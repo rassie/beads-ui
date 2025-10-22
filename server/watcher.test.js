@@ -7,9 +7,11 @@ const watchers = [];
 vi.mock('node:fs', () => {
   const watch = vi.fn((dir, _opts, cb) => {
     // Minimal event emitter interface for FSWatcher
-    const handlers = /** @type {{ close: Array<() => void> }} */ ({ close: [] });
+    const handlers = /** @type {{ close: Array<() => void> }} */ ({
+      close: []
+    });
     const w = {
-      close: () => handlers.close.forEach((fn) => fn()),
+      close: () => handlers.close.forEach((fn) => fn())
     };
     watchers.push({ dir, cb, w });
     return /** @type {any} */ (w);
@@ -33,7 +35,7 @@ describe('watchDb', () => {
     const calls = [];
     const handle = watchDb('/repo', (p) => calls.push(p), {
       debounce_ms: 100,
-      explicit_db: '/repo/.beads/ui.db',
+      explicit_db: '/repo/.beads/ui.db'
     });
     expect(watchers.length).toBe(1);
     const { cb } = watchers[0];
@@ -58,7 +60,7 @@ describe('watchDb', () => {
     const calls = [];
     const handle = watchDb('/repo', (p) => calls.push(p), {
       debounce_ms: 50,
-      explicit_db: '/repo/.beads/ui.db',
+      explicit_db: '/repo/.beads/ui.db'
     });
     const { cb } = watchers[0];
     cb('change', 'something-else.db');
@@ -71,7 +73,7 @@ describe('watchDb', () => {
     const calls = [];
     const handle = watchDb('/repo', (p) => calls.push(p), {
       debounce_ms: 50,
-      explicit_db: '/repo/.beads/ui.db',
+      explicit_db: '/repo/.beads/ui.db'
     });
     expect(watchers.length).toBe(1);
     const first = watchers[0];

@@ -87,7 +87,9 @@ export function renderMarkdown(src) {
         list_type = '';
       }
       const level = Math.min(6, hx[1].length);
-      const h = /** @type {HTMLHeadingElement} */ (document.createElement('h' + String(level)));
+      const h = /** @type {HTMLHeadingElement} */ (
+        document.createElement('h' + String(level))
+      );
       appendInline(h, hx[2]);
       frag.appendChild(h);
       continue;

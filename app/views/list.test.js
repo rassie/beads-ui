@@ -15,7 +15,7 @@ describe('views/list', () => {
     const mount = /** @type {HTMLElement} */ (document.getElementById('mount'));
     const issues = [
       { id: 'UI-1', title: 'One', status: 'open', priority: 1 },
-      { id: 'UI-2', title: 'Two', status: 'closed', priority: 2 },
+      { id: 'UI-2', title: 'Two', status: 'closed', priority: 2 }
     ];
     const view = createListView(mount, stubSend(issues), (hash) => {
       window.location.hash = hash;
@@ -35,12 +35,16 @@ describe('views/list', () => {
     const issues = [
       { id: 'UI-1', title: 'Alpha', status: 'open', priority: 1 },
       { id: 'UI-2', title: 'Beta', status: 'in_progress', priority: 2 },
-      { id: 'UI-3', title: 'Gamma', status: 'closed', priority: 3 },
+      { id: 'UI-3', title: 'Gamma', status: 'closed', priority: 3 }
     ];
     const view = createListView(mount, stubSend(issues));
     await view.load();
-    const select = /** @type {HTMLSelectElement} */ (mount.querySelector('select'));
-    const input = /** @type {HTMLInputElement} */ (mount.querySelector('input[type="search"]'));
+    const select = /** @type {HTMLSelectElement} */ (
+      mount.querySelector('select')
+    );
+    const input = /** @type {HTMLInputElement} */ (
+      mount.querySelector('input[type="search"]')
+    );
 
     // Filter by status
     select.value = 'open';
@@ -52,7 +56,9 @@ describe('views/list', () => {
     select.dispatchEvent(new Event('change'));
     input.value = 'ga';
     input.dispatchEvent(new Event('input'));
-    const visible = Array.from(mount.querySelectorAll('li')).map((el) => el.textContent || '');
+    const visible = Array.from(mount.querySelectorAll('li')).map(
+      (el) => el.textContent || ''
+    );
     expect(visible.length).toBe(1);
     expect(visible[0].toLowerCase()).toContain('gamma');
   });

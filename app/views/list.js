@@ -1,3 +1,4 @@
+/* global NodeListOf */
 // List view implementation; requires a transport send function.
 
 /**
@@ -30,7 +31,7 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
     ['all', 'All'],
     ['open', 'Open'],
     ['in_progress', 'In progress'],
-    ['closed', 'Closed'],
+    ['closed', 'Closed']
   ]
     .map(([v, t]) => `<option value="${v}">${t}</option>`)
     .join('');
@@ -120,7 +121,9 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
   status_select.addEventListener('change', () => {
     status_filter = status_select.value;
     if (store) {
-      store.setState({ filters: { status: /** @type {any} */ (status_filter) } });
+      store.setState({
+        filters: { status: /** @type {any} */ (status_filter) }
+      });
       void load();
     }
     render();
@@ -167,7 +170,11 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
     }
     const idx = Math.max(
       0,
-      selected_id ? Array.from(items).findIndex((el) => el.dataset.issueId === selected_id) : 0
+      selected_id
+        ? Array.from(items).findIndex(
+            (el) => el.dataset.issueId === selected_id
+          )
+        : 0
     );
     if (ev.key === 'ArrowDown') {
       ev.preventDefault();
@@ -216,6 +223,6 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
         unsubscribe();
         unsubscribe = null;
       }
-    },
+    }
   };
 }

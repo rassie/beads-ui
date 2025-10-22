@@ -38,7 +38,7 @@ export function createWsClient(options = {}) {
     initialMs: options.backoff?.initialMs ?? 1000,
     maxMs: options.backoff?.maxMs ?? 30000,
     factor: options.backoff?.factor ?? 2,
-    jitterRatio: options.backoff?.jitterRatio ?? 0.2,
+    jitterRatio: options.backoff?.jitterRatio ?? 0.2
   };
 
   /** @type {() => string} */
@@ -47,7 +47,11 @@ export function createWsClient(options = {}) {
       return options.url;
     }
     if (typeof location !== 'undefined') {
-      return (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws';
+      return (
+        (location.protocol === 'https:' ? 'wss://' : 'ws://') +
+        location.host +
+        '/ws'
+      );
     }
     return 'ws://localhost/ws';
   };
@@ -80,7 +84,10 @@ export function createWsClient(options = {}) {
       (backoff.initialMs || 0) * Math.pow(backoff.factor || 1, attempts)
     );
     const jitter = (backoff.jitterRatio || 0) * base;
-    const delay = Math.max(0, Math.round(base + (Math.random() * 2 - 1) * jitter));
+    const delay = Math.max(
+      0,
+      Math.round(base + (Math.random() * 2 - 1) * jitter)
+    );
     reconnect_timer = setTimeout(() => {
       reconnect_timer = null;
       connect();
@@ -240,6 +247,6 @@ export function createWsClient(options = {}) {
     /** For diagnostics in tests or UI. */
     getState() {
       return state;
-    },
+    }
   };
 }

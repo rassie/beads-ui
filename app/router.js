@@ -40,6 +40,6 @@ export function createHashRouter(store) {
         // Force state update even if hash is the same
         store.setState({ selectedId: id });
       }
-    },
+    }
   };
 }

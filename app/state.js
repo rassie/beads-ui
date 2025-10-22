@@ -25,8 +25,8 @@ export function createStore(initial = {}) {
     selectedId: initial.selectedId ?? null,
     filters: {
       status: initial.filters?.status ?? 'all',
-      search: initial.filters?.search ?? '',
-    },
+      search: initial.filters?.search ?? ''
+    }
   };
 
   /** @type {Set<(s: AppState) => void>} */
@@ -55,7 +55,7 @@ export function createStore(initial = {}) {
       const next = {
         ...state,
         ...patch,
-        filters: { ...state.filters, ...(patch.filters || {}) },
+        filters: { ...state.filters, ...(patch.filters || {}) }
       };
       // Avoid emitting if nothing changed (shallow compare)
       if (
@@ -71,6 +71,6 @@ export function createStore(initial = {}) {
     subscribe(fn) {
       subs.add(fn);
       return () => subs.delete(fn);
-    },
+    }
   };
 }

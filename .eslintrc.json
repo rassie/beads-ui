@@ -12,7 +12,10 @@
   "extends": ["eslint:recommended"],
   "plugins": ["jsdoc", "import", "n", "promise"],
   "rules": {
-    "no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+    "no-unused-vars": [
+      "error",
+      { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
+    ],
     "no-console": "off",
     "eqeqeq": ["error", "always"],
     "jsdoc/check-alignment": "warn",

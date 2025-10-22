@@ -38,7 +38,11 @@ export function resolveDbPath(options = {}) {
 
   // 4) ~/.beads/default.db
   const homeDefault = path.join(os.homedir(), '.beads', 'default.db');
-  return { path: homeDefault, source: 'home-default', exists: fileExists(homeDefault) };
+  return {
+    path: homeDefault,
+    source: 'home-default',
+    exists: fileExists(homeDefault)
+  };
 }
 
 /**

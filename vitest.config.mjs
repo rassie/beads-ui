@@ -7,7 +7,7 @@ export default defineConfig({
     environmentMatchGlobs: [['app/**/*.test.js', 'jsdom']],
     reporters: 'default',
     coverage: {
-      reporter: ['text', 'html'],
-    },
-  },
+      reporter: ['text', 'html']
+    }
+  }
 });

@@ -77,12 +77,16 @@ describe('utils/markdown', () => {
   });
 
   test('renders http and mailto links', () => {
-    const frag = renderMarkdown('[web](https://example.com) and [mail](mailto:test@example.com)');
+    const frag = renderMarkdown(
+      '[web](https://example.com) and [mail](mailto:test@example.com)'
+    );
     const host = document.createElement('div');
 
     host.appendChild(frag);
 
-    const hrefs = Array.from(host.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+    const hrefs = Array.from(host.querySelectorAll('a')).map((a) =>
+      a.getAttribute('href')
+    );
     expect(hrefs).toEqual(['https://example.com', 'mailto:test@example.com']);
   });
 

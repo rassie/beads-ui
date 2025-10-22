@@ -12,7 +12,7 @@ function makeStubSocket() {
     /** @param {string} msg */
     send(msg) {
       this.sent.push(String(msg));
-    },
+    }
   };
 }
 
@@ -21,10 +21,20 @@ describe('ws mutation handlers', () => {
     const mRun = /** @type {import('vitest').Mock} */ (runBd);
     const mJson = /** @type {import('vitest').Mock} */ (runBdJson);
     mRun.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
-    mJson.mockResolvedValueOnce({ code: 0, stdoutJson: { id: 'UI-7', status: 'in_progress' } });
+    mJson.mockResolvedValueOnce({
+      code: 0,
+      stdoutJson: { id: 'UI-7', status: 'in_progress' }
+    });
     const ws = makeStubSocket();
-    const req = { id: 'r1', type: 'update-status', payload: { id: 'UI-7', status: 'in_progress' } };
-    await handleMessage(/** @type {any} */ (ws), Buffer.from(JSON.stringify(req)));
+    const req = {
+      id: 'r1',
+      type: 'update-status',
+      payload: { id: 'UI-7', status: 'in_progress' }
+    };
+    await handleMessage(
+      /** @type {any} */ (ws),
+      Buffer.from(JSON.stringify(req))
+    );
     const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
     expect(obj.ok).toBe(true);
     expect(obj.payload.status).toBe('in_progress');
@@ -32,8 +42,15 @@ describe('ws mutation handlers', () => {
 
   test('update-status invalid payload yields bad_request', async () => {
     const ws = makeStubSocket();
-    const req = { id: 'r2', type: 'update-status', payload: { id: 'UI-7', status: 'bogus' } };
-    await handleMessage(/** @type {any} */ (ws), Buffer.from(JSON.stringify(req)));
+    const req = {
+      id: 'r2',
+      type: 'update-status',
+      payload: { id: 'UI-7', status: 'bogus' }
+    };
+    await handleMessage(
+      /** @type {any} */ (ws),
+      Buffer.from(JSON.stringify(req))
+    );
     const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
     expect(obj.ok).toBe(false);
     expect(obj.error.code).toBe('bad_request');
@@ -43,10 +60,20 @@ describe('ws mutation handlers', () => {
     const mRun = /** @type {import('vitest').Mock} */ (runBd);
     const mJson = /** @type {import('vitest').Mock} */ (runBdJson);
     mRun.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
-    mJson.mockResolvedValueOnce({ code: 0, stdoutJson: { id: 'UI-7', priority: 1 } });
+    mJson.mockResolvedValueOnce({
+      code: 0,
+      stdoutJson: { id: 'UI-7', priority: 1 }
+    });
     const ws = makeStubSocket();
-    const req = { id: 'r3', type: 'update-priority', payload: { id: 'UI-7', priority: 1 } };
-    await handleMessage(/** @type {any} */ (ws), Buffer.from(JSON.stringify(req)));
+    const req = {
+      id: 'r3',
+      type: 'update-priority',
+      payload: { id: 'UI-7', priority: 1 }
+    };
+    await handleMessage(
+      /** @type {any} */ (ws),
+      Buffer.from(JSON.stringify(req))
+    );
     const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
     expect(obj.ok).toBe(true);
     expect(obj.payload.priority).toBe(1);
@@ -56,14 +83,20 @@ describe('ws mutation handlers', () => {
     const mRun = /** @type {import('vitest').Mock} */ (runBd);
     const mJson = /** @type {import('vitest').Mock} */ (runBdJson);
     mRun.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
-    mJson.mockResolvedValueOnce({ code: 0, stdoutJson: { id: 'UI-7', title: 'New' } });
+    mJson.mockResolvedValueOnce({
+      code: 0,
+      stdoutJson: { id: 'UI-7', title: 'New' }
+    });
     const ws = makeStubSocket();
     const req = {
       id: 'r4',
       type: 'edit-text',
-      payload: { id: 'UI-7', field: 'title', value: 'New' },
+      payload: { id: 'UI-7', field: 'title', value: 'New' }
     };
-    await handleMessage(/** @type {any} */ (ws), Buffer.from(JSON.stringify(req)));
+    await handleMessage(
+      /** @type {any} */ (ws),
+      Buffer.from(JSON.stringify(req))
+    );
     const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
     expect(obj.ok).toBe(true);
     expect(obj.payload.title).toBe('New');
@@ -75,15 +108,18 @@ describe('ws mutation handlers', () => {
     mRun.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
     mJson.mockResolvedValueOnce({
       code: 0,
-      stdoutJson: { id: 'UI-7', acceptance: 'Done when...' },
+      stdoutJson: { id: 'UI-7', acceptance: 'Done when...' }
     });
     const ws = makeStubSocket();
     const req = {
       id: 'r4a',
       type: 'edit-text',
-      payload: { id: 'UI-7', field: 'acceptance', value: 'Done when...' },
+      payload: { id: 'UI-7', field: 'acceptance', value: 'Done when...' }
     };
-    await handleMessage(/** @type {any} */ (ws), Buffer.from(JSON.stringify(req)));
+    await handleMessage(
+      /** @type {any} */ (ws),
+      Buffer.from(JSON.stringify(req))
+    );
     const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
     expect(obj.ok).toBe(true);
     expect(obj.payload.acceptance).toBe('Done when...');
@@ -93,14 +129,20 @@ describe('ws mutation handlers', () => {
     const mRun = /** @type {import('vitest').Mock} */ (runBd);
     const mJson = /** @type {import('vitest').Mock} */ (runBdJson);
     mRun.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
-    mJson.mockResolvedValueOnce({ code: 0, stdoutJson: { id: 'UI-7', dependencies: [] } });
+    mJson.mockResolvedValueOnce({
+      code: 0,
+      stdoutJson: { id: 'UI-7', dependencies: [] }
+    });
     const ws = makeStubSocket();
     const req = {
       id: 'r5',
       type: 'dep-add',
-      payload: { a: 'UI-7', b: 'UI-1', view_id: 'UI-7' },
+      payload: { a: 'UI-7', b: 'UI-1', view_id: 'UI-7' }
     };
-    await handleMessage(/** @type {any} */ (ws), Buffer.from(JSON.stringify(req)));
+    await handleMessage(
+      /** @type {any} */ (ws),
+      Buffer.from(JSON.stringify(req))
+    );
     const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
     expect(obj.ok).toBe(true);
     expect(obj.payload.id).toBe('UI-7');
@@ -109,7 +151,10 @@ describe('ws mutation handlers', () => {
   test('dep-remove bad payload yields bad_request', async () => {
     const ws = makeStubSocket();
     const req = { id: 'r6', type: 'dep-remove', payload: { a: '' } };
-    await handleMessage(/** @type {any} */ (ws), Buffer.from(JSON.stringify(req)));
+    await handleMessage(
+      /** @type {any} */ (ws),
+      Buffer.from(JSON.stringify(req))
+    );
     const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
     expect(obj.ok).toBe(false);
     expect(obj.error.code).toBe('bad_request');
@@ -122,9 +167,17 @@ describe('ws mutation handlers', () => {
     const req = {
       id: 'r7',
       type: 'create-issue',
-      payload: { title: 'New item', type: 'task', priority: 2, description: 'x' },
+      payload: {
+        title: 'New item',
+        type: 'task',
+        priority: 2,
+        description: 'x'
+      }
     };
-    await handleMessage(/** @type {any} */ (ws), Buffer.from(JSON.stringify(req)));
+    await handleMessage(
+      /** @type {any} */ (ws),
+      Buffer.from(JSON.stringify(req))
+    );
     const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
     expect(obj.ok).toBe(true);
     expect(obj.payload && obj.payload.created).toBe(true);

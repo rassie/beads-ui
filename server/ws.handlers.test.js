@@ -12,7 +12,7 @@ function makeStubSocket() {
     /** @param {string} msg */
     send(msg) {
       this.sent.push(String(msg));
-    },
+    }
   };
 }
 
@@ -21,8 +21,15 @@ describe('ws handlers: list/show', () => {
     const mocked = /** @type {import('vitest').Mock} */ (runBdJson);
     mocked.mockResolvedValueOnce({ code: 0, stdoutJson: [{ id: 'UI-1' }] });
     const ws = makeStubSocket();
-    const req = { id: 'r1', type: 'list-issues', payload: { filters: { status: 'open' } } };
-    await handleMessage(/** @type {any} */ (ws), Buffer.from(JSON.stringify(req)));
+    const req = {
+      id: 'r1',
+      type: 'list-issues',
+      payload: { filters: { status: 'open' } }
+    };
+    await handleMessage(
+      /** @type {any} */ (ws),
+      Buffer.from(JSON.stringify(req))
+    );
     const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
     expect(obj.ok).toBe(true);
     expect(Array.isArray(obj.payload)).toBe(true);
@@ -31,7 +38,10 @@ describe('ws handlers: list/show', () => {
   test('show-issue returns error on missing id', async () => {
     const ws = makeStubSocket();
     const req = { id: 'r2', type: 'show-issue', payload: {} };
-    await handleMessage(/** @type {any} */ (ws), Buffer.from(JSON.stringify(req)));
+    await handleMessage(
+      /** @type {any} */ (ws),
+      Buffer.from(JSON.stringify(req))
+    );
     const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
     expect(obj.ok).toBe(false);
     expect(obj.error.code).toBe('bad_request');
@@ -39,10 +49,16 @@ describe('ws handlers: list/show', () => {
 
   test('show-issue forwards bd JSON on success', async () => {
     const mocked = /** @type {import('vitest').Mock} */ (runBdJson);
-    mocked.mockResolvedValueOnce({ code: 0, stdoutJson: { id: 'UI-9', title: 'X' } });
+    mocked.mockResolvedValueOnce({
+      code: 0,
+      stdoutJson: { id: 'UI-9', title: 'X' }
+    });
     const ws = makeStubSocket();
     const req = { id: 'r3', type: 'show-issue', payload: { id: 'UI-9' } };
-    await handleMessage(/** @type {any} */ (ws), Buffer.from(JSON.stringify(req)));
+    await handleMessage(
+      /** @type {any} */ (ws),
+      Buffer.from(JSON.stringify(req))
+    );
     const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
     expect(obj.ok).toBe(true);
     expect(obj.payload.id).toBe('UI-9');
@@ -53,7 +69,10 @@ describe('ws handlers: list/show', () => {
     mocked.mockResolvedValueOnce({ code: 1, stderr: 'boom' });
     const ws = makeStubSocket();
     const req = { id: 'r4', type: 'list-issues', payload: {} };
-    await handleMessage(/** @type {any} */ (ws), Buffer.from(JSON.stringify(req)));
+    await handleMessage(
+      /** @type {any} */ (ws),
+      Buffer.from(JSON.stringify(req))
+    );
     const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
     expect(obj.ok).toBe(false);
     expect(obj.error.code).toBe('bd_error');

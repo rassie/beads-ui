@@ -54,14 +54,18 @@ export function watchDb(root_dir, on_change, options = {}) {
 
     // (Re)create watcher
     try {
-      watcher = fs.watch(current_dir, { persistent: true }, (event_type, filename) => {
-        if (filename && String(filename) !== current_file) {
-          return;
+      watcher = fs.watch(
+        current_dir,
+        { persistent: true },
+        (event_type, filename) => {
+          if (filename && String(filename) !== current_file) {
+            return;
+          }
+          if (event_type === 'change' || event_type === 'rename') {
+            schedule();
+          }
         }
-        if (event_type === 'change' || event_type === 'rename') {
-          schedule();
-        }
-      });
+      );
     } catch (err) {
       console.warn('watchDb: unable to watch directory', current_dir, err);
     }
@@ -88,13 +92,16 @@ export function watchDb(root_dir, on_change, options = {}) {
     rebind(opts = {}) {
       const next_root = opts.root_dir ? String(opts.root_dir) : root_dir;
       const next_explicit = opts.explicit_db ?? options.explicit_db;
-      const nextResolved = resolveDbPath({ cwd: next_root, explicit_db: next_explicit });
+      const nextResolved = resolveDbPath({
+        cwd: next_root,
+        explicit_db: next_explicit
+      });
       const next_path = nextResolved.path;
       if (next_path !== current_path) {
         // swap watcher
         watcher?.close();
         bind(next_root, next_explicit);
       }
-    },
+    }
   };
 }

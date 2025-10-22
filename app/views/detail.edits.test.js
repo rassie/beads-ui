@@ -6,10 +6,17 @@ const mockSend = (impl) => vi.fn(impl);
 
 describe('views/detail edits', () => {
   test('updates status via dropdown and disables while pending', async () => {
-    document.body.innerHTML = '<section class="panel"><div id="mount"></div></section>';
+    document.body.innerHTML =
+      '<section class="panel"><div id="mount"></div></section>';
     const mount = /** @type {HTMLElement} */ (document.getElementById('mount'));
 
-    const initial = { id: 'UI-7', title: 'T', description: 'D', status: 'open', priority: 2 };
+    const initial = {
+      id: 'UI-7',
+      title: 'T',
+      description: 'D',
+      status: 'open',
+      priority: 2
+    };
     const updated = { ...initial, status: 'in_progress' };
 
     const send = mockSend(async (type, payload) => {
@@ -27,7 +34,9 @@ describe('views/detail edits', () => {
     const view = createDetailView(mount, send);
     await view.load('UI-7');
 
-    const select = /** @type {HTMLSelectElement} */ (mount.querySelector('select'));
+    const select = /** @type {HTMLSelectElement} */ (
+      mount.querySelector('select')
+    );
     expect(select.value).toBe('open');
 
     // Trigger change
@@ -39,14 +48,23 @@ describe('views/detail edits', () => {
 
     // After async flow, DOM should reflect updated status
     await Promise.resolve(); // allow microtasks
-    const select2 = /** @type {HTMLSelectElement} */ (mount.querySelector('select'));
+    const select2 = /** @type {HTMLSelectElement} */ (
+      mount.querySelector('select')
+    );
     expect(select2.value).toBe('in_progress');
   });
 
   test('saves title and re-renders from reply', async () => {
-    document.body.innerHTML = '<section class="panel"><div id="mount"></div></section>';
+    document.body.innerHTML =
+      '<section class="panel"><div id="mount"></div></section>';
     const mount = /** @type {HTMLElement} */ (document.getElementById('mount'));
-    const initial = { id: 'UI-8', title: 'Old', description: '', status: 'open', priority: 1 };
+    const initial = {
+      id: 'UI-8',
+      title: 'Old',
+      description: '',
+      status: 'open',
+      priority: 1
+    };
     const send = mockSend(async (type, payload) => {
       if (type === 'show-issue') {
         return initial;
@@ -60,23 +78,38 @@ describe('views/detail edits', () => {
     const view = createDetailView(mount, send);
     await view.load('UI-8');
     // Enter edit mode by clicking the span
-    const titleSpan = /** @type {HTMLSpanElement} */ (mount.querySelector('h2 .editable'));
+    const titleSpan = /** @type {HTMLSpanElement} */ (
+      mount.querySelector('h2 .editable')
+    );
     titleSpan.click();
-    const titleInput = /** @type {HTMLInputElement} */ (mount.querySelector('h2 input'));
-    const titleSave = /** @type {HTMLButtonElement} */ (mount.querySelector('h2 button'));
+    const titleInput = /** @type {HTMLInputElement} */ (
+      mount.querySelector('h2 input')
+    );
+    const titleSave = /** @type {HTMLButtonElement} */ (
+      mount.querySelector('h2 button')
+    );
     titleInput.value = 'New Title';
     titleSave.click();
     await Promise.resolve();
     // After save, returns to read mode with updated text
-    const titleSpan2 = /** @type {HTMLSpanElement} */ (mount.querySelector('h2 .editable'));
+    const titleSpan2 = /** @type {HTMLSpanElement} */ (
+      mount.querySelector('h2 .editable')
+    );
     expect(titleSpan2.textContent).toBe('New Title');
   });
 
   test('shows toast on description save error and re-enables', async () => {
     vi.useFakeTimers();
-    document.body.innerHTML = '<section class="panel"><div id="mount"></div></section>';
+    document.body.innerHTML =
+      '<section class="panel"><div id="mount"></div></section>';
     const mount = /** @type {HTMLElement} */ (document.getElementById('mount'));
-    const initial = { id: 'UI-9', title: 'T', description: 'D', status: 'open', priority: 2 };
+    const initial = {
+      id: 'UI-9',
+      title: 'T',
+      description: 'D',
+      status: 'open',
+      priority: 2
+    };
     const send = mockSend(async (type) => {
       if (type === 'show-issue') {
         return initial;
@@ -91,15 +124,21 @@ describe('views/detail edits', () => {
     // Enter edit mode
     const md = /** @type {HTMLDivElement} */ (mount.querySelector('.md'));
     md.click();
-    const ta = /** @type {HTMLTextAreaElement} */ (mount.querySelector('textarea'));
-    const btn = /** @type {HTMLButtonElement} */ (mount.querySelector('.editable-actions button'));
+    const ta = /** @type {HTMLTextAreaElement} */ (
+      mount.querySelector('textarea')
+    );
+    const btn = /** @type {HTMLButtonElement} */ (
+      mount.querySelector('.editable-actions button')
+    );
     ta.value = 'New D';
     btn.click();
     await Promise.resolve();
     // Toast appears
     const toast = /** @type {HTMLElement} */ (mount.querySelector('.toast'));
     expect(toast).not.toBeNull();
-    expect((toast.textContent || '').toLowerCase()).toContain('failed to save description');
+    expect((toast.textContent || '').toLowerCase()).toContain(
+      'failed to save description'
+    );
     // Auto-dismiss after a while
     await vi.advanceTimersByTimeAsync(3000);
     vi.useRealTimers();

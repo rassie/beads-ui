@@ -76,7 +76,9 @@ function setupFakeWebSocket() {
 describe('app/ws client', () => {
   test('correlates replies for concurrent sends', async () => {
     const sockets = setupFakeWebSocket();
-    const client = createWsClient({ backoff: { initialMs: 5, maxMs: 5, jitterRatio: 0 } });
+    const client = createWsClient({
+      backoff: { initialMs: 5, maxMs: 5, jitterRatio: 0 }
+    });
     // open connection
     sockets[0].openNow();
 
@@ -84,13 +86,25 @@ describe('app/ws client', () => {
     const p2 = client.send('show-issue', { id: 'UI-1' });
 
     // Parse the last two frames to extract ids
-    const frames = sockets[0].sent.slice(-2).map((/** @type {string} */ s) => JSON.parse(s));
+    const frames = sockets[0].sent
+      .slice(-2)
+      .map((/** @type {string} */ s) => JSON.parse(s));
     const id1 = frames[0].id;
     const id2 = frames[1].id;
 
     // Reply out of order
-    sockets[0].emitMessage({ id: id2, ok: true, type: 'show-issue', payload: { id: 'UI-1' } });
-    sockets[0].emitMessage({ id: id1, ok: true, type: 'list-issues', payload: [{ id: 'UI-1' }] });
+    sockets[0].emitMessage({
+      id: id2,
+      ok: true,
+      type: 'show-issue',
+      payload: { id: 'UI-1' }
+    });
+    sockets[0].emitMessage({
+      id: id1,
+      ok: true,
+      type: 'list-issues',
+      payload: [{ id: 'UI-1' }]
+    });
 
     await expect(p2).resolves.toEqual({ id: 'UI-1' });
     await expect(p1).resolves.toEqual([{ id: 'UI-1' }]);
@@ -99,7 +113,9 @@ describe('app/ws client', () => {
   test('reconnects and resubscribes after close', async () => {
     vi.useFakeTimers();
     const sockets = setupFakeWebSocket();
-    const client = createWsClient({ backoff: { initialMs: 10, maxMs: 10, jitterRatio: 0 } });
+    const client = createWsClient({
+      backoff: { initialMs: 10, maxMs: 10, jitterRatio: 0 }
+    });
 
     // First connection opens
     sockets[0].openNow();
@@ -135,12 +151,17 @@ describe('app/ws client', () => {
       id: 'evt-1',
       ok: true,
       type: 'issues-changed',
-      payload: { ids: ['UI-1'] },
+      payload: { ids: ['UI-1'] }
     });
     expect(events).toEqual([{ ids: ['UI-1'] }]);
 
     // No handler registered for create-issue -> warn
-    sockets[0].emitMessage({ id: 'evt-2', ok: true, type: 'create-issue', payload: {} });
+    sockets[0].emitMessage({
+      id: 'evt-2',
+      ok: true,
+      type: 'create-issue',
+      payload: {}
+    });
     expect(logger.warn).toHaveBeenCalled();
     client.close();
   });

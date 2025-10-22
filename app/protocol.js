@@ -53,7 +53,7 @@ export const MESSAGE_TYPES = /** @type {const} */ ([
   'subscribe-updates',
   'issues-changed',
   'dep-add',
-  'dep-remove',
+  'dep-remove'
 ]);
 
 /**
@@ -96,7 +96,12 @@ export function makeOk(req, payload) {
  * @returns {ReplyEnvelope}
  */
 export function makeError(req, code, message, details) {
-  return { id: req.id, ok: false, type: req.type, error: { code, message, details } };
+  return {
+    id: req.id,
+    ok: false,
+    type: req.type,
+    error: { code, message, details }
+  };
 }
 
 /**
@@ -114,7 +119,10 @@ function isRecord(value) {
  * @returns {value is MessageType}
  */
 export function isMessageType(value) {
-  return typeof value === 'string' && MESSAGE_TYPES.includes(/** @type {MessageType} */ (value));
+  return (
+    typeof value === 'string' &&
+    MESSAGE_TYPES.includes(/** @type {MessageType} */ (value))
+  );
 }
 
 /**
@@ -142,12 +150,20 @@ export function isReply(value) {
   if (!isRecord(value)) {
     return false;
   }
-  if (typeof value.id !== 'string' || typeof value.ok !== 'boolean' || !isMessageType(value.type)) {
+  if (
+    typeof value.id !== 'string' ||
+    typeof value.ok !== 'boolean' ||
+    !isMessageType(value.type)
+  ) {
     return false;
   }
   if (value.ok === false) {
     const err = /** @type {any} */ (value).error;
-    if (!isRecord(err) || typeof err.code !== 'string' || typeof err.message !== 'string') {
+    if (
+      !isRecord(err) ||
+      typeof err.code !== 'string' ||
+      typeof err.message !== 'string'
+    ) {
       return false;
     }
   }

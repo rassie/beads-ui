@@ -118,7 +118,10 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
       const title_input = document.createElement('input');
       title_input.type = 'text';
       title_input.value = issue.title || '';
-      title_input.size = Math.min(80, Math.max(20, (issue.title || '').length + 5));
+      title_input.size = Math.min(
+        80,
+        Math.max(20, (issue.title || '').length + 5)
+      );
       title_input.setAttribute('aria-label', 'Edit title');
       title_input.addEventListener('keydown', (ev) => {
         if (ev.key === 'Escape') {
@@ -153,7 +156,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
           const updated = await send_fn('edit-text', {
             id: current.id,
             field: 'title',
-            value: next,
+            value: next
           });
           if (updated && typeof updated === 'object') {
             current = /** @type {IssueDetail} */ (updated);
@@ -212,7 +215,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
     status_select.innerHTML = [
       ['open', 'Open'],
       ['in_progress', 'In progress'],
-      ['closed', 'Closed'],
+      ['closed', 'Closed']
     ]
       .map(([v, t]) => `<option value="${v}">${t}</option>`)
       .join('');
@@ -232,7 +235,10 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
       current.status = next;
       try {
         /** @type {any} */
-        const updated = await send_fn('update-status', { id: current.id, status: next });
+        const updated = await send_fn('update-status', {
+          id: current.id,
+          status: next
+        });
         if (updated && typeof updated === 'object') {
           current = /** @type {IssueDetail} */ (updated);
           render(current);
@@ -268,7 +274,10 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
       current.priority = next;
       try {
         /** @type {any} */
-        const updated = await send_fn('update-priority', { id: current.id, priority: next });
+        const updated = await send_fn('update-priority', {
+          id: current.id,
+          priority: next
+        });
         if (updated && typeof updated === 'object') {
           current = /** @type {IssueDetail} */ (updated);
           render(current);
@@ -282,7 +291,11 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
       }
     });
 
-    meta.replaceChildren(status_select, document.createTextNode(' · '), priority_select);
+    meta.replaceChildren(
+      status_select,
+      document.createTextNode(' · '),
+      priority_select
+    );
 
     // Description (markdown read-mode + inline edit)
     /** @type {HTMLDivElement} */
@@ -330,7 +343,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
           const updated = await send_fn('edit-text', {
             id: current.id,
             field: 'description',
-            value: next,
+            value: next
           });
           if (updated && typeof updated === 'object') {
             current = /** @type {IssueDetail} */ (updated);
@@ -433,7 +446,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
                 const updated = await send_fn('dep-remove', {
                   a: current.id,
                   b: did,
-                  view_id: current.id,
+                  view_id: current.id
                 });
                 if (updated && typeof updated === 'object') {
                   current = /** @type {IssueDetail} */ (updated);
@@ -445,7 +458,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
                 const updated = await send_fn('dep-remove', {
                   a: did,
                   b: current.id,
-                  view_id: current.id,
+                  view_id: current.id
                 });
                 if (updated && typeof updated === 'object') {
                   current = /** @type {IssueDetail} */ (updated);
@@ -499,7 +512,10 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
       const input = document.createElement('input');
       input.type = 'text';
       input.placeholder = 'Issue ID (e.g., UI-12)';
-      input.setAttribute('data-testid', mode === 'dependency' ? 'add-dependency' : 'add-dependent');
+      input.setAttribute(
+        'data-testid',
+        mode === 'dependency' ? 'add-dependency' : 'add-dependent'
+      );
       /** @type {HTMLButtonElement} */
       const addBtn = document.createElement('button');
       addBtn.textContent = 'Add';
@@ -528,7 +544,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
             const updated = await send_fn('dep-add', {
               a: current.id,
               b: target,
-              view_id: current.id,
+              view_id: current.id
             });
             if (updated && typeof updated === 'object') {
               current = /** @type {IssueDetail} */ (updated);
@@ -539,7 +555,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
             const updated = await send_fn('dep-add', {
               a: target,
               b: current.id,
-              view_id: current.id,
+              view_id: current.id
             });
             if (updated && typeof updated === 'object') {
               current = /** @type {IssueDetail} */ (updated);
@@ -618,7 +634,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
           const updated = await send_fn('edit-text', {
             id: current.id,
             field: 'acceptance',
-            value: next,
+            value: next
           });
           if (updated && typeof updated === 'object') {
             current = /** @type {IssueDetail} */ (updated);
@@ -704,6 +720,6 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
     },
     destroy() {
       mount_element.replaceChildren();
-    },
+    }
   };
 }

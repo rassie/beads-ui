@@ -1,6 +1,7 @@
 # beads-ui WebSocket Protocol (v1.0.0)
 
-This document defines the JSON messages exchanged between the browser client and the local server.
+This document defines the JSON messages exchanged between the browser client and
+the local server.
 
 - Transport: single WebSocket connection
 - Encoding: JSON text frames
@@ -12,25 +13,30 @@ This document defines the JSON messages exchanged between the browser client and
 - ReplyEnvelope:
   `{ id: string, ok: boolean, type: string, payload?: any, error?: { code: string, message: string, details?: any } }`
 
-Server may send unsolicited events (e.g., `issues-changed`) using the ReplyEnvelope shape with
-`ok: true` and a generated `id`.
+Server may send unsolicited events (e.g., `issues-changed`) using the
+ReplyEnvelope shape with `ok: true` and a generated `id`.
 
 ## Message Types
 
 - `list-issues` payload: `{ filters?: { status?: string, priority?: number } }`
 - `show-issue` payload: `{ id: string }`
-- `update-status` payload: `{ id: string, status: 'open'|'in_progress'|'closed' }`
-- `edit-text` payload: `{ id: string, field: 'title'|'description', value: string }`
+- `update-status` payload:
+  `{ id: string, status: 'open'|'in_progress'|'closed' }`
+- `edit-text` payload:
+  `{ id: string, field: 'title'|'description', value: string }`
 - `update-priority` payload: `{ id: string, priority: 0|1|2|3|4 }`
 - `create-issue` payload:
   `{ title: string, type?: 'bug'|'feature'|'task'|'epic'|'chore', priority?: 0|1|2|3|4, description?: string }`
 - `list-ready` payload: `{}`
-- `subscribe-updates` payload: `{}` (server responds with `ok` and begins emitting events)
+- `subscribe-updates` payload: `{}` (server responds with `ok` and begins
+  emitting events)
 - `issues-changed` payload: `{ ts: number, hint?: { ids?: string[] } }`
-- `dep-add` payload: `{ a: string, b: string, view_id?: string }` where `a` depends on `b` (i.e.,
-  `a` is blocked by `b`). Reply payload is the updated issue for `view_id` (or `a` when omitted).
-- `dep-remove` payload: `{ a: string, b: string, view_id?: string }` removing the `a` depends on `b`
-  link. Reply payload is the updated issue for `view_id` (or `a`).
+- `dep-add` payload: `{ a: string, b: string, view_id?: string }` where `a`
+  depends on `b` (i.e., `a` is blocked by `b`). Reply payload is the updated
+  issue for `view_id` (or `a` when omitted).
+- `dep-remove` payload: `{ a: string, b: string, view_id?: string }` removing
+  the `a` depends on `b` link. Reply payload is the updated issue for `view_id`
+  (or `a`).
 
 ## Mapping to `bd` CLI
 
@@ -52,4 +58,5 @@ Errors follow the shape `{ code, message, details? }`. Common codes:
 
 ## Versioning
 
-Breaking changes to shapes or semantics increment `PROTOCOL_VERSION` in `app/protocol.js`.
+Breaking changes to shapes or semantics increment `PROTOCOL_VERSION` in
+`app/protocol.js`.

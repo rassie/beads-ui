@@ -12,7 +12,7 @@ function makeStubSocket() {
       this.sent.push(String(msg));
     },
     ping: vi.fn(),
-    terminate: vi.fn(),
+    terminate: vi.fn()
   };
 }
 
@@ -28,7 +28,10 @@ describe('ws message handling', () => {
 
   test('invalid envelope yields bad_request', () => {
     const ws = makeStubSocket();
-    handleMessage(/** @type {any} */ (ws), Buffer.from(JSON.stringify({ not: 'a request' })));
+    handleMessage(
+      /** @type {any} */ (ws),
+      Buffer.from(JSON.stringify({ not: 'a request' }))
+    );
     const last = ws.sent[ws.sent.length - 1];
     const obj = JSON.parse(last);
     expect(obj.ok).toBe(false);

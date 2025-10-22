@@ -7,7 +7,10 @@ import { attachWsServer } from './ws.js';
 const config = getConfig();
 const app = createApp(config);
 const server = createServer(app);
-const { broadcast } = attachWsServer(server, { path: '/ws', heartbeat_ms: 30000 });
+const { broadcast } = attachWsServer(server, {
+  path: '/ws',
+  heartbeat_ms: 30000
+});
 
 // Watch the active beads DB and broadcast invalidation to clients
 watchDb(config.root_dir, (payload) => {
@@ -15,7 +18,9 @@ watchDb(config.root_dir, (payload) => {
 });
 
 server.listen(config.port, config.host, () => {
-  console.log(`beads-ui server listening on http://${config.host}:${config.port} (${config.env})`);
+  console.log(
+    `beads-ui server listening on http://${config.host}:${config.port} (${config.env})`
+  );
 });
 
 server.on('error', (err) => {

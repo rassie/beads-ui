@@ -6,7 +6,7 @@ import globals from 'globals';
 
 export default defineConfig([
   {
-    ignores: ['node_modules', 'coverage', 'dist', '.beads'],
+    ignores: ['node_modules', 'coverage', 'dist', '.beads']
   },
   js.configs.recommended,
   plugin_jsdoc.configs['flat/recommended'],
@@ -15,9 +15,9 @@ export default defineConfig([
       jsdoc: {
         mode: 'typescript',
         preferredTypes: {
-          object: 'Object',
-        },
-      },
+          object: 'Object'
+        }
+      }
     },
     rules: {
       'jsdoc/require-jsdoc': 'off',
@@ -25,29 +25,29 @@ export default defineConfig([
       'jsdoc/require-returns-description': 'off',
       'jsdoc/require-property-description': 'off',
       'jsdoc/reject-any-type': 'off',
-      'jsdoc/require-returns': 'off',
-    },
+      'jsdoc/require-returns': 'off'
+    }
   },
   {
     files: ['**/*.test.js'],
     languageOptions: {
-      globals: globals.vitest,
-    },
+      globals: globals.vitest
+    }
   },
   {
     files: ['server/**/*.js'],
     ...plugin_n.configs['flat/recommended'],
     languageOptions: {
-      globals: globals.node,
+      globals: globals.node
     },
     rules: {
-      'n/no-unpublished-import': 'off',
-    },
+      'n/no-unpublished-import': 'off'
+    }
   },
   {
     files: ['app/**/*.js'],
     languageOptions: {
-      globals: globals.browser,
-    },
-  },
+      globals: globals.browser
+    }
+  }
 ]);

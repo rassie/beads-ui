@@ -9,7 +9,7 @@ import {
   isRequest,
   makeError,
   makeOk,
-  makeRequest,
+  makeRequest
 } from './protocol.js';
 
 describe('protocol', () => {
@@ -22,7 +22,11 @@ describe('protocol', () => {
   });
 
   test('makeRequest / isRequest / decodeRequest', () => {
-    const req = makeRequest('list-issues', { filters: { status: 'open' } }, 'r-1');
+    const req = makeRequest(
+      'list-issues',
+      { filters: { status: 'open' } },
+      'r-1'
+    );
     expect(isRequest(req)).toBe(true);
     const round = decodeRequest(JSON.parse(JSON.stringify(req)));
     expect(round.id).toBe('r-1');

@@ -24,6 +24,6 @@ export function getConfig() {
     port: port_value,
     env: process.env.NODE_ENV ? String(process.env.NODE_ENV) : 'development',
     app_dir: path.resolve(root_dir, 'app'),
-    root_dir,
+    root_dir
   };
 }

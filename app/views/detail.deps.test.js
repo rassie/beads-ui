@@ -17,13 +17,13 @@ describe('views/detail dependencies', () => {
         id: 'UI-10',
         title: 'X',
         dependencies: [],
-        dependents: [],
+        dependents: []
       })
       // dep-add returns updated issue
       .mockResolvedValueOnce({
         id: 'UI-10',
         dependencies: [{ id: 'UI-2' }],
-        dependents: [],
+        dependents: []
       });
     const view = createDetailView(mount, /** @type {any} */ (send));
     await view.load('UI-10');
@@ -53,7 +53,7 @@ describe('views/detail dependencies', () => {
         id: 'UI-20',
         title: 'Y',
         dependencies: [],
-        dependents: [{ id: 'UI-5' }],
+        dependents: [{ id: 'UI-5' }]
       })
       // dep-remove returns updated issue
       .mockResolvedValueOnce({ id: 'UI-20', dependencies: [], dependents: [] });
@@ -62,7 +62,9 @@ describe('views/detail dependencies', () => {
 
     // Find the remove button next to link UI-5
     const btns = mount.querySelectorAll('button');
-    const rm = Array.from(btns).find((b) => b.getAttribute('aria-label')?.includes('UI-5'));
+    const rm = Array.from(btns).find((b) =>
+      b.getAttribute('aria-label')?.includes('UI-5')
+    );
     expect(rm).toBeTruthy();
     rm?.dispatchEvent(new window.Event('click'));
 
@@ -76,7 +78,7 @@ describe('views/detail dependencies', () => {
     const send = vi.fn().mockResolvedValueOnce({
       id: 'UI-30',
       dependencies: [{ id: 'UI-9' }],
-      dependents: [],
+      dependents: []
     });
     const view = createDetailView(mount, /** @type {any} */ (send));
     await view.load('UI-30');

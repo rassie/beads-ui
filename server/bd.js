@@ -25,7 +25,7 @@ export function runBd(args, options = {}) {
   const spawn_opts = {
     cwd: options.cwd || process.cwd(),
     env: options.env ? options.env : process.env,
-    shell: false,
+    shell: false
   };
 
   // Ensure a consistent DB by injecting --db if missing, following beads precedence.
@@ -74,7 +74,7 @@ export function runBd(args, options = {}) {
       resolve({
         code: Number(code || 0),
         stdout: out_chunks.join(''),
-        stderr: err_chunks.join(''),
+        stderr: err_chunks.join('')
       });
     };
 
