@@ -271,12 +271,23 @@ export async function handleMessage(ws, data) {
       );
       return;
     }
-    const flag =
-      field === 'title'
-        ? '--title'
-        : field === 'description'
-          ? '--description'
-          : '--acceptance';
+    // Description updates are currently not supported by bd
+    if (field === 'description') {
+      ws.send(
+        JSON.stringify(
+          makeError(
+            req,
+            'bd_error',
+            'editing description is not supported by bd'
+          )
+        )
+      );
+      return;
+    }
+    // Map UI fields to bd CLI flags
+    // title       → --title
+    // acceptance  → --acceptance-criteria
+    const flag = field === 'title' ? '--title' : '--acceptance-criteria';
     const res = await runBd(['update', id, flag, value]);
     if (res.code !== 0) {
       ws.send(

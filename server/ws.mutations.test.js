@@ -1,8 +1,14 @@
-import { describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { runBd, runBdJson } from './bd.js';
 import { handleMessage } from './ws.js';
 
 vi.mock('./bd.js', () => ({ runBdJson: vi.fn(), runBd: vi.fn() }));
+
+// Ensure clean mock state for each test
+beforeEach(() => {
+  /** @type {import('vitest').Mock} */ (runBd).mockReset();
+  /** @type {import('vitest').Mock} */ (runBdJson).mockReset();
+});
 
 function makeStubSocket() {
   return {
@@ -123,6 +129,29 @@ describe('ws mutation handlers', () => {
     const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
     expect(obj.ok).toBe(true);
     expect(obj.payload.acceptance).toBe('Done when...');
+    // Verify correct flag mapping for acceptance
+    expect(mRun.mock.calls[0][0]).toEqual([
+      'update',
+      'UI-7',
+      '--acceptance-criteria',
+      'Done when...'
+    ]);
+  });
+
+  test('edit-text description yields bd_error (unsupported)', async () => {
+    const ws = makeStubSocket();
+    const req = {
+      id: 'r4b',
+      type: 'edit-text',
+      payload: { id: 'UI-7', field: 'description', value: 'New desc' }
+    };
+    await handleMessage(
+      /** @type {any} */ (ws),
+      Buffer.from(JSON.stringify(req))
+    );
+    const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
+    expect(obj.ok).toBe(false);
+    expect(obj.error.code).toBe('bd_error');
   });
 
   test('dep-add returns updated issue (view_id)', async () => {

@@ -73,7 +73,7 @@ Message types implemented by the server today:
 - `update-status` payload:
   `{ id: string, status: 'open'|'in_progress'|'closed' }`
 - `edit-text` payload:
-  `{ id: string, field: 'title'|'description', value: string }`
+  `{ id: string, field: 'title'|'description'|'acceptance', value: string }`
 - `update-priority` payload: `{ id: string, priority: 0|1|2|3|4 }`
 - `dep-add` payload: `{ a: string, b: string, view_id?: string }`
 - `dep-remove` payload: `{ a: string, b: string, view_id?: string }`
@@ -147,7 +147,8 @@ Error reply
 - Update status: `bd update <id> --status <open|in_progress|closed>`
 - Update priority: `bd update <id> --priority <0..4>`
 - Edit title: `bd update <id> --title <text>`
-- Edit description: `bd update <id> --description <text>`
+- Edit description: not supported (immutable after create)
+- Edit acceptance: `bd update <id> --acceptance-criteria <text>`
 - Link dependency: `bd dep add <a> <b>` (a depends on b)
 - Unlink dependency: `bd dep remove <a> <b>`
 - Planned (UI not wired yet): Create:
@@ -168,6 +169,7 @@ interface Issue {
   id: string;
   title?: string;
   description?: string;
+  acceptance?: string;
   status?: 'open' | 'in_progress' | 'closed';
   priority?: 0 | 1 | 2 | 3 | 4;
   dependencies?: Array<{
@@ -232,9 +234,9 @@ Notes
 - Cross‑platform DB path resolution nuances
   - Owner: Server
   - Next: Expand tests for Windows/macOS/Linux; document overrides
-- Acceptance text editing (if required)
+- Acceptance text editing
   - Owner: UI + Server
-  - Next: Extend `edit-text` to include `acceptance` field, update UI
+  - Status: Implemented via `edit-text` + `--acceptance-criteria`
 
 ---
 

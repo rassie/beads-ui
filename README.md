@@ -27,11 +27,12 @@ Open http://127.0.0.1:5173 in your browser.
 
 ## How Edits Propagate
 
-- UI actions (edit title/description/acceptance, change status/priority,
-  add/remove dependencies) send WS messages.
+- UI actions (edit title/acceptance, change status/priority, add/remove
+  dependencies) send WS messages.
 - The server validates the payload and runs the corresponding `bd` command.
 - On success, the server returns the updated issue (or an ack for create) and
-  the DB watcher broadcasts `issues-changed` so other views refresh.
+  the DB watcher broadcasts `issues-changed` so other views refresh. Note:
+  Description is currently read-only (no `bd` update flag).
 - On errors, the UI rolls back the optimistic change and shows a small toast
   message.
 

@@ -23,7 +23,8 @@ ReplyEnvelope shape with `ok: true` and a generated `id`.
 - `update-status` payload:
   `{ id: string, status: 'open'|'in_progress'|'closed' }`
 - `edit-text` payload:
-  `{ id: string, field: 'title'|'description', value: string }`
+  `{ id: string, field: 'title'|'description'|'acceptance', value: string }`
+  - Note: `description` edits are rejected by the server (unsupported by `bd`).
 - `update-priority` payload: `{ id: string, priority: 0|1|2|3|4 }`
 - `create-issue` payload:
   `{ title: string, type?: 'bug'|'feature'|'task'|'epic'|'chore', priority?: 0|1|2|3|4, description?: string }`
@@ -43,7 +44,8 @@ ReplyEnvelope shape with `ok: true` and a generated `id`.
 - `list-issues` → `bd list --json [--status <s>] [--priority <n>]`
 - `show-issue` → `bd show <id> --json`
 - `update-status` → `bd update <id> --status <status>`
-- `edit-text` → `bd update <id> --title <t>` or `--description <d>`
+- `edit-text` → `bd update <id> --title <t>` or `--acceptance-criteria <a>`
+  - `description` has no CLI flag; server responds with an error
 - `update-priority` → `bd update <id> --priority <n>`
 - `create-issue` → `bd create "title" -t <type> -p <prio> -d "desc"`
 - `list-ready` → `bd ready --json`
