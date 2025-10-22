@@ -126,7 +126,7 @@ export function isRequest(value) {
   }
   return (
     typeof value.id === 'string' &&
-    isMessageType(value.type) &&
+    typeof value.type === 'string' &&
     (value.payload === undefined || 'payload' in value)
   );
 }
