@@ -1,15 +1,17 @@
+/**
+ * @import { Server } from 'node:http'
+ * @import { RawData, WebSocket } from 'ws'
+ * @import { MessageType } from '../app/protocol.js'
+ */
 import { WebSocketServer } from 'ws';
-import { runBdJson } from './bd.js';
+import { runBd, runBdJson } from './bd.js';
 import { isRequest, makeError, makeOk } from './protocol.js';
-
-/** @typedef {import('ws').WebSocket} WebSocket */
-/** @typedef {import('ws').WebSocketServer} WebSocketServerType */
 
 /**
  * Attach a WebSocket server to an existing HTTP server.
- * @param {import('node:http').Server} http_server
+ * @param {Server} http_server
  * @param {{ path?: string, heartbeat_ms?: number }} [options]
- * @returns {{ wss: WebSocketServerType, broadcast: (type: import('../app/protocol.js').MessageType, payload?: unknown) => void }}
+ * @returns {{ wss: WebSocketServer, broadcast: (type: MessageType, payload?: unknown) => void }}
  */
 export function attachWsServer(http_server, options = {}) {
   const path = options.path || '/ws';
@@ -53,7 +55,7 @@ export function attachWsServer(http_server, options = {}) {
 
   /**
    * Broadcast a server-initiated event to all open clients.
-   * @param {import('../app/protocol.js').MessageType} type
+   * @param {MessageType} type
    * @param {unknown} [payload]
    */
   function broadcast(type, payload) {
@@ -71,7 +73,7 @@ export function attachWsServer(http_server, options = {}) {
 /**
  * Handle an incoming message frame and respond to the same socket.
  * @param {WebSocket} ws
- * @param {import('ws').RawData} data
+ * @param {RawData} data
  */
 export async function handleMessage(ws, data) {
   /** @type {unknown} */
@@ -110,10 +112,7 @@ export async function handleMessage(ws, data) {
 
   // list-issues
   if (req.type === 'list-issues') {
-    const filters =
-      req.payload && typeof req.payload === 'object'
-        ? /** @type {any} */ (req.payload).filters
-        : undefined;
+    const { filters } = /** @type {any} */ (req.payload || {});
     /** @type {string[]} */
     const args = ['list', '--json'];
     if (filters && typeof filters === 'object') {
@@ -136,7 +135,7 @@ export async function handleMessage(ws, data) {
 
   // show-issue
   if (req.type === 'show-issue') {
-    const id = /** @type {any} */ (req.payload)?.id;
+    const { id } = /** @type {any} */ (req.payload);
     if (typeof id !== 'string' || id.length === 0) {
       ws.send(
         JSON.stringify(makeError(req, 'bad_request', 'payload.id must be a non-empty string'))
@@ -150,6 +149,107 @@ export async function handleMessage(ws, data) {
       return;
     }
     ws.send(JSON.stringify(makeOk(req, res.stdoutJson)));
+    return;
+  }
+
+  // update-status
+  if (req.type === 'update-status') {
+    const { id, status } = /** @type {any} */ (req.payload);
+    const allowed = new Set(['open', 'in_progress', 'closed']);
+    if (
+      typeof id !== 'string' ||
+      id.length === 0 ||
+      typeof status !== 'string' ||
+      !allowed.has(status)
+    ) {
+      ws.send(
+        JSON.stringify(
+          makeError(
+            req,
+            'bad_request',
+            "payload requires { id: string, status: 'open'|'in_progress'|'closed' }"
+          )
+        )
+      );
+      return;
+    }
+    const res = await runBd(['update', id, '--status', status]);
+    if (res.code !== 0) {
+      ws.send(JSON.stringify(makeError(req, 'bd_error', res.stderr || 'bd failed')));
+      return;
+    }
+    const shown = await runBdJson(['show', id, '--json']);
+    if (shown.code !== 0) {
+      ws.send(JSON.stringify(makeError(req, 'bd_error', shown.stderr || 'bd failed')));
+      return;
+    }
+    ws.send(JSON.stringify(makeOk(req, shown.stdoutJson)));
+    return;
+  }
+
+  // update-priority
+  if (req.type === 'update-priority') {
+    const { id, priority } = /** @type {any} */ (req.payload);
+    if (
+      typeof id !== 'string' ||
+      id.length === 0 ||
+      typeof priority !== 'number' ||
+      priority < 0 ||
+      priority > 4
+    ) {
+      ws.send(
+        JSON.stringify(
+          makeError(req, 'bad_request', 'payload requires { id: string, priority: 0..4 }')
+        )
+      );
+      return;
+    }
+    const res = await runBd(['update', id, '--priority', String(priority)]);
+    if (res.code !== 0) {
+      ws.send(JSON.stringify(makeError(req, 'bd_error', res.stderr || 'bd failed')));
+      return;
+    }
+    const shown = await runBdJson(['show', id, '--json']);
+    if (shown.code !== 0) {
+      ws.send(JSON.stringify(makeError(req, 'bd_error', shown.stderr || 'bd failed')));
+      return;
+    }
+    ws.send(JSON.stringify(makeOk(req, shown.stdoutJson)));
+    return;
+  }
+
+  // edit-text
+  if (req.type === 'edit-text') {
+    const { id, field, value } = /** @type {any} */ (req.payload);
+    if (
+      typeof id !== 'string' ||
+      id.length === 0 ||
+      (field !== 'title' && field !== 'description') ||
+      typeof value !== 'string'
+    ) {
+      ws.send(
+        JSON.stringify(
+          makeError(
+            req,
+            'bad_request',
+            "payload requires { id: string, field: 'title'|'description', value: string }"
+          )
+        )
+      );
+      return;
+    }
+    const flag = field === 'title' ? '--title' : '--description';
+    const res = await runBd(['update', id, flag, value]);
+    if (res.code !== 0) {
+      ws.send(JSON.stringify(makeError(req, 'bd_error', res.stderr || 'bd failed')));
+      return;
+    }
+    const shown = await runBdJson(['show', id, '--json']);
+    if (shown.code !== 0) {
+      ws.send(JSON.stringify(makeError(req, 'bd_error', shown.stderr || 'bd failed')));
+      return;
+    }
+    ws.send(JSON.stringify(makeOk(req, shown.stdoutJson)));
     return;
   }
 
