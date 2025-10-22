@@ -145,10 +145,9 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
         filters: { status: /** @type {any} */ (status_filter) }
       });
     }
-    if (status_filter === 'ready') {
-      void load();
-    }
-    render();
+    // Always reload on status changes to ensure cache matches scope
+    // (e.g., switching from 'ready' back to 'all').
+    void load();
   });
   search_input.addEventListener('input', () => {
     search_text = search_input.value;
@@ -245,12 +244,9 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
         if (next_status !== status_filter) {
           status_filter = next_status;
           status_select.value = status_filter;
-          // Switching to ready needs backend reload
-          if (status_filter === 'ready') {
-            void load();
-            return;
-          }
-          needs_render = true;
+          // Reload on any status scope change to keep cache correct
+          void load();
+          return;
         }
         if (next_search !== search_text) {
           search_text = next_search;

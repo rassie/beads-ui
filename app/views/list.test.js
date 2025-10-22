@@ -128,6 +128,57 @@ describe('views/list', () => {
     expect(mount.querySelectorAll('li').length).toBe(1);
   });
 
+  test('switching ready → all reloads full list', async () => {
+    document.body.innerHTML = '<aside id="mount" class="panel"></aside>';
+    const mount = /** @type {HTMLElement} */ (document.getElementById('mount'));
+
+    const allIssues = [
+      { id: 'UI-1', title: 'One', status: 'open', priority: 1 },
+      { id: 'UI-2', title: 'Two', status: 'closed', priority: 2 }
+    ];
+    const readyIssues = [
+      { id: 'UI-2', title: 'Two', status: 'closed', priority: 2 }
+    ];
+
+    /** @type {{ calls: any[] }} */
+    const spy = { calls: [] };
+    /** @type {(type: string, payload?: unknown) => Promise<any[]>} */
+    const send = async (type, payload) => {
+      spy.calls.push({ type, payload });
+      const p = /** @type {any} */ (payload);
+      if (p && p.filters && p.filters.ready === true) {
+        return readyIssues;
+      }
+      return allIssues;
+    };
+
+    const view = createListView(mount, send);
+    await view.load();
+    expect(mount.querySelectorAll('li').length).toBe(2);
+
+    const select = /** @type {HTMLSelectElement} */ (
+      mount.querySelector('select')
+    );
+
+    // Switch to ready (backend should return the smaller set)
+    select.value = 'ready';
+    select.dispatchEvent(new Event('change'));
+    await Promise.resolve();
+    expect(mount.querySelectorAll('li').length).toBe(1);
+
+    // Switch back to all; view should reload full list from backend
+    select.value = 'all';
+    select.dispatchEvent(new Event('change'));
+    await Promise.resolve();
+    expect(mount.querySelectorAll('li').length).toBe(2);
+
+    // Verify that a request without ready=true was made after switching to all
+    const lastCall = spy.calls[spy.calls.length - 1];
+    expect(lastCall.type).toBe('list-issues');
+    const payload = /** @type {any} */ (lastCall.payload);
+    expect(payload && payload.filters && payload.filters.ready).not.toBe(true);
+  });
+
   test('applies persisted filters from store on initial load', async () => {
     document.body.innerHTML = '<aside id="mount" class="panel"></aside>';
     const mount = /** @type {HTMLElement} */ (document.getElementById('mount'));
