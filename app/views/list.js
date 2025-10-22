@@ -45,6 +45,18 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
   search_input.type = 'search';
   search_input.placeholder = 'Search…';
 
+  // Initialize filters from store on first render so reload applies persisted state
+  if (store) {
+    /** @type {any} */
+    const s = store.getState();
+    if (s && s.filters && typeof s.filters === 'object') {
+      status_filter = s.filters.status || 'all';
+      search_text = s.filters.search || '';
+    }
+  }
+  status_select.value = status_filter;
+  search_input.value = search_text;
+
   /** @type {HTMLElement} */
   const header = document.createElement('div');
   header.className = 'panel__header';

@@ -127,4 +127,60 @@ describe('views/list', () => {
     expect(has_ready).toBe(true);
     expect(mount.querySelectorAll('li').length).toBe(1);
   });
+
+  test('applies persisted filters from store on initial load', async () => {
+    document.body.innerHTML = '<aside id="mount" class="panel"></aside>';
+    const mount = /** @type {HTMLElement} */ (document.getElementById('mount'));
+
+    const issues = [
+      { id: 'UI-1', title: 'Alpha', status: 'open', priority: 1 },
+      { id: 'UI-2', title: 'Gamma', status: 'open', priority: 2 },
+      { id: 'UI-3', title: 'Gamma closed', status: 'closed', priority: 3 }
+    ];
+
+    /** @type {{ state: any, subs: ((s:any)=>void)[], getState: () => any, setState: (patch:any)=>void, subscribe: (fn:(s:any)=>void)=>()=>void }} */
+    const store = {
+      state: { selectedId: null, filters: { status: 'open', search: 'ga' } },
+      subs: [],
+      getState() {
+        return this.state;
+      },
+      setState(patch) {
+        this.state = {
+          ...this.state,
+          ...(patch || {}),
+          filters: { ...this.state.filters, ...(patch.filters || {}) }
+        };
+        for (const fn of this.subs) {
+          fn(this.state);
+        }
+      },
+      subscribe(fn) {
+        this.subs.push(fn);
+        return () => {
+          this.subs = this.subs.filter((f) => f !== fn);
+        };
+      }
+    };
+
+    const view = createListView(mount, stubSend(issues), undefined, store);
+    await view.load();
+
+    // Expect only UI-2 ("Gamma" open) to be visible
+    const items = Array.from(mount.querySelectorAll('li')).map(
+      (el) => el.textContent || ''
+    );
+    expect(items.length).toBe(1);
+    expect(items[0].toLowerCase()).toContain('ui-2');
+
+    // Controls reflect persisted filters
+    const select = /** @type {HTMLSelectElement} */ (
+      mount.querySelector('select')
+    );
+    const input = /** @type {HTMLInputElement} */ (
+      mount.querySelector('input[type="search"]')
+    );
+    expect(select.value).toBe('open');
+    expect(input.value).toBe('ga');
+  });
 });
