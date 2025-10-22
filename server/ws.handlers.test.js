@@ -35,6 +35,29 @@ describe('ws handlers: list/show', () => {
     expect(Array.isArray(obj.payload)).toBe(true);
   });
 
+  test('list-issues with filters.ready uses bd "ready"', async () => {
+    const mocked = /** @type {import('vitest').Mock} */ (runBdJson);
+    mocked.mockResolvedValueOnce({ code: 0, stdoutJson: [{ id: 'UI-2' }] });
+    const ws = makeStubSocket();
+    const req = {
+      id: 'r1a',
+      type: 'list-issues',
+      payload: { filters: { ready: true } }
+    };
+    await handleMessage(
+      /** @type {any} */ (ws),
+      Buffer.from(JSON.stringify(req))
+    );
+    // Ensure we called the ready command
+    const call = mocked.mock.calls[mocked.mock.calls.length - 1];
+    expect(Array.isArray(call[0])).toBe(true);
+    expect(call[0][0]).toBe('ready');
+
+    const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
+    expect(obj.ok).toBe(true);
+    expect(Array.isArray(obj.payload)).toBe(true);
+  });
+
   test('show-issue returns error on missing id', async () => {
     const ws = makeStubSocket();
     const req = { id: 'r2', type: 'show-issue', payload: {} };

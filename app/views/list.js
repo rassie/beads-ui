@@ -29,6 +29,7 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
   const status_select = document.createElement('select');
   status_select.innerHTML = [
     ['all', 'All'],
+    ['ready', 'Ready'],
     ['open', 'Open'],
     ['in_progress', 'In progress'],
     ['closed', 'Closed']
@@ -67,7 +68,7 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
   function render() {
     /** @type {Issue[]} */
     let filtered = issues_cache;
-    if (status_filter !== 'all') {
+    if (status_filter !== 'all' && status_filter !== 'ready') {
       filtered = filtered.filter((it) => it.status === status_filter);
     }
     if (search_text) {
@@ -124,6 +125,8 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
       store.setState({
         filters: { status: /** @type {any} */ (status_filter) }
       });
+    }
+    if (status_filter === 'ready') {
       void load();
     }
     render();
@@ -135,6 +138,7 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
     }
     render();
   });
+  // no separate ready checkbox when using select option
 
   /**
    * Load issues from backend and re-render.
@@ -142,8 +146,11 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
   async function load() {
     /** @type {any} */
     const filters = {};
-    if (status_filter !== 'all') {
+    if (status_filter !== 'all' && status_filter !== 'ready') {
       filters.status = status_filter;
+    }
+    if (status_filter === 'ready') {
+      filters.ready = true;
     }
     /** @type {unknown} */
     let result;
@@ -211,6 +218,29 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
       if (s.selectedId !== selected_id) {
         selected_id = s.selectedId;
         render();
+      }
+      if (s.filters && typeof s.filters === 'object') {
+        const next_status = s.filters.status;
+        const next_search = s.filters.search || '';
+        let needs_render = false;
+        if (next_status !== status_filter) {
+          status_filter = next_status;
+          status_select.value = status_filter;
+          // Switching to ready needs backend reload
+          if (status_filter === 'ready') {
+            void load();
+            return;
+          }
+          needs_render = true;
+        }
+        if (next_search !== search_text) {
+          search_text = next_search;
+          search_input.value = search_text;
+          needs_render = true;
+        }
+        if (needs_render) {
+          render();
+        }
       }
     });
   }

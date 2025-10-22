@@ -49,6 +49,7 @@ describe('views/list', () => {
     // Filter by status
     select.value = 'open';
     select.dispatchEvent(new Event('change'));
+    await Promise.resolve();
     expect(mount.querySelectorAll('li').length).toBe(1);
 
     // Search filters further
@@ -61,5 +62,53 @@ describe('views/list', () => {
     );
     expect(visible.length).toBe(1);
     expect(visible[0].toLowerCase()).toContain('gamma');
+  });
+
+  test('ready filter via select triggers backend reload', async () => {
+    document.body.innerHTML = '<aside id="mount" class="panel"></aside>';
+    const mount = /** @type {HTMLElement} */ (document.getElementById('mount'));
+
+    const allIssues = [
+      { id: 'UI-1', title: 'One', status: 'open', priority: 1 },
+      { id: 'UI-2', title: 'Two', status: 'open', priority: 2 }
+    ];
+    const readyIssues = [
+      { id: 'UI-2', title: 'Two', status: 'open', priority: 2 }
+    ];
+
+    /** @type {{ calls: any[] }} */
+    const spy = { calls: [] };
+    /** @type {(type: string, payload?: unknown) => Promise<any[]>} */
+    const send = async (type, payload) => {
+      spy.calls.push({ type, payload });
+      const p = /** @type {any} */ (payload);
+      if (p && p.filters && p.filters.ready === true) {
+        return readyIssues;
+      }
+      return allIssues;
+    };
+
+    const view = createListView(mount, send);
+    await view.load();
+    expect(mount.querySelectorAll('li').length).toBe(2);
+
+    const select = /** @type {HTMLSelectElement} */ (
+      mount.querySelector('select')
+    );
+    select.value = 'ready';
+    select.dispatchEvent(new Event('change'));
+    // Await a microtask to allow load to complete in jsdom
+    await Promise.resolve();
+
+    // A call should include filters.ready = true
+    const has_ready = spy.calls.some(
+      (c) =>
+        c.type === 'list-issues' &&
+        c.payload &&
+        c.payload.filters &&
+        c.payload.filters.ready === true
+    );
+    expect(has_ready).toBe(true);
+    expect(mount.querySelectorAll('li').length).toBe(1);
   });
 });

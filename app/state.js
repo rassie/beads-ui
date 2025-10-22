@@ -3,7 +3,7 @@
  */
 
 /**
- * @typedef {'all'|'open'|'in_progress'|'closed'} StatusFilter
+ * @typedef {'all'|'open'|'in_progress'|'closed'|'ready'} StatusFilter
  */
 
 /**

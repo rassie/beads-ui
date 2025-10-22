@@ -28,7 +28,28 @@ export function bootstrap(root_element) {
   const detail_mount = document.getElementById('detail-root');
   if (list_mount) {
     const client = createWsClient();
-    const store = createStore({ filters: { status: 'all', search: '' } });
+    // Load persisted filters (status/search) from localStorage
+    /** @type {{ status: 'all'|'open'|'in_progress'|'closed'|'ready', search: string }} */
+    let persistedFilters = { status: 'all', search: '' };
+    try {
+      const raw = window.localStorage.getItem('beads-ui.filters');
+      if (raw) {
+        const obj = JSON.parse(raw);
+        if (obj && typeof obj === 'object') {
+          persistedFilters = {
+            status: ['all', 'open', 'in_progress', 'closed', 'ready'].includes(
+              obj.status
+            )
+              ? obj.status
+              : 'all',
+            search: typeof obj.search === 'string' ? obj.search : ''
+          };
+        }
+      }
+    } catch {
+      // ignore parse errors
+    }
+    const store = createStore({ filters: persistedFilters });
     const router = createHashRouter(store);
     router.start();
     /**
@@ -53,6 +74,18 @@ export function bootstrap(root_element) {
       },
       store
     );
+    // Persist filter changes to localStorage
+    store.subscribe((s) => {
+      try {
+        const data = {
+          status: s.filters.status,
+          search: s.filters.search
+        };
+        window.localStorage.setItem('beads-ui.filters', JSON.stringify(data));
+      } catch {
+        // ignore
+      }
+    });
     void view.load();
     if (detail_mount) {
       const detail = createDetailView(detail_mount, transport, (hash) => {

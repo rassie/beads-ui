@@ -511,7 +511,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
       /** @type {HTMLInputElement} */
       const input = document.createElement('input');
       input.type = 'text';
-      input.placeholder = 'Issue ID (e.g., UI-12)';
+      input.placeholder = 'Issue ID';
       input.setAttribute(
         'data-testid',
         mode === 'dependency' ? 'add-dependency' : 'add-dependent'

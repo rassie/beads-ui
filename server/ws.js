@@ -118,6 +118,18 @@ export async function handleMessage(ws, data) {
   // list-issues
   if (req.type === 'list-issues') {
     const { filters } = /** @type {any} */ (req.payload || {});
+    // When "ready" is requested, use the dedicated bd subcommand
+    if (filters && typeof filters === 'object' && filters.ready === true) {
+      const res = await runBdJson(['ready', '--json']);
+      if (res.code !== 0) {
+        const err = makeError(req, 'bd_error', res.stderr || 'bd failed');
+        ws.send(JSON.stringify(err));
+        return;
+      }
+      ws.send(JSON.stringify(makeOk(req, res.stdoutJson)));
+      return;
+    }
+
     /** @type {string[]} */
     const args = ['list', '--json'];
     if (filters && typeof filters === 'object') {
