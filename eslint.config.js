@@ -28,6 +28,12 @@ export default defineConfig([
     },
   },
   {
+    files: ['**/*.test.js'],
+    languageOptions: {
+      globals: globals.vitest,
+    },
+  },
+  {
     files: ['server/**/*.js'],
     ...plugin_n.configs['flat/recommended'],
     languageOptions: {

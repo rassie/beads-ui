@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { sum } from '../src/utils/sum.js';
+import { sum } from './sum.js';
 
 describe('sum', () => {
   test('returns sum of numbers', () => {

@@ -60,8 +60,7 @@ If no issue is specified, run `bd ready` and claim an unblocked issue.
 - File and directory names are `kebab-case`.
 - Use `.js` files with JSDoc type annotations (TypeScript mode).
 - Use `.ts` files only for interface definitions.
-- If a type isn't imported in code, use a JSDoc block at the top of the file and
-  import with `@import { X } from './file.js`. Do not use inline imports.
+- Type only imports: `@import { X, Y, Z } from './file.js` in top-of-file JSDoc.
 - Add JSDoc to all functions and methods with `@param` (and `@returns` for non
   trivial return types).
 - Annotate local variables with `@type` blocks if their type is not obvious from
@@ -80,7 +79,7 @@ If no issue is specified, run `bd ready` and claim an unblocked issue.
 
 ## Pre‑Handoff Validation
 
+- Run type checks: `npm run typecheck`
 - Run tests: `npm test`
-- Run type checks: `npx tsc`
-- Run lint on touched `*.js` files: `npx eslint --fix <files>`
-- Run prettier on touched `*.{js,md}` files: `npx prettier --write <files>`
+- Run eslint: `npm run lint`
+- Run prettier: `npm run format`
