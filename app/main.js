@@ -97,7 +97,7 @@ export function bootstrap(root_element) {
 
       // React to selectedId changes
       store.subscribe((s) => {
-        const id = s.selectedId;
+        const id = s.selected_id;
         if (id) {
           void detail.load(id);
         } else {
@@ -105,10 +105,16 @@ export function bootstrap(root_element) {
         }
       });
 
+      // Initial deep-link: if router set a selectedId before subscription, load it now
+      const initialId = store.getState().selected_id;
+      if (initialId) {
+        void detail.load(initialId);
+      }
+
       // Refresh views on push updates
       client.on('issues-changed', () => {
         void view.load();
-        const id = store.getState().selectedId;
+        const id = store.getState().selected_id;
         if (id) {
           void detail.load(id);
         }

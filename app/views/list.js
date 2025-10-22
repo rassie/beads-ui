@@ -23,7 +23,7 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
   /** @type {Issue[]} */
   let issues_cache = [];
   /** @type {string | null} */
-  let selected_id = store ? store.getState().selectedId : null;
+  let selected_id = store ? store.getState().selected_id : null;
   /** @type {null | (() => void)} */
   let unsubscribe = null;
 
@@ -207,7 +207,7 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
       const next = items[Math.min(idx + 1, items.length - 1)];
       const nextId = next?.dataset.issueId || null;
       if (store && nextId) {
-        store.setState({ selectedId: nextId });
+        store.setState({ selected_id: nextId });
       }
       selected_id = nextId;
       render();
@@ -216,7 +216,7 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
       const prev = items[Math.max(idx - 1, 0)];
       const prevId = prev?.dataset.issueId || null;
       if (store && prevId) {
-        store.setState({ selectedId: prevId });
+        store.setState({ selected_id: prevId });
       }
       selected_id = prevId;
       render();
@@ -234,8 +234,8 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
   // Keep selection in sync with store
   if (store) {
     unsubscribe = store.subscribe((s) => {
-      if (s.selectedId !== selected_id) {
-        selected_id = s.selectedId;
+      if (s.selected_id !== selected_id) {
+        selected_id = s.selected_id;
         render();
       }
       if (s.filters && typeof s.filters === 'object') {

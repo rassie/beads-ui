@@ -140,7 +140,7 @@ describe('views/list', () => {
 
     /** @type {{ state: any, subs: ((s:any)=>void)[], getState: () => any, setState: (patch:any)=>void, subscribe: (fn:(s:any)=>void)=>()=>void }} */
     const store = {
-      state: { selectedId: null, filters: { status: 'open', search: 'ga' } },
+      state: { selected_id: null, filters: { status: 'open', search: 'ga' } },
       subs: [],
       getState() {
         return this.state;

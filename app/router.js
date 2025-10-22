@@ -21,7 +21,7 @@ export function createHashRouter(store) {
   /** @type {(ev?: HashChangeEvent) => any} */
   const onHashChange = () => {
     const id = parseHash(window.location.hash || '');
-    store.setState({ selectedId: id });
+    store.setState({ selected_id: id });
   };
 
   return {
@@ -38,7 +38,7 @@ export function createHashRouter(store) {
         window.location.hash = next;
       } else {
         // Force state update even if hash is the same
-        store.setState({ selectedId: id });
+        store.setState({ selected_id: id });
       }
     }
   };

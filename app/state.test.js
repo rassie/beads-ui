@@ -7,7 +7,7 @@ describe('state store', () => {
     const seen = [];
     const off = store.subscribe((s) => seen.push(s));
 
-    store.setState({ selectedId: 'UI-1' });
+    store.setState({ selected_id: 'UI-1' });
     store.setState({ filters: { status: 'open' } });
     // no-op (unchanged)
     store.setState({ filters: { status: 'open' } });
@@ -15,7 +15,7 @@ describe('state store', () => {
 
     expect(seen.length).toBe(2);
     const state = store.getState();
-    expect(state.selectedId).toBe('UI-1');
+    expect(state.selected_id).toBe('UI-1');
     expect(state.filters.status).toBe('open');
   });
 });

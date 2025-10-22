@@ -11,18 +11,18 @@
  */
 
 /**
- * @typedef {{ selectedId: string | null, filters: Filters }} AppState
+ * @typedef {{ selected_id: string | null, filters: Filters }} AppState
  */
 
 /**
  * Create a simple store for application state.
  * @param {Partial<AppState>} [initial]
- * @returns {{ getState: () => AppState, setState: (patch: { selectedId?: string | null, filters?: Partial<Filters> }) => void, subscribe: (fn: (s: AppState) => void) => () => void }}
+ * @returns {{ getState: () => AppState, setState: (patch: { selected_id?: string | null, filters?: Partial<Filters> }) => void, subscribe: (fn: (s: AppState) => void) => () => void }}
  */
 export function createStore(initial = {}) {
   /** @type {AppState} */
   let state = {
-    selectedId: initial.selectedId ?? null,
+    selected_id: initial.selected_id ?? null,
     filters: {
       status: initial.filters?.status ?? 'all',
       search: initial.filters?.search ?? ''
@@ -48,7 +48,7 @@ export function createStore(initial = {}) {
     },
     /**
      * Update state. Nested filters can be partial.
-     * @param {{ selectedId?: string | null, filters?: Partial<Filters> }} patch
+     * @param {{ selected_id?: string | null, filters?: Partial<Filters> }} patch
      */
     setState(patch) {
       /** @type {AppState} */
@@ -59,7 +59,7 @@ export function createStore(initial = {}) {
       };
       // Avoid emitting if nothing changed (shallow compare)
       if (
-        next.selectedId === state.selectedId &&
+        next.selected_id === state.selected_id &&
         next.filters.status === state.filters.status &&
         next.filters.search === state.filters.search
       ) {

@@ -17,7 +17,7 @@ describe('router', () => {
     window.location.hash = '#/issue/UI-10';
     // Trigger handler synchronously
     window.dispatchEvent(new HashChangeEvent('hashchange'));
-    expect(store.getState().selectedId).toBe('UI-10');
+    expect(store.getState().selected_id).toBe('UI-10');
 
     router.gotoIssue('UI-11');
     expect(window.location.hash).toBe('#/issue/UI-11');
