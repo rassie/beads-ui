@@ -29,11 +29,11 @@ describe('detail deps UI (UI-47)', () => {
 
     const text = mount.textContent || '';
     expect(text).toContain('UI-1');
-    expect(text).toContain('feature');
     expect(text).toContain('Alpha');
     expect(text).toContain('UI-3');
-    expect(text).toContain('task');
     expect(text).toContain('Gamma');
+    const badges = mount.querySelectorAll('ul .type-badge');
+    expect(badges.length).toBeGreaterThanOrEqual(2);
   });
 
   test('clicking a dependency row triggers navigation', async () => {

@@ -83,6 +83,30 @@ describe('views/detail', () => {
     expect(navigations[navigations.length - 1]).toBe('#/issue/UI-25');
   });
 
+  test('renders type badge next to title', async () => {
+    document.body.innerHTML =
+      '<section class="panel"><div id="mount"></div></section>';
+    const mount = /** @type {HTMLElement} */ (document.getElementById('mount'));
+    /** @type {any} */
+    const issue = {
+      id: 'UI-50',
+      title: 'With type',
+      issue_type: 'feature',
+      dependencies: [],
+      dependents: []
+    };
+    const view = createDetailView(mount, async (type) => {
+      if (type === 'show-issue') {
+        return issue;
+      }
+      throw new Error('Unexpected');
+    });
+    await view.load('UI-50');
+    const badge = mount.querySelector('.type-badge');
+    expect(badge).toBeTruthy();
+    expect(badge && badge.textContent).toBe('feature');
+  });
+
   test('inline editing toggles for title and description', async () => {
     document.body.innerHTML =
       '<section class="panel"><div id="mount"></div></section>';

@@ -1,8 +1,10 @@
 /* global NodeListOf */
+import { createTypeBadge } from '../utils/type-badge.js';
+
 // List view implementation; requires a transport send function.
 
 /**
- * @typedef {{ id: string, title: string, status: string, priority: number }} Issue
+ * @typedef {{ id: string, title: string, status: string, priority: number, issue_type?: string }} Issue
  */
 
 /**
@@ -106,6 +108,10 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
       const title_span = document.createElement('span');
       title_span.textContent = it.title || '(no title)';
 
+      // Type badge next to title
+      const badge = createTypeBadge(/** @type {any} */ (it).issue_type);
+      badge.style.marginRight = '6px';
+
       /** @type {HTMLSpanElement} */
       const meta_span = document.createElement('span');
       meta_span.className = 'muted';
@@ -113,6 +119,7 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
       meta_span.textContent = `${it.status} · p${it.priority}`;
 
       li.appendChild(id_span);
+      li.appendChild(badge);
       li.appendChild(title_span);
       li.appendChild(meta_span);
       list.appendChild(li);

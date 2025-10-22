@@ -4,6 +4,21 @@
   --muted: #666;
   --border: #e5e7eb;
   --panel-bg: #fafafa;
+
+  /* Issue type badge palette (light) */
+  --badge-radius: 10px;
+  --badge-bg-neutral: #e5e7eb;
+  --badge-fg-neutral: #374151;
+  --badge-bg-bug: #fee2e2;
+  --badge-fg-bug: #991b1b;
+  --badge-bg-feature: #d1fae5;
+  --badge-fg-feature: #065f46;
+  --badge-bg-task: #dbeafe;
+  --badge-fg-task: #1e3a8a;
+  --badge-bg-epic: #ede9fe;
+  --badge-fg-epic: #5b21b6;
+  --badge-bg-chore: #fef9c3;
+  --badge-fg-chore: #78350f;
 }
 
 html,
@@ -123,4 +138,71 @@ body {
   padding: 10px;
   overflow: auto;
   border-radius: 6px;
+}
+
+/* Type badge */
+.type-badge {
+  display: inline-block;
+  padding: 0 6px;
+  line-height: 18px;
+  height: 18px;
+  border-radius: var(--badge-radius);
+  font-size: 11px;
+  font-weight: 600;
+  vertical-align: middle;
+  user-select: none;
+}
+.type-badge[title] {
+  cursor: default;
+}
+.type-badge + .type-badge {
+  margin-left: 4px;
+}
+.type-badge--neutral {
+  background: var(--badge-bg-neutral);
+  color: var(--badge-fg-neutral);
+}
+.type-badge--bug {
+  background: var(--badge-bg-bug);
+  color: var(--badge-fg-bug);
+}
+.type-badge--feature {
+  background: var(--badge-bg-feature);
+  color: var(--badge-fg-feature);
+}
+.type-badge--task {
+  background: var(--badge-bg-task);
+  color: var(--badge-fg-task);
+}
+.type-badge--epic {
+  background: var(--badge-bg-epic);
+  color: var(--badge-fg-epic);
+}
+.type-badge--chore {
+  background: var(--badge-bg-chore);
+  color: var(--badge-fg-chore);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fg: #e5e7eb;
+    --bg: #0b1021;
+    --muted: #9ca3af;
+    --panel-bg: #0f172a;
+    --border: #1f2937;
+
+    /* Dark variants tuned for contrast */
+    --badge-bg-neutral: #374151;
+    --badge-fg-neutral: #f3f4f6;
+    --badge-bg-bug: #7f1d1d;
+    --badge-fg-bug: #fee2e2;
+    --badge-bg-feature: #064e3b;
+    --badge-fg-feature: #d1fae5;
+    --badge-bg-task: #1e3a8a;
+    --badge-fg-task: #dbeafe;
+    --badge-bg-epic: #4c1d95;
+    --badge-fg-epic: #ede9fe;
+    --badge-bg-chore: #78350f;
+    --badge-fg-chore: #fef9c3;
+  }
 }

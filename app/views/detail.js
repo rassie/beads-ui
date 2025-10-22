@@ -1,5 +1,6 @@
 // Issue Detail view implementation.
 import { renderMarkdown } from '../utils/markdown.js';
+import { createTypeBadge } from '../utils/type-badge.js';
 
 /**
  * @typedef {Object} Dependency
@@ -201,7 +202,11 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
           render(issue);
         }
       });
+      // Type badge next to title
+      const badge = createTypeBadge(/** @type {any} */ (issue).issue_type);
+      badge.style.marginLeft = '8px';
       h.appendChild(title_span);
+      h.appendChild(badge);
     }
 
     // Meta row
@@ -522,13 +527,9 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
           id_link.addEventListener('click', (ev) => ev.stopPropagation());
           li.appendChild(id_link);
 
-          // Type label
-          /** @type {HTMLSpanElement} */
-          const type_span = document.createElement('span');
-          type_span.className = 'muted';
-          type_span.style.fontSize = '12px';
-          type_span.textContent = dep.issue_type || '';
-          li.appendChild(type_span);
+          // Type badge
+          const type_badge = createTypeBadge(dep.issue_type || '');
+          li.appendChild(type_badge);
 
           // Title span (ellipsis)
           /** @type {HTMLSpanElement} */

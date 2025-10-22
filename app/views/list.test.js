@@ -14,8 +14,20 @@ describe('views/list', () => {
     document.body.innerHTML = '<aside id="mount" class="panel"></aside>';
     const mount = /** @type {HTMLElement} */ (document.getElementById('mount'));
     const issues = [
-      { id: 'UI-1', title: 'One', status: 'open', priority: 1 },
-      { id: 'UI-2', title: 'Two', status: 'closed', priority: 2 }
+      {
+        id: 'UI-1',
+        title: 'One',
+        status: 'open',
+        priority: 1,
+        issue_type: 'task'
+      },
+      {
+        id: 'UI-2',
+        title: 'Two',
+        status: 'closed',
+        priority: 2,
+        issue_type: 'bug'
+      }
     ];
     const view = createListView(mount, stubSend(issues), (hash) => {
       window.location.hash = hash;
@@ -23,6 +35,10 @@ describe('views/list', () => {
     await view.load();
     const items = mount.querySelectorAll('li');
     expect(items.length).toBe(2);
+
+    // badge present
+    const badges = mount.querySelectorAll('.type-badge');
+    expect(badges.length).toBeGreaterThanOrEqual(2);
 
     const first = /** @type {HTMLElement} */ (items[0]);
     first.click();
