@@ -17,7 +17,7 @@ export function getConfig() {
   }
 
   /** @type {string} */
-  const host_value = process.env.HOST ? String(process.env.HOST) : '127.0.0.1';
+  const host_value = '127.0.0.1';
 
   return {
     host: host_value,

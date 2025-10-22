@@ -224,7 +224,7 @@ export async function handleMessage(ws, data) {
     if (
       typeof id !== 'string' ||
       id.length === 0 ||
-      (field !== 'title' && field !== 'description') ||
+      (field !== 'title' && field !== 'description' && field !== 'acceptance') ||
       typeof value !== 'string'
     ) {
       ws.send(
@@ -232,13 +232,14 @@ export async function handleMessage(ws, data) {
           makeError(
             req,
             'bad_request',
-            "payload requires { id: string, field: 'title'|'description', value: string }"
+            "payload requires { id: string, field: 'title'|'description'|'acceptance', value: string }"
           )
         )
       );
       return;
     }
-    const flag = field === 'title' ? '--title' : '--description';
+    const flag =
+      field === 'title' ? '--title' : field === 'description' ? '--description' : '--acceptance';
     const res = await runBd(['update', id, flag, value]);
     if (res.code !== 0) {
       ws.send(JSON.stringify(makeError(req, 'bd_error', res.stderr || 'bd failed')));
@@ -253,9 +254,46 @@ export async function handleMessage(ws, data) {
     return;
   }
 
-  // dep-add: payload { a: string, b: string, viewId?: string }
+  // create-issue
+  if (req.type === /** @type {any} */ ('create-issue')) {
+    const { title, type, priority, description } = /** @type {any} */ (req.payload || {});
+    if (typeof title !== 'string' || title.length === 0) {
+      ws.send(
+        JSON.stringify(makeError(req, 'bad_request', 'payload requires { title: string, ... }'))
+      );
+      return;
+    }
+    /** @type {string[]} */
+    const args = ['create', title];
+    if (
+      typeof type === 'string' &&
+      (type === 'bug' ||
+        type === 'feature' ||
+        type === 'task' ||
+        type === 'epic' ||
+        type === 'chore')
+    ) {
+      args.push('-t', type);
+    }
+    if (typeof priority === 'number' && priority >= 0 && priority <= 4) {
+      args.push('-p', String(priority));
+    }
+    if (typeof description === 'string' && description.length > 0) {
+      args.push('-d', description);
+    }
+    const res = await runBd(args);
+    if (res.code !== 0) {
+      ws.send(JSON.stringify(makeError(req, 'bd_error', res.stderr || 'bd failed')));
+      return;
+    }
+    // Rely on watcher to refresh clients; reply with a minimal ack
+    ws.send(JSON.stringify(makeOk(req, { created: true })));
+    return;
+  }
+
+  // dep-add: payload { a: string, b: string, view_id?: string }
   if (req.type === /** @type {any} */ ('dep-add')) {
-    const { a, b, viewId } = /** @type {any} */ (req.payload || {});
+    const { a, b, view_id } = /** @type {any} */ (req.payload || {});
     if (typeof a !== 'string' || a.length === 0 || typeof b !== 'string' || b.length === 0) {
       ws.send(
         JSON.stringify(makeError(req, 'bad_request', 'payload requires { a: string, b: string }'))
@@ -267,7 +305,7 @@ export async function handleMessage(ws, data) {
       ws.send(JSON.stringify(makeError(req, 'bd_error', res.stderr || 'bd failed')));
       return;
     }
-    const id = typeof viewId === 'string' && viewId.length > 0 ? viewId : a;
+    const id = typeof view_id === 'string' && view_id.length > 0 ? view_id : a;
     const shown = await runBdJson(['show', id, '--json']);
     if (shown.code !== 0) {
       ws.send(JSON.stringify(makeError(req, 'bd_error', shown.stderr || 'bd failed')));
@@ -277,9 +315,9 @@ export async function handleMessage(ws, data) {
     return;
   }
 
-  // dep-remove: payload { a: string, b: string, viewId?: string }
+  // dep-remove: payload { a: string, b: string, view_id?: string }
   if (req.type === /** @type {any} */ ('dep-remove')) {
-    const { a, b, viewId } = /** @type {any} */ (req.payload || {});
+    const { a, b, view_id } = /** @type {any} */ (req.payload || {});
     if (typeof a !== 'string' || a.length === 0 || typeof b !== 'string' || b.length === 0) {
       ws.send(
         JSON.stringify(makeError(req, 'bad_request', 'payload requires { a: string, b: string }'))
@@ -291,7 +329,7 @@ export async function handleMessage(ws, data) {
       ws.send(JSON.stringify(makeError(req, 'bd_error', res.stderr || 'bd failed')));
       return;
     }
-    const id = typeof viewId === 'string' && viewId.length > 0 ? viewId : a;
+    const id = typeof view_id === 'string' && view_id.length > 0 ? view_id : a;
     const shown = await runBdJson(['show', id, '--json']);
     if (shown.code !== 0) {
       ws.send(JSON.stringify(makeError(req, 'bd_error', shown.stderr || 'bd failed')));

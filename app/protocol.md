@@ -27,10 +27,10 @@ Server may send unsolicited events (e.g., `issues-changed`) using the ReplyEnvel
 - `list-ready` payload: `{}`
 - `subscribe-updates` payload: `{}` (server responds with `ok` and begins emitting events)
 - `issues-changed` payload: `{ ts: number, hint?: { ids?: string[] } }`
-- `dep-add` payload: `{ a: string, b: string, viewId?: string }` where `a` depends on `b` (i.e., `a`
-  is blocked by `b`). Reply payload is the updated issue for `viewId` (or `a` when omitted).
-- `dep-remove` payload: `{ a: string, b: string, viewId?: string }` removing the `a` depends on `b`
-  link. Reply payload is the updated issue for `viewId` (or `a`).
+- `dep-add` payload: `{ a: string, b: string, view_id?: string }` where `a` depends on `b` (i.e.,
+  `a` is blocked by `b`). Reply payload is the updated issue for `view_id` (or `a` when omitted).
+- `dep-remove` payload: `{ a: string, b: string, view_id?: string }` removing the `a` depends on `b`
+  link. Reply payload is the updated issue for `view_id` (or `a`).
 
 ## Mapping to `bd` CLI
 

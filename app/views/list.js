@@ -19,6 +19,8 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
   let search_text = '';
   /** @type {Issue[]} */
   let issues_cache = [];
+  /** @type {string | null} */
+  let selected_id = store ? store.getState().selectedId : null;
   /** @type {null | (() => void)} */
   let unsubscribe = null;
 
@@ -88,6 +90,10 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
         nav(`#/issue/${it.id}`);
       });
 
+      if (selected_id === it.id) {
+        li.classList.add('selected');
+      }
+
       /** @type {HTMLSpanElement} */
       const id_span = document.createElement('span');
       id_span.textContent = it.id;
@@ -149,6 +155,57 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
       issues_cache = /** @type {Issue[]} */ (result);
     }
     render();
+  }
+
+  // Keyboard navigation
+  mount_element.tabIndex = 0;
+  mount_element.addEventListener('keydown', (ev) => {
+    /** @type {NodeListOf<HTMLLIElement>} */
+    const items = list.querySelectorAll('li');
+    if (items.length === 0) {
+      return;
+    }
+    const idx = Math.max(
+      0,
+      selected_id ? Array.from(items).findIndex((el) => el.dataset.issueId === selected_id) : 0
+    );
+    if (ev.key === 'ArrowDown') {
+      ev.preventDefault();
+      const next = items[Math.min(idx + 1, items.length - 1)];
+      const nextId = next?.dataset.issueId || null;
+      if (store && nextId) {
+        store.setState({ selectedId: nextId });
+      }
+      selected_id = nextId;
+      render();
+    } else if (ev.key === 'ArrowUp') {
+      ev.preventDefault();
+      const prev = items[Math.max(idx - 1, 0)];
+      const prevId = prev?.dataset.issueId || null;
+      if (store && prevId) {
+        store.setState({ selectedId: prevId });
+      }
+      selected_id = prevId;
+      render();
+    } else if (ev.key === 'Enter') {
+      ev.preventDefault();
+      const current = items[idx];
+      const id = current?.dataset.issueId;
+      if (id) {
+        const nav = navigate_fn || ((h) => (window.location.hash = h));
+        nav(`#/issue/${id}`);
+      }
+    }
+  });
+
+  // Keep selection in sync with store
+  if (store) {
+    unsubscribe = store.subscribe((s) => {
+      if (s.selectedId !== selected_id) {
+        selected_id = s.selectedId;
+        render();
+      }
+    });
   }
 
   return {

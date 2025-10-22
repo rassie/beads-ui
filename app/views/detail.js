@@ -15,6 +15,7 @@ import { renderMarkdown } from '../utils/markdown.js';
  * @property {string} id
  * @property {string} [title]
  * @property {string} [description]
+ * @property {string} [acceptance]
  * @property {string} [status]
  * @property {number} [priority]
  * @property {Dependency[]} [dependencies]
@@ -37,6 +38,8 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
   let edit_title = false;
   /** @type {boolean} */
   let edit_desc = false;
+  /** @type {boolean} */
+  let edit_accept = false;
 
   /**
    * Show a transient toast message.
@@ -430,7 +433,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
                 const updated = await send_fn('dep-remove', {
                   a: current.id,
                   b: did,
-                  viewId: current.id,
+                  view_id: current.id,
                 });
                 if (updated && typeof updated === 'object') {
                   current = /** @type {IssueDetail} */ (updated);
@@ -442,7 +445,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
                 const updated = await send_fn('dep-remove', {
                   a: did,
                   b: current.id,
-                  viewId: current.id,
+                  view_id: current.id,
                 });
                 if (updated && typeof updated === 'object') {
                   current = /** @type {IssueDetail} */ (updated);
@@ -525,7 +528,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
             const updated = await send_fn('dep-add', {
               a: current.id,
               b: target,
-              viewId: current.id,
+              view_id: current.id,
             });
             if (updated && typeof updated === 'object') {
               current = /** @type {IssueDetail} */ (updated);
@@ -536,7 +539,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
             const updated = await send_fn('dep-add', {
               a: target,
               b: current.id,
-              viewId: current.id,
+              view_id: current.id,
             });
             if (updated && typeof updated === 'object') {
               current = /** @type {IssueDetail} */ (updated);
@@ -563,6 +566,108 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
     container.appendChild(h);
     container.appendChild(meta);
     container.appendChild(desc_box);
+
+    // Acceptance (markdown read-mode + inline edit)
+    /** @type {HTMLDivElement} */
+    const acc_box = document.createElement('div');
+    acc_box.style.marginBottom = '8px';
+    /** @type {HTMLDivElement} */
+    const acc_head = document.createElement('div');
+    acc_head.className = 'muted';
+    acc_head.textContent = 'Acceptance';
+    acc_box.appendChild(acc_head);
+    if (edit_accept) {
+      /** @type {HTMLTextAreaElement} */
+      const acc_input = document.createElement('textarea');
+      acc_input.value = issue.acceptance || '';
+      acc_input.rows = 6;
+      acc_input.style.width = '100%';
+      acc_input.setAttribute('aria-label', 'Edit acceptance');
+      acc_input.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Escape') {
+          edit_accept = false;
+          render(current || issue);
+        } else if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) {
+          ev.preventDefault();
+          acc_save.click();
+        }
+      });
+      /** @type {HTMLDivElement} */
+      const actions = document.createElement('div');
+      actions.className = 'editable-actions';
+      /** @type {HTMLButtonElement} */
+      const acc_save = document.createElement('button');
+      acc_save.textContent = 'Save';
+      acc_save.addEventListener('click', async () => {
+        if (pending || !current) {
+          return;
+        }
+        const prev = current.acceptance || '';
+        const next = acc_input.value;
+        if (next === prev) {
+          edit_accept = false;
+          render(current);
+          return;
+        }
+        pending = true;
+        acc_input.disabled = true;
+        acc_save.disabled = true;
+        current.acceptance = next;
+        try {
+          /** @type {any} */
+          const updated = await send_fn('edit-text', {
+            id: current.id,
+            field: 'acceptance',
+            value: next,
+          });
+          if (updated && typeof updated === 'object') {
+            current = /** @type {IssueDetail} */ (updated);
+            edit_accept = false;
+            render(current);
+          }
+        } catch {
+          current.acceptance = prev;
+          edit_accept = false;
+          render(current);
+          showToast('Failed to save acceptance');
+        } finally {
+          pending = false;
+        }
+      });
+      /** @type {HTMLButtonElement} */
+      const acc_cancel = document.createElement('button');
+      acc_cancel.textContent = 'Cancel';
+      acc_cancel.addEventListener('click', () => {
+        edit_accept = false;
+        render(current || issue);
+      });
+      actions.appendChild(acc_save);
+      actions.appendChild(acc_cancel);
+      acc_box.appendChild(acc_input);
+      acc_box.appendChild(actions);
+    } else {
+      /** @type {HTMLDivElement} */
+      const md_wrap = document.createElement('div');
+      md_wrap.className = 'md editable';
+      md_wrap.setAttribute('tabindex', '0');
+      md_wrap.setAttribute('role', 'button');
+      md_wrap.setAttribute('aria-label', 'Edit acceptance');
+      const text = issue.acceptance || '';
+      const frag = renderMarkdown(text);
+      md_wrap.appendChild(frag);
+      md_wrap.addEventListener('click', () => {
+        edit_accept = true;
+        render(issue);
+      });
+      md_wrap.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') {
+          edit_accept = true;
+          render(issue);
+        }
+      });
+      acc_box.appendChild(md_wrap);
+    }
+    container.appendChild(acc_box);
     container.appendChild(deps);
 
     mount_element.replaceChildren(container);

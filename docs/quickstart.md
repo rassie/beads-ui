@@ -27,7 +27,8 @@ npm start
 
 Environment knobs:
 
-- `HOST` and `PORT` to change bind address or port (defaults: `127.0.0.1`, `5173`).
+- `PORT` to change the listen port (default: `5173`). The server always binds to `127.0.0.1` for
+  local‑only access.
 - `BD_BIN` to point at a non-default `bd` binary.
 
 ## Database Resolution and Watching
