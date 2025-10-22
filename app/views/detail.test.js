@@ -12,7 +12,7 @@ const stubSend = (map) => async (type, payload) => {
 };
 
 describe('views/detail', () => {
-  test('renders fields and dependency links', async () => {
+  test('renders fields, markdown description, and dependency links', async () => {
     document.body.innerHTML = '<section class="panel"><div id="mount"></div></section>';
     const mount = /** @type {HTMLElement} */ (document.getElementById('mount'));
 
@@ -20,7 +20,7 @@ describe('views/detail', () => {
     const issue = {
       id: 'UI-29',
       title: 'Issue detail view',
-      description: 'Implement detail view',
+      description: '# Heading\n\nImplement detail view with a [link](https://example.com) and `code`.',
       status: 'open',
       priority: 2,
       dependencies: [
@@ -40,24 +40,87 @@ describe('views/detail', () => {
 
     const text = mount.textContent || '';
     expect(text).toContain('UI-29');
-    const titleInput = /** @type {HTMLInputElement} */ (mount.querySelector('h2 input'));
-    expect(titleInput.value).toBe('Issue detail view');
+    const titleSpan = /** @type {HTMLSpanElement} */ (mount.querySelector('h2 .editable'));
+    expect(titleSpan.textContent).toBe('Issue detail view');
     // status select + priority select exist
     const selects = mount.querySelectorAll('select');
     expect(selects.length).toBeGreaterThanOrEqual(2);
-    // description rendered in textarea; not visible in textContent
+    // description rendered as markdown in read mode
+    const md = /** @type {HTMLDivElement} */ (mount.querySelector('.md'));
+    expect(md).toBeTruthy();
+    const a = /** @type {HTMLAnchorElement|null} */ (md.querySelector('a'));
+    expect(a && a.getAttribute('href')).toBe('https://example.com');
+    const code = md.querySelector('code');
+    expect(code && code.textContent).toBe('code');
 
     const links = /** @type {NodeListOf<HTMLAnchorElement>} */ (mount.querySelectorAll('a'));
-    const hrefs = Array.from(links).map((a) => a.getAttribute('href'));
+    const hrefs = Array.from(links)
+      .map((a) => a.getAttribute('href') || '')
+      .filter((h) => h.startsWith('#/issue/'));
     expect(hrefs).toEqual(['#/issue/UI-25', '#/issue/UI-27', '#/issue/UI-34']);
 
-    // Description appears in textarea
-    const descInput = /** @type {HTMLTextAreaElement} */ (mount.querySelector('textarea'));
-    expect(descInput.value).toBe('Implement detail view');
+    // No textarea in read mode
+    const descInput0 = /** @type {HTMLTextAreaElement|null} */ (mount.querySelector('textarea'));
+    expect(descInput0).toBeNull();
 
-    // Simulate clicking the first link, ensure navigate_fn is used
-    links[0].click();
+    // Simulate clicking the first internal link, ensure navigate_fn is used
+    const firstInternal = Array.from(links).find((a) => (a.getAttribute('href') || '').startsWith('#/issue/'));
+    if (!firstInternal) {
+      throw new Error('No internal link found');
+    }
+    firstInternal.click();
     expect(navigations[navigations.length - 1]).toBe('#/issue/UI-25');
+  });
+
+  test('inline editing toggles for title and description', async () => {
+    document.body.innerHTML = '<section class="panel"><div id="mount"></div></section>';
+    const mount = /** @type {HTMLElement} */ (document.getElementById('mount'));
+
+    /** @type {any} */
+    const issue = {
+      id: 'UI-29',
+      title: 'Issue detail view',
+      description: 'Some text',
+      status: 'open',
+      priority: 2,
+      dependencies: [],
+      dependents: [],
+    };
+
+    const view = createDetailView(mount, async (type, payload) => {
+      if (type === 'show-issue') {
+        return issue;
+      }
+      if (type === 'edit-text') {
+        const f = /** @type {any} */ (payload).field;
+        const v = /** @type {any} */ (payload).value;
+        issue[f] = v;
+        return issue;
+      }
+      throw new Error('Unexpected type');
+    });
+
+    await view.load('UI-29');
+
+    // Title: click to edit -> input appears, Esc cancels
+    const titleSpan = /** @type {HTMLSpanElement} */ (mount.querySelector('h2 .editable'));
+    titleSpan.click();
+    let titleInput = /** @type {HTMLInputElement} */ (mount.querySelector('h2 input'));
+    expect(titleInput).toBeTruthy();
+    const esc = new KeyboardEvent('keydown', { key: 'Escape' });
+    titleInput.dispatchEvent(esc);
+    expect(/** @type {HTMLInputElement|null} */ (mount.querySelector('h2 input'))).toBeNull();
+
+    // Description: click to edit -> textarea appears, Ctrl+Enter saves
+    const md = /** @type {HTMLDivElement} */ (mount.querySelector('.md'));
+    md.click();
+    const area = /** @type {HTMLTextAreaElement} */ (mount.querySelector('textarea'));
+    area.value = 'Changed';
+    const key = new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true });
+    area.dispatchEvent(key);
+    // After save, returns to read mode (allow microtask flush)
+    await Promise.resolve();
+    expect(/** @type {HTMLTextAreaElement|null} */ (mount.querySelector('textarea'))).toBeNull();
   });
 
   test('shows placeholder when not found or bad payload', async () => {

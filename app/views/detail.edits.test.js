@@ -59,14 +59,17 @@ describe('views/detail edits', () => {
     });
     const view = createDetailView(mount, send);
     await view.load('UI-8');
-    const [titleInput, titleSave] = /** @type {[HTMLInputElement, HTMLButtonElement]} */ (
-      /** @type {any} */ (mount.querySelectorAll('h2 input, h2 button'))
-    );
+    // Enter edit mode by clicking the span
+    const titleSpan = /** @type {HTMLSpanElement} */ (mount.querySelector('h2 .editable'));
+    titleSpan.click();
+    const titleInput = /** @type {HTMLInputElement} */ (mount.querySelector('h2 input'));
+    const titleSave = /** @type {HTMLButtonElement} */ (mount.querySelector('h2 button'));
     titleInput.value = 'New Title';
     titleSave.click();
     await Promise.resolve();
-    const val = /** @type {HTMLInputElement} */ (mount.querySelector('h2 input')).value;
-    expect(val).toBe('New Title');
+    // After save, returns to read mode with updated text
+    const titleSpan2 = /** @type {HTMLSpanElement} */ (mount.querySelector('h2 .editable'));
+    expect(titleSpan2.textContent).toBe('New Title');
   });
 
   test('shows toast on description save error and re-enables', async () => {
@@ -85,8 +88,11 @@ describe('views/detail edits', () => {
     });
     const view = createDetailView(mount, send);
     await view.load('UI-9');
+    // Enter edit mode
+    const md = /** @type {HTMLDivElement} */ (mount.querySelector('.md'));
+    md.click();
     const ta = /** @type {HTMLTextAreaElement} */ (mount.querySelector('textarea'));
-    const btn = /** @type {HTMLButtonElement} */ (mount.querySelector('textarea + button'));
+    const btn = /** @type {HTMLButtonElement} */ (mount.querySelector('.editable-actions button'));
     ta.value = 'New D';
     btn.click();
     await Promise.resolve();

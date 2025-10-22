@@ -1,4 +1,5 @@
 // Issue Detail view implementation.
+import { renderMarkdown } from '../utils/markdown.js';
 
 /**
  * @typedef {Object} Dependency
@@ -30,6 +31,10 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
   let current = null;
   /** @type {boolean} */
   let pending = false;
+  /** @type {boolean} */
+  let edit_title = false;
+  /** @type {boolean} */
+  let edit_desc = false;
 
   /**
    * Show a transient toast message.
@@ -101,51 +106,91 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
     id_span.textContent = issue.id;
     id_span.style.fontWeight = '700';
     id_span.style.marginRight = '8px';
-    /** @type {HTMLInputElement} */
-    const title_input = document.createElement('input');
-    title_input.type = 'text';
-    title_input.value = issue.title || '';
-    title_input.size = Math.min(80, Math.max(20, (issue.title || '').length + 5));
-    /** @type {HTMLButtonElement} */
-    const title_save = document.createElement('button');
-    title_save.textContent = 'Save';
-    title_save.style.marginLeft = '6px';
-    title_save.addEventListener('click', async () => {
-      if (pending || !current) {
-        return;
-      }
-      const prev = current.title || '';
-      const next = title_input.value;
-      if (next === prev) {
-        return;
-      }
-      pending = true;
-      title_input.disabled = true;
-      title_save.disabled = true;
-      // optimistic
-      current.title = next;
-      try {
-        /** @type {any} */
-        const updated = await send_fn('edit-text', { id: current.id, field: 'title', value: next });
-        if (
-          updated &&
-          typeof updated === 'object' &&
-          /** @type {any} */ (updated).id === current.id
-        ) {
-          current = /** @type {IssueDetail} */ (updated);
-          render(current);
-        }
-      } catch {
-        current.title = prev;
-        render(current);
-        showToast('Failed to save title');
-      } finally {
-        pending = false;
-      }
-    });
     h.appendChild(id_span);
-    h.appendChild(title_input);
-    h.appendChild(title_save);
+
+    if (edit_title) {
+      /** @type {HTMLInputElement} */
+      const title_input = document.createElement('input');
+      title_input.type = 'text';
+      title_input.value = issue.title || '';
+      title_input.size = Math.min(80, Math.max(20, (issue.title || '').length + 5));
+      title_input.setAttribute('aria-label', 'Edit title');
+      title_input.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Escape') {
+          edit_title = false;
+          render(current || issue);
+        } else if (ev.key === 'Enter') {
+          ev.preventDefault();
+          title_save.click();
+        }
+      });
+      /** @type {HTMLButtonElement} */
+      const title_save = document.createElement('button');
+      title_save.textContent = 'Save';
+      title_save.style.marginLeft = '6px';
+      title_save.addEventListener('click', async () => {
+        if (pending || !current) {
+          return;
+        }
+        const prev = current.title || '';
+        const next = title_input.value;
+        if (next === prev) {
+          edit_title = false;
+          render(current);
+          return;
+        }
+        pending = true;
+        title_input.disabled = true;
+        title_save.disabled = true;
+        current.title = next;
+        try {
+          /** @type {any} */
+          const updated = await send_fn('edit-text', { id: current.id, field: 'title', value: next });
+          if (updated && typeof updated === 'object') {
+            current = /** @type {IssueDetail} */ (updated);
+            edit_title = false;
+            render(current);
+          }
+        } catch {
+          current.title = prev;
+          edit_title = false;
+          render(current);
+          showToast('Failed to save title');
+        } finally {
+          pending = false;
+        }
+      });
+      /** @type {HTMLButtonElement} */
+      const title_cancel = document.createElement('button');
+      title_cancel.textContent = 'Cancel';
+      title_cancel.style.marginLeft = '6px';
+      title_cancel.addEventListener('click', () => {
+        edit_title = false;
+        render(current || issue);
+      });
+      h.appendChild(title_input);
+      h.appendChild(title_save);
+      h.appendChild(title_cancel);
+    } else {
+      /** @type {HTMLSpanElement} */
+      const title_span = document.createElement('span');
+      title_span.className = 'editable';
+      title_span.setAttribute('tabindex', '0');
+      title_span.setAttribute('role', 'button');
+      title_span.setAttribute('aria-label', 'Edit title');
+      title_span.textContent = issue.title || '';
+      title_span.addEventListener('click', () => {
+        edit_title = true;
+        render(issue);
+      });
+      title_span.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') {
+          edit_title = true;
+          render(issue);
+        }
+      });
+      h.appendChild(title_span);
+    }
 
     // Meta row
     /** @type {HTMLDivElement} */
@@ -230,48 +275,101 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
 
     meta.replaceChildren(status_select, document.createTextNode(' · '), priority_select);
 
-    // Description
-    /** @type {HTMLTextAreaElement} */
-    const desc_input = document.createElement('textarea');
-    desc_input.value = issue.description || '';
-    desc_input.rows = 6;
-    desc_input.style.width = '100%';
-    desc_input.style.marginBottom = '8px';
-    /** @type {HTMLButtonElement} */
-    const desc_save = document.createElement('button');
-    desc_save.textContent = 'Save description';
-    desc_save.addEventListener('click', async () => {
-      if (pending || !current) {
-        return;
-      }
-      const prev = current.description || '';
-      const next = desc_input.value;
-      if (next === prev) {
-        return;
-      }
-      pending = true;
-      desc_input.disabled = true;
-      desc_save.disabled = true;
-      current.description = next;
-      try {
-        /** @type {any} */
-        const updated = await send_fn('edit-text', {
-          id: current.id,
-          field: 'description',
-          value: next,
-        });
-        if (updated && typeof updated === 'object') {
-          current = /** @type {IssueDetail} */ (updated);
-          render(current);
+    // Description (markdown read-mode + inline edit)
+    /** @type {HTMLDivElement} */
+    const desc_box = document.createElement('div');
+    desc_box.style.marginBottom = '8px';
+    if (edit_desc) {
+      /** @type {HTMLTextAreaElement} */
+      const desc_input = document.createElement('textarea');
+      desc_input.value = issue.description || '';
+      desc_input.rows = 8;
+      desc_input.style.width = '100%';
+      desc_input.setAttribute('aria-label', 'Edit description');
+      desc_input.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Escape') {
+          edit_desc = false;
+          render(current || issue);
+        } else if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) {
+          ev.preventDefault();
+          desc_save.click();
         }
-      } catch {
-        current.description = prev;
-        render(current);
-        showToast('Failed to save description');
-      } finally {
-        pending = false;
-      }
-    });
+      });
+      /** @type {HTMLDivElement} */
+      const actions = document.createElement('div');
+      actions.className = 'editable-actions';
+      /** @type {HTMLButtonElement} */
+      const desc_save = document.createElement('button');
+      desc_save.textContent = 'Save';
+      desc_save.addEventListener('click', async () => {
+        if (pending || !current) {
+          return;
+        }
+        const prev = current.description || '';
+        const next = desc_input.value;
+        if (next === prev) {
+          edit_desc = false;
+          render(current);
+          return;
+        }
+        pending = true;
+        desc_input.disabled = true;
+        desc_save.disabled = true;
+        current.description = next;
+        try {
+          /** @type {any} */
+          const updated = await send_fn('edit-text', {
+            id: current.id,
+            field: 'description',
+            value: next,
+          });
+          if (updated && typeof updated === 'object') {
+            current = /** @type {IssueDetail} */ (updated);
+            edit_desc = false;
+            render(current);
+          }
+        } catch {
+          current.description = prev;
+          edit_desc = false;
+          render(current);
+          showToast('Failed to save description');
+        } finally {
+          pending = false;
+        }
+      });
+      /** @type {HTMLButtonElement} */
+      const desc_cancel = document.createElement('button');
+      desc_cancel.textContent = 'Cancel';
+      desc_cancel.addEventListener('click', () => {
+        edit_desc = false;
+        render(current || issue);
+      });
+      actions.appendChild(desc_save);
+      actions.appendChild(desc_cancel);
+      desc_box.appendChild(desc_input);
+      desc_box.appendChild(actions);
+    } else {
+      /** @type {HTMLDivElement} */
+      const md_wrap = document.createElement('div');
+      md_wrap.className = 'md editable';
+      md_wrap.setAttribute('tabindex', '0');
+      md_wrap.setAttribute('role', 'button');
+      md_wrap.setAttribute('aria-label', 'Edit description');
+      const text = issue.description || '';
+      const frag = renderMarkdown(text);
+      md_wrap.appendChild(frag);
+      md_wrap.addEventListener('click', () => {
+        edit_desc = true;
+        render(issue);
+      });
+      md_wrap.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') {
+          edit_desc = true;
+          render(issue);
+        }
+      });
+      desc_box.appendChild(md_wrap);
+    }
 
     // Dependencies
     /** @type {HTMLDivElement} */
@@ -340,8 +438,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
 
     container.appendChild(h);
     container.appendChild(meta);
-    container.appendChild(desc_input);
-    container.appendChild(desc_save);
+    container.appendChild(desc_box);
     container.appendChild(deps);
 
     mount_element.replaceChildren(container);
