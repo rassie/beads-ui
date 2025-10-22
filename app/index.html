@@ -4,45 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>beads-ui</title>
-    <style>
-      :root {
-        --fg: #222;
-        --bg: #fff;
-      }
-      html,
-      body {
-        height: 100%;
-        margin: 0;
-      }
-      body {
-        color: var(--fg);
-        background: var(--bg);
-        font-family:
-          -apple-system,
-          system-ui,
-          Segoe UI,
-          Roboto,
-          Ubuntu,
-          Cantarell,
-          Noto Sans,
-          sans-serif;
-      }
-      .container {
-        padding: 24px;
-      }
-      .muted {
-        color: #666;
-      }
-    </style>
+    <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="container">
-      <h1>beads-ui</h1>
-      <p class="muted">Placeholder index. UI views will be added in UI-25.</p>
-    </div>
-    <script type="module">
-      // Placeholder to verify module loading; real app bootstrap lands in UI-25.
-      console.log('beads-ui placeholder loaded');
-    </script>
+    <header class="app-header">
+      <h1 class="app-title">beads-ui</h1>
+    </header>
+    <main id="app" class="app-shell" aria-live="polite"></main>
+    <script type="module" src="./main.js"></script>
   </body>
 </html>

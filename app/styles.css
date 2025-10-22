@@ -1,0 +1,67 @@
+:root {
+  --fg: #222;
+  --bg: #fff;
+  --muted: #666;
+  --border: #e5e7eb;
+  --panel-bg: #fafafa;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  color: var(--fg);
+  background: var(--bg);
+  font-family:
+    -apple-system,
+    system-ui,
+    Segoe UI,
+    Roboto,
+    Ubuntu,
+    Cantarell,
+    Noto Sans,
+    sans-serif;
+}
+
+.app-header {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.app-title {
+  font-size: 18px;
+  margin: 0;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 0;
+  height: calc(100% - 48px);
+}
+
+.panel {
+  min-height: 0;
+  overflow: auto;
+  background: var(--panel-bg);
+}
+.panel + .panel {
+  border-left: 1px solid var(--border);
+}
+
+.panel__header {
+  position: sticky;
+  top: 0;
+  background: inherit;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.panel__body {
+  padding: 12px;
+}
+
+.muted {
+  color: var(--muted);
+}
