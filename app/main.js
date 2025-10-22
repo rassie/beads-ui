@@ -119,6 +119,45 @@ export function bootstrap(root_element) {
 
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   window.addEventListener('DOMContentLoaded', () => {
+    // Initialize theme from saved preference or OS preference
+    try {
+      const saved = window.localStorage.getItem('beads-ui.theme');
+      const prefersDark =
+        window.matchMedia &&
+        window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const initial =
+        saved === 'dark' || saved === 'light'
+          ? saved
+          : prefersDark
+            ? 'dark'
+            : 'light';
+      document.documentElement.setAttribute('data-theme', initial);
+      const sw = /** @type {HTMLInputElement|null} */ (
+        document.getElementById('theme-switch')
+      );
+      if (sw) {
+        sw.checked = initial === 'dark';
+      }
+    } catch {
+      // ignore theme init errors
+    }
+
+    // Wire up theme switch in header
+    const themeSwitch = /** @type {HTMLInputElement|null} */ (
+      document.getElementById('theme-switch')
+    );
+    if (themeSwitch) {
+      themeSwitch.addEventListener('change', () => {
+        const mode = themeSwitch.checked ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', mode);
+        try {
+          window.localStorage.setItem('beads-ui.theme', mode);
+        } catch {
+          // ignore persistence errors
+        }
+      });
+    }
+
     /** @type {HTMLElement|null} */
     const app_root = document.getElementById('app');
     if (app_root) {
