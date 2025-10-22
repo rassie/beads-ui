@@ -1,12 +1,10 @@
-/**
- * Bootstrap the SPA shell with two panels.
- * @param {HTMLElement} root_element - The container element to render into.
- */
 import { makeRequest, nextId } from './protocol.js';
+import { createDetailView } from './views/detail.js';
 import { createListView } from './views/list.js';
 
 /**
- * @param {HTMLElement} root_element
+ * Bootstrap the SPA shell with two panels.
+ * @param {HTMLElement} root_element - The container element to render into.
  */
 export function bootstrap(root_element) {
   /** @type {string} */
@@ -17,18 +15,21 @@ export function bootstrap(root_element) {
     </aside>
     <section id="detail-panel" class="panel">
       <div class="panel__header"><strong>Details</strong></div>
-      <div class="panel__body"><p class="muted">Select an issue to view details</p></div>
+      <div class="panel__body" id="detail-root"><p class="muted">Select an issue to view details</p></div>
     </section>
   `;
   root_element.innerHTML = html_value;
 
   /** @type {HTMLElement|null} */
   const list_mount = document.getElementById('list-root');
+  /** @type {HTMLElement|null} */
+  const detail_mount = document.getElementById('detail-root');
   if (list_mount) {
-    const transport = /**
+    /**
      * @param {string} type
      * @param {unknown} payload
-     */ async (type, payload) => {
+     */
+    const transport = async (type, payload) => {
       if (typeof window === 'undefined' || typeof WebSocket === 'undefined') {
         return [];
       }
@@ -69,6 +70,35 @@ export function bootstrap(root_element) {
       window.location.hash = hash;
     });
     void view.load();
+    if (detail_mount) {
+      const detail = createDetailView(detail_mount, transport, (hash) => {
+        window.location.hash = hash;
+      });
+
+      /**
+       * Parse current location hash to an issue id (or null).
+       * @returns {string|null}
+       */
+      function currentIssueId() {
+        const m = /^#\/issue\/([^\s?#]+)/.exec(window.location.hash || '');
+        if (m && m[1]) {
+          return decodeURIComponent(m[1]);
+        }
+        return null;
+      }
+
+      function handleHashChange() {
+        const id = currentIssueId();
+        if (id) {
+          void detail.load(id);
+        } else {
+          detail.clear();
+        }
+      }
+
+      window.addEventListener('hashchange', handleHashChange);
+      handleHashChange();
+    }
   }
 }
 
