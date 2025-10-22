@@ -20,10 +20,12 @@ vi.mock('node:fs', () => {
 beforeEach(() => {
   watchers.length = 0;
   vi.useFakeTimers();
+  vi.spyOn(console, 'warn').mockImplementation(() => {});
 });
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 describe('watchDb', () => {
