@@ -1,12 +1,18 @@
 import { createServer } from 'node:http';
 import { createApp } from './app.js';
 import { getConfig } from './config.js';
+import { watchIssuesJsonl } from './watcher.js';
 import { attachWsServer } from './ws.js';
 
 const config = getConfig();
 const app = createApp(config);
 const server = createServer(app);
-attachWsServer(server, { path: '/ws', heartbeat_ms: 30000 });
+const { broadcast } = attachWsServer(server, { path: '/ws', heartbeat_ms: 30000 });
+
+// Watch `.beads/issues.jsonl` and broadcast invalidation to clients
+watchIssuesJsonl(config.root_dir, (payload) => {
+  broadcast('issues-changed', payload);
+});
 
 server.listen(config.port, config.host, () => {
   console.log(`beads-ui server listening on http://${config.host}:${config.port} (${config.env})`);
