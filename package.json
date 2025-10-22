@@ -1,0 +1,40 @@
+{
+  "name": "beads-ui",
+  "version": "0.0.0",
+  "description": "Web interface for Beads (bd)",
+  "keywords": [
+    "beads",
+    "bd",
+    "issues"
+  ],
+  "type": "module",
+  "author": "Maximilian Antoni <mail@maxantoni.de>",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint .",
+    "test": "vitest run",
+    "watch": "vitest",
+    "prettier:check": "prettier --check '**/*.{js,json,md,sql}'",
+    "prettier:write": "prettier --write '**/*.{js,json,md,sql}'"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^5.2.2",
+    "@types/node": "^24.9.1",
+    "eslint": "^9.38.0",
+    "eslint-plugin-jsdoc": "^61.1.5",
+    "eslint-plugin-n": "^17.23.1",
+    "globals": "^16.4.0",
+    "prettier": "^3.6.2",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "license": "MIT"
+}
