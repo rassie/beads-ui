@@ -1,6 +1,6 @@
-import { describe, expect, test } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
+import { describe, expect, test } from 'vitest';
 import { createApp } from './app.js';
 import { getConfig } from './config.js';
 
