@@ -1,0 +1,43 @@
+import js from '@eslint/js';
+import plugin_jsdoc from 'eslint-plugin-jsdoc';
+import plugin_n from 'eslint-plugin-n';
+import { defineConfig } from 'eslint/config';
+import globals from 'globals';
+
+export default defineConfig([
+  js.configs.recommended,
+  plugin_jsdoc.configs['flat/recommended'],
+  {
+    settings: {
+      jsdoc: {
+        mode: 'typescript',
+        preferredTypes: {
+          object: 'Object'
+        }
+      }
+    },
+    rules: {
+      'jsdoc/require-jsdoc': 'off',
+      'jsdoc/require-param-description': 'off',
+      'jsdoc/require-returns-description': 'off',
+      'jsdoc/reject-any-type': 'off',
+      'jsdoc/require-returns': 'off'
+    }
+  },
+  {
+    files: ['server/**/*.js'],
+    ...plugin_n.configs['flat/recommended'],
+    languageOptions: {
+      globals: globals.node
+    },
+    rules: {
+      'n/no-unpublished-import': 'off'
+    }
+  },
+  {
+    files: ['app/**/*.js'],
+    languageOptions: {
+      globals: globals.browser
+    }
+  }
+]);
