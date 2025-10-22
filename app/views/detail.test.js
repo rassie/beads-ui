@@ -24,11 +24,8 @@ describe('views/detail', () => {
         '# Heading\n\nImplement detail view with a [link](https://example.com) and `code`.',
       status: 'open',
       priority: 2,
-      dependencies: [
-        { issue_id: 'UI-29', depends_on_id: 'UI-25', type: 'blocks' },
-        { issue_id: 'UI-29', depends_on_id: 'UI-27', type: 'blocks' },
-      ],
-      dependents: [{ issue_id: 'UI-34', depends_on_id: 'UI-29', type: 'blocks' }],
+      dependencies: [{ id: 'UI-25' }, { id: 'UI-27' }],
+      dependents: [{ id: 'UI-34' }],
     };
 
     /** @type {string[]} */

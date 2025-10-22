@@ -68,4 +68,30 @@ describe('ws mutation handlers', () => {
     expect(obj.ok).toBe(true);
     expect(obj.payload.title).toBe('New');
   });
+
+  test('dep-add returns updated issue (viewId)', async () => {
+    const mRun = /** @type {import('vitest').Mock} */ (runBd);
+    const mJson = /** @type {import('vitest').Mock} */ (runBdJson);
+    mRun.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
+    mJson.mockResolvedValueOnce({ code: 0, stdoutJson: { id: 'UI-7', dependencies: [] } });
+    const ws = makeStubSocket();
+    const req = {
+      id: 'r5',
+      type: 'dep-add',
+      payload: { a: 'UI-7', b: 'UI-1', viewId: 'UI-7' },
+    };
+    await handleMessage(/** @type {any} */ (ws), Buffer.from(JSON.stringify(req)));
+    const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
+    expect(obj.ok).toBe(true);
+    expect(obj.payload.id).toBe('UI-7');
+  });
+
+  test('dep-remove bad payload yields bad_request', async () => {
+    const ws = makeStubSocket();
+    const req = { id: 'r6', type: 'dep-remove', payload: { a: '' } };
+    await handleMessage(/** @type {any} */ (ws), Buffer.from(JSON.stringify(req)));
+    const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
+    expect(obj.ok).toBe(false);
+    expect(obj.error.code).toBe('bad_request');
+  });
 });

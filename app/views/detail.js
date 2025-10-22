@@ -3,9 +3,11 @@ import { renderMarkdown } from '../utils/markdown.js';
 
 /**
  * @typedef {Object} Dependency
- * @property {string} issue_id
- * @property {string} depends_on_id
- * @property {string} type
+ * @property {string} id
+ * @property {string} [title]
+ * @property {string} [status]
+ * @property {number} [priority]
+ * @property {string} [issue_type]
  */
 
 /**
@@ -409,6 +411,51 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
           /** @type {HTMLLIElement} */
           const li = document.createElement('li');
           li.appendChild(linkFor(did));
+          // remove button
+          /** @type {HTMLButtonElement} */
+          const rm = document.createElement('button');
+          rm.textContent = '×';
+          rm.setAttribute('aria-label', `Remove dependency ${did}`);
+          rm.style.marginLeft = '6px';
+          rm.addEventListener('click', async () => {
+            if (!current || pending) {
+              return;
+            }
+            pending = true;
+            try {
+              // Determine direction based on list title
+              if (title === 'Dependencies') {
+                // current depends on did → remove (current, did)
+                /** @type {any} */
+                const updated = await send_fn('dep-remove', {
+                  a: current.id,
+                  b: did,
+                  viewId: current.id,
+                });
+                if (updated && typeof updated === 'object') {
+                  current = /** @type {IssueDetail} */ (updated);
+                  render(current);
+                }
+              } else {
+                // Blocks: did depends on current → remove (did, current)
+                /** @type {any} */
+                const updated = await send_fn('dep-remove', {
+                  a: did,
+                  b: current.id,
+                  viewId: current.id,
+                });
+                if (updated && typeof updated === 'object') {
+                  current = /** @type {IssueDetail} */ (updated);
+                  render(current);
+                }
+              }
+            } catch {
+              showToast('Failed to remove dependency');
+            } finally {
+              pending = false;
+            }
+          });
+          li.appendChild(rm);
           ul.appendChild(li);
         }
       }
@@ -418,27 +465,100 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
     }
 
     /** @type {string[]} */
-    const blocked_by = [];
+    const dependencies = [];
     /** @type {string[]} */
-    const blocks = [];
+    const dependents = [];
 
     if (Array.isArray(issue.dependencies)) {
       for (const d of issue.dependencies) {
-        if (d && d.type === 'blocks' && d.issue_id === issue.id) {
-          blocked_by.push(d.depends_on_id);
-        }
+        dependencies.push(d.id);
       }
     }
     if (Array.isArray(issue.dependents)) {
       for (const d of issue.dependents) {
-        if (d && d.type === 'blocks' && d.depends_on_id === issue.id) {
-          blocks.push(d.issue_id);
-        }
+        dependents.push(d.id);
       }
     }
 
-    deps.appendChild(makeList('Blocked by', blocked_by));
-    deps.appendChild(makeList('Blocks', blocks));
+    const dependencies_box = makeList('Dependencies', dependencies);
+    const dependents_box = makeList('Dependents', dependents);
+
+    // Add controls
+    /**
+     * @param {HTMLDivElement} container
+     * @param {'dependency' | 'dependent'} mode
+     */
+    function attachAddControls(container, mode) {
+      /** @type {HTMLDivElement} */
+      const row = document.createElement('div');
+      row.style.marginTop = '6px';
+      /** @type {HTMLInputElement} */
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = 'Issue ID (e.g., UI-12)';
+      input.setAttribute('data-testid', mode === 'dependency' ? 'add-dependency' : 'add-dependent');
+      /** @type {HTMLButtonElement} */
+      const addBtn = document.createElement('button');
+      addBtn.textContent = 'Add';
+      addBtn.style.marginLeft = '6px';
+      addBtn.addEventListener('click', async () => {
+        if (!current || pending) {
+          return;
+        }
+        const target = input.value.trim();
+        if (!target || target === current.id) {
+          showToast('Enter a different issue id');
+          return;
+        }
+        // duplicate prevention
+        const set = new Set(mode === 'dependency' ? dependencies : dependents);
+        if (set.has(target)) {
+          showToast('Link already exists');
+          return;
+        }
+        pending = true;
+        addBtn.disabled = true;
+        input.disabled = true;
+        try {
+          if (mode === 'dependency') {
+            /** @type {any} */
+            const updated = await send_fn('dep-add', {
+              a: current.id,
+              b: target,
+              viewId: current.id,
+            });
+            if (updated && typeof updated === 'object') {
+              current = /** @type {IssueDetail} */ (updated);
+              render(current);
+            }
+          } else {
+            /** @type {any} */
+            const updated = await send_fn('dep-add', {
+              a: target,
+              b: current.id,
+              viewId: current.id,
+            });
+            if (updated && typeof updated === 'object') {
+              current = /** @type {IssueDetail} */ (updated);
+              render(current);
+            }
+          }
+        } catch {
+          showToast('Failed to add dependency');
+        } finally {
+          pending = false;
+        }
+      });
+      row.appendChild(input);
+      row.appendChild(addBtn);
+      container.appendChild(row);
+    }
+
+    attachAddControls(dependencies_box, 'dependency');
+    attachAddControls(dependents_box, 'dependent');
+
+    deps.appendChild(dependencies_box);
+    deps.appendChild(dependents_box);
 
     container.appendChild(h);
     container.appendChild(meta);

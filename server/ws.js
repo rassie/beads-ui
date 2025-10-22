@@ -253,6 +253,54 @@ export async function handleMessage(ws, data) {
     return;
   }
 
+  // dep-add: payload { a: string, b: string, viewId?: string }
+  if (req.type === /** @type {any} */ ('dep-add')) {
+    const { a, b, viewId } = /** @type {any} */ (req.payload || {});
+    if (typeof a !== 'string' || a.length === 0 || typeof b !== 'string' || b.length === 0) {
+      ws.send(
+        JSON.stringify(makeError(req, 'bad_request', 'payload requires { a: string, b: string }'))
+      );
+      return;
+    }
+    const res = await runBd(['dep', 'add', a, b]);
+    if (res.code !== 0) {
+      ws.send(JSON.stringify(makeError(req, 'bd_error', res.stderr || 'bd failed')));
+      return;
+    }
+    const id = typeof viewId === 'string' && viewId.length > 0 ? viewId : a;
+    const shown = await runBdJson(['show', id, '--json']);
+    if (shown.code !== 0) {
+      ws.send(JSON.stringify(makeError(req, 'bd_error', shown.stderr || 'bd failed')));
+      return;
+    }
+    ws.send(JSON.stringify(makeOk(req, shown.stdoutJson)));
+    return;
+  }
+
+  // dep-remove: payload { a: string, b: string, viewId?: string }
+  if (req.type === /** @type {any} */ ('dep-remove')) {
+    const { a, b, viewId } = /** @type {any} */ (req.payload || {});
+    if (typeof a !== 'string' || a.length === 0 || typeof b !== 'string' || b.length === 0) {
+      ws.send(
+        JSON.stringify(makeError(req, 'bad_request', 'payload requires { a: string, b: string }'))
+      );
+      return;
+    }
+    const res = await runBd(['dep', 'remove', a, b]);
+    if (res.code !== 0) {
+      ws.send(JSON.stringify(makeError(req, 'bd_error', res.stderr || 'bd failed')));
+      return;
+    }
+    const id = typeof viewId === 'string' && viewId.length > 0 ? viewId : a;
+    const shown = await runBdJson(['show', id, '--json']);
+    if (shown.code !== 0) {
+      ws.send(JSON.stringify(makeError(req, 'bd_error', shown.stderr || 'bd failed')));
+      return;
+    }
+    ws.send(JSON.stringify(makeOk(req, shown.stdoutJson)));
+    return;
+  }
+
   // Unknown type
   const err = makeError(req, 'unknown_type', `Unknown message type: ${req.type}`);
   ws.send(JSON.stringify(err));
