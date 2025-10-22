@@ -40,14 +40,20 @@ describe('views/detail', () => {
 
     const text = mount.textContent || '';
     expect(text).toContain('UI-29');
-    expect(text).toContain('Issue detail view');
-    expect(text.toLowerCase()).toContain('open');
-    expect(text).toContain('p2');
-    expect(text).toContain('Implement detail view');
+    const titleInput = /** @type {HTMLInputElement} */ (mount.querySelector('h2 input'));
+    expect(titleInput.value).toBe('Issue detail view');
+    // status select + priority select exist
+    const selects = mount.querySelectorAll('select');
+    expect(selects.length).toBeGreaterThanOrEqual(2);
+    // description rendered in textarea; not visible in textContent
 
     const links = /** @type {NodeListOf<HTMLAnchorElement>} */ (mount.querySelectorAll('a'));
     const hrefs = Array.from(links).map((a) => a.getAttribute('href'));
     expect(hrefs).toEqual(['#/issue/UI-25', '#/issue/UI-27', '#/issue/UI-34']);
+
+    // Description appears in textarea
+    const descInput = /** @type {HTMLTextAreaElement} */ (mount.querySelector('textarea'));
+    expect(descInput.value).toBe('Implement detail view');
 
     // Simulate clicking the first link, ensure navigate_fn is used
     links[0].click();

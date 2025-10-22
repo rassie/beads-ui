@@ -26,6 +26,37 @@
  * @returns {{ load: (id: string) => Promise<void>, clear: () => void, destroy: () => void }} View API.
  */
 export function createDetailView(mount_element, send_fn, navigate_fn) {
+  /** @type {IssueDetail | null} */
+  let current = null;
+  /** @type {boolean} */
+  let pending = false;
+
+  /**
+   * Show a transient toast message.
+   * @param {string} text
+   */
+  function showToast(text) {
+    /** @type {HTMLDivElement} */
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = text;
+    toast.style.position = 'absolute';
+    toast.style.right = '12px';
+    toast.style.bottom = '12px';
+    toast.style.background = 'rgba(0,0,0,0.8)';
+    toast.style.color = '#fff';
+    toast.style.padding = '8px 10px';
+    toast.style.borderRadius = '4px';
+    toast.style.fontSize = '12px';
+    mount_element.appendChild(toast);
+    setTimeout(() => {
+      try {
+        toast.remove();
+      } catch {
+        /* ignore */
+      }
+    }, 2800);
+  }
   /**
    * Render a placeholder message.
    * @param {string} message
@@ -59,6 +90,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
   function render(issue) {
     /** @type {HTMLElement} */
     const container = document.createElement('div');
+    container.style.position = 'relative';
 
     // Header: ID and Title
     /** @type {HTMLHeadingElement} */
@@ -69,25 +101,177 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
     id_span.textContent = issue.id;
     id_span.style.fontWeight = '700';
     id_span.style.marginRight = '8px';
-    /** @type {HTMLSpanElement} */
-    const title_span = document.createElement('span');
-    title_span.textContent = issue.title || '';
+    /** @type {HTMLInputElement} */
+    const title_input = document.createElement('input');
+    title_input.type = 'text';
+    title_input.value = issue.title || '';
+    title_input.size = Math.min(80, Math.max(20, (issue.title || '').length + 5));
+    /** @type {HTMLButtonElement} */
+    const title_save = document.createElement('button');
+    title_save.textContent = 'Save';
+    title_save.style.marginLeft = '6px';
+    title_save.addEventListener('click', async () => {
+      if (pending || !current) {
+        return;
+      }
+      const prev = current.title || '';
+      const next = title_input.value;
+      if (next === prev) {
+        return;
+      }
+      pending = true;
+      title_input.disabled = true;
+      title_save.disabled = true;
+      // optimistic
+      current.title = next;
+      try {
+        /** @type {any} */
+        const updated = await send_fn('edit-text', { id: current.id, field: 'title', value: next });
+        if (
+          updated &&
+          typeof updated === 'object' &&
+          /** @type {any} */ (updated).id === current.id
+        ) {
+          current = /** @type {IssueDetail} */ (updated);
+          render(current);
+        }
+      } catch {
+        current.title = prev;
+        render(current);
+        showToast('Failed to save title');
+      } finally {
+        pending = false;
+      }
+    });
     h.appendChild(id_span);
-    h.appendChild(title_span);
+    h.appendChild(title_input);
+    h.appendChild(title_save);
 
     // Meta row
     /** @type {HTMLDivElement} */
     const meta = document.createElement('div');
     meta.className = 'muted';
     meta.style.marginBottom = '12px';
-    meta.textContent = `${issue.status || ''}${issue.status ? ' · ' : ''}p${issue.priority ?? ''}`;
+    // Status select
+    /** @type {HTMLSelectElement} */
+    const status_select = document.createElement('select');
+    status_select.innerHTML = [
+      ['open', 'Open'],
+      ['in_progress', 'In progress'],
+      ['closed', 'Closed'],
+    ]
+      .map(([v, t]) => `<option value="${v}">${t}</option>`)
+      .join('');
+    status_select.value = issue.status || 'open';
+    status_select.addEventListener('change', async () => {
+      if (pending || !current) {
+        status_select.value = current?.status || 'open';
+        return;
+      }
+      const prev = current.status || 'open';
+      const next = status_select.value;
+      if (next === prev) {
+        return;
+      }
+      pending = true;
+      status_select.disabled = true;
+      current.status = next;
+      try {
+        /** @type {any} */
+        const updated = await send_fn('update-status', { id: current.id, status: next });
+        if (updated && typeof updated === 'object') {
+          current = /** @type {IssueDetail} */ (updated);
+          render(current);
+        }
+      } catch {
+        current.status = prev;
+        render(current);
+        showToast('Failed to update status');
+      } finally {
+        pending = false;
+      }
+    });
+
+    // Priority select 0..4
+    /** @type {HTMLSelectElement} */
+    const priority_select = document.createElement('select');
+    priority_select.innerHTML = [0, 1, 2, 3, 4]
+      .map((n) => `<option value="${n}">p${n}</option>`)
+      .join('');
+    priority_select.value = String(issue.priority ?? 2);
+    priority_select.addEventListener('change', async () => {
+      if (pending || !current) {
+        priority_select.value = String(current?.priority ?? 2);
+        return;
+      }
+      const prev = typeof current.priority === 'number' ? current.priority : 2;
+      const next = Number(priority_select.value);
+      if (next === prev) {
+        return;
+      }
+      pending = true;
+      priority_select.disabled = true;
+      current.priority = next;
+      try {
+        /** @type {any} */
+        const updated = await send_fn('update-priority', { id: current.id, priority: next });
+        if (updated && typeof updated === 'object') {
+          current = /** @type {IssueDetail} */ (updated);
+          render(current);
+        }
+      } catch {
+        current.priority = prev;
+        render(current);
+        showToast('Failed to update priority');
+      } finally {
+        pending = false;
+      }
+    });
+
+    meta.replaceChildren(status_select, document.createTextNode(' · '), priority_select);
 
     // Description
-    /** @type {HTMLDivElement} */
-    const desc = document.createElement('div');
-    desc.style.whiteSpace = 'pre-wrap';
-    desc.style.marginBottom = '16px';
-    desc.textContent = issue.description || '';
+    /** @type {HTMLTextAreaElement} */
+    const desc_input = document.createElement('textarea');
+    desc_input.value = issue.description || '';
+    desc_input.rows = 6;
+    desc_input.style.width = '100%';
+    desc_input.style.marginBottom = '8px';
+    /** @type {HTMLButtonElement} */
+    const desc_save = document.createElement('button');
+    desc_save.textContent = 'Save description';
+    desc_save.addEventListener('click', async () => {
+      if (pending || !current) {
+        return;
+      }
+      const prev = current.description || '';
+      const next = desc_input.value;
+      if (next === prev) {
+        return;
+      }
+      pending = true;
+      desc_input.disabled = true;
+      desc_save.disabled = true;
+      current.description = next;
+      try {
+        /** @type {any} */
+        const updated = await send_fn('edit-text', {
+          id: current.id,
+          field: 'description',
+          value: next,
+        });
+        if (updated && typeof updated === 'object') {
+          current = /** @type {IssueDetail} */ (updated);
+          render(current);
+        }
+      } catch {
+        current.description = prev;
+        render(current);
+        showToast('Failed to save description');
+      } finally {
+        pending = false;
+      }
+    });
 
     // Dependencies
     /** @type {HTMLDivElement} */
@@ -156,7 +340,8 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
 
     container.appendChild(h);
     container.appendChild(meta);
-    container.appendChild(desc);
+    container.appendChild(desc_input);
+    container.appendChild(desc_save);
     container.appendChild(deps);
 
     mount_element.replaceChildren(container);
@@ -184,6 +369,8 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
         renderPlaceholder('Issue not found');
         return;
       }
+      current = issue;
+      pending = false;
       render(issue);
     },
     clear() {
