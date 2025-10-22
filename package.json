@@ -1,40 +1,31 @@
 {
   "name": "beads-ui",
-  "version": "0.0.0",
-  "description": "Web interface for Beads (bd)",
-  "keywords": [
-    "beads",
-    "bd",
-    "issues"
-  ],
+  "version": "0.1.0",
+  "private": true,
   "type": "module",
-  "author": "Maximilian Antoni <mail@maxantoni.de>",
-  "main": "index.js",
-  "scripts": {
-    "lint": "eslint .",
-    "test": "vitest run",
-    "watch": "vitest",
-    "prettier:check": "prettier --check '**/*.{js,json,md,sql}'",
-    "prettier:write": "prettier --write '**/*.{js,json,md,sql}'"
+  "engines": {
+    "node": ">=18.19"
   },
-  "dependencies": {
-    "express": "^5.1.0",
-    "ws": "^8.18.3"
+  "scripts": {
+    "start": "node -e \"console.log('TODO: implement server (UI-17)')\"",
+    "dev": "node -e \"console.log('TODO: implement dev server (UI-17)')\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint --ext .js .",
+    "format": "prettier --write ."
   },
   "devDependencies": {
-    "@trivago/prettier-plugin-sort-imports": "^5.2.2",
-    "@types/node": "^24.9.1",
-    "eslint": "^9.38.0",
-    "eslint-plugin-jsdoc": "^61.1.5",
-    "eslint-plugin-n": "^17.23.1",
+    "@eslint/js": "^9.38.0",
+    "@types/node": "^22.7.4",
+    "eslint": "^9.11.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-jsdoc": "^48.10.2",
+    "eslint-plugin-n": "^17.9.0",
+    "eslint-plugin-promise": "^6.1.1",
     "globals": "^16.4.0",
-    "prettier": "^3.6.2",
-    "rimraf": "^6.0.1",
-    "typescript": "^5.9.3",
-    "vitest": "^3.2.4"
-  },
-  "engines": {
-    "node": ">=24"
-  },
-  "license": "MIT"
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.3"
+  }
 }

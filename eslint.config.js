@@ -5,6 +5,9 @@ import { defineConfig } from 'eslint/config';
 import globals from 'globals';
 
 export default defineConfig([
+  {
+    ignores: ['node_modules', 'coverage', 'dist', '.beads'],
+  },
   js.configs.recommended,
   plugin_jsdoc.configs['flat/recommended'],
   {
@@ -12,32 +15,32 @@ export default defineConfig([
       jsdoc: {
         mode: 'typescript',
         preferredTypes: {
-          object: 'Object'
-        }
-      }
+          object: 'Object',
+        },
+      },
     },
     rules: {
       'jsdoc/require-jsdoc': 'off',
       'jsdoc/require-param-description': 'off',
       'jsdoc/require-returns-description': 'off',
       'jsdoc/reject-any-type': 'off',
-      'jsdoc/require-returns': 'off'
-    }
+      'jsdoc/require-returns': 'off',
+    },
   },
   {
     files: ['server/**/*.js'],
     ...plugin_n.configs['flat/recommended'],
     languageOptions: {
-      globals: globals.node
+      globals: globals.node,
     },
     rules: {
-      'n/no-unpublished-import': 'off'
-    }
+      'n/no-unpublished-import': 'off',
+    },
   },
   {
     files: ['app/**/*.js'],
     languageOptions: {
-      globals: globals.browser
-    }
-  }
+      globals: globals.browser,
+    },
+  },
 ]);
