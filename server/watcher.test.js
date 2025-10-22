@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { watchIssuesJsonl } from './watcher.js';
+import { watchDb } from './watcher.js';
 
 /** @type {{ dir: string, cb: (event: string, filename?: string) => void, w: { close: () => void } }[]} */
 const watchers = [];
@@ -26,17 +26,20 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe('watchIssuesJsonl', () => {
+describe('watchDb', () => {
   test('debounces rapid change events', () => {
     const calls = [];
-    const handle = watchIssuesJsonl('/repo', (p) => calls.push(p), { debounce_ms: 100 });
+    const handle = watchDb('/repo', (p) => calls.push(p), {
+      debounce_ms: 100,
+      explicit_db: '/repo/.beads/ui.db',
+    });
     expect(watchers.length).toBe(1);
     const { cb } = watchers[0];
 
     // Fire multiple changes in quick succession
-    cb('change', 'issues.jsonl');
-    cb('change', 'issues.jsonl');
-    cb('rename', 'issues.jsonl');
+    cb('change', 'ui.db');
+    cb('change', 'ui.db');
+    cb('rename', 'ui.db');
 
     // Nothing yet until debounce passes
     expect(calls.length).toBe(0);
@@ -51,11 +54,43 @@ describe('watchIssuesJsonl', () => {
 
   test('ignores other filenames', () => {
     const calls = [];
-    const handle = watchIssuesJsonl('/repo', (p) => calls.push(p), { debounce_ms: 50 });
+    const handle = watchDb('/repo', (p) => calls.push(p), {
+      debounce_ms: 50,
+      explicit_db: '/repo/.beads/ui.db',
+    });
     const { cb } = watchers[0];
-    cb('change', 'something-else.jsonl');
+    cb('change', 'something-else.db');
     vi.advanceTimersByTime(60);
     expect(calls.length).toBe(0);
+    handle.close();
+  });
+
+  test('rebind attaches to new db path', () => {
+    const calls = [];
+    const handle = watchDb('/repo', (p) => calls.push(p), {
+      debounce_ms: 50,
+      explicit_db: '/repo/.beads/ui.db',
+    });
+    expect(watchers.length).toBe(1);
+    const first = watchers[0];
+
+    // Rebind to a different DB path
+    handle.rebind({ explicit_db: '/other/.beads/alt.db' });
+
+    // A new watcher is created
+    expect(watchers.length).toBe(2);
+    const second = watchers[1];
+
+    // Old watcher should ignore new file name
+    first.cb('change', 'ui.db');
+    vi.advanceTimersByTime(60);
+    expect(calls.length).toBe(0);
+
+    // New watcher reacts
+    second.cb('change', 'alt.db');
+    vi.advanceTimersByTime(60);
+    expect(calls.length).toBe(1);
+
     handle.close();
   });
 });

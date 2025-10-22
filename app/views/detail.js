@@ -145,7 +145,11 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
         current.title = next;
         try {
           /** @type {any} */
-          const updated = await send_fn('edit-text', { id: current.id, field: 'title', value: next });
+          const updated = await send_fn('edit-text', {
+            id: current.id,
+            field: 'title',
+            value: next,
+          });
           if (updated && typeof updated === 'object') {
             current = /** @type {IssueDetail} */ (updated);
             edit_title = false;

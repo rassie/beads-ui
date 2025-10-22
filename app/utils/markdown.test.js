@@ -97,4 +97,3 @@ describe('utils/markdown', () => {
     expect(host.textContent || '').toContain('danger (javascript:alert(1))');
   });
 });
-

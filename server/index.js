@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import { createApp } from './app.js';
 import { getConfig } from './config.js';
-import { watchIssuesJsonl } from './watcher.js';
+import { watchDb } from './watcher.js';
 import { attachWsServer } from './ws.js';
 
 const config = getConfig();
@@ -9,8 +9,8 @@ const app = createApp(config);
 const server = createServer(app);
 const { broadcast } = attachWsServer(server, { path: '/ws', heartbeat_ms: 30000 });
 
-// Watch `.beads/issues.jsonl` and broadcast invalidation to clients
-watchIssuesJsonl(config.root_dir, (payload) => {
+// Watch the active beads DB and broadcast invalidation to clients
+watchDb(config.root_dir, (payload) => {
   broadcast('issues-changed', payload);
 });
 

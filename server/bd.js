@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { resolveDbPath } from './db.js';
 
 /**
  * Resolve the bd executable path.
@@ -27,8 +28,12 @@ export function runBd(args, options = {}) {
     shell: false,
   };
 
+  // Ensure a consistent DB by injecting --db if missing, following beads precedence.
+  /** @type {string[]} */
+  const finalArgs = withDbArg(args, spawn_opts.cwd, spawn_opts.env);
+
   return new Promise((resolve) => {
-    const child = spawn(bin, args, spawn_opts);
+    const child = spawn(bin, finalArgs, spawn_opts);
 
     /** @type {string[]} */
     const out_chunks = [];
@@ -102,4 +107,19 @@ export async function runBdJson(args, options = {}) {
     return { code: 0, stderr: 'Invalid JSON from bd' };
   }
   return { code: 0, stdoutJson: parsed };
+}
+
+/**
+ * Add a resolved "--db <path>" pair to args when none present.
+ * @param {string[]} args
+ * @param {string} cwd
+ * @param {Record<string, string | undefined>} env
+ * @returns {string[]}
+ */
+function withDbArg(args, cwd, env) {
+  if (args.includes('--db')) {
+    return args.slice();
+  }
+  const resolved = resolveDbPath({ cwd, env });
+  return ['--db', resolved.path, ...args];
 }

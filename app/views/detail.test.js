@@ -20,7 +20,8 @@ describe('views/detail', () => {
     const issue = {
       id: 'UI-29',
       title: 'Issue detail view',
-      description: '# Heading\n\nImplement detail view with a [link](https://example.com) and `code`.',
+      description:
+        '# Heading\n\nImplement detail view with a [link](https://example.com) and `code`.',
       status: 'open',
       priority: 2,
       dependencies: [
@@ -64,7 +65,9 @@ describe('views/detail', () => {
     expect(descInput0).toBeNull();
 
     // Simulate clicking the first internal link, ensure navigate_fn is used
-    const firstInternal = Array.from(links).find((a) => (a.getAttribute('href') || '').startsWith('#/issue/'));
+    const firstInternal = Array.from(links).find((a) =>
+      (a.getAttribute('href') || '').startsWith('#/issue/')
+    );
     if (!firstInternal) {
       throw new Error('No internal link found');
     }
