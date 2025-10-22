@@ -1,4 +1,5 @@
 import { WebSocketServer } from 'ws';
+import { runBdJson } from './bd.js';
 import { isRequest, makeError, makeOk } from './protocol.js';
 
 /** @typedef {import('ws').WebSocket} WebSocket */
@@ -72,7 +73,7 @@ export function attachWsServer(http_server, options = {}) {
  * @param {WebSocket} ws
  * @param {import('ws').RawData} data
  */
-export function handleMessage(ws, data) {
+export async function handleMessage(ws, data) {
   /** @type {unknown} */
   let json;
   try {
@@ -104,6 +105,51 @@ export function handleMessage(ws, data) {
   // Dispatch known types here as we implement them. For now, only a ping utility.
   if (req.type === /** @type {any} */ ('ping')) {
     ws.send(JSON.stringify(makeOk(req, { ts: Date.now() })));
+    return;
+  }
+
+  // list-issues
+  if (req.type === 'list-issues') {
+    const filters =
+      req.payload && typeof req.payload === 'object'
+        ? /** @type {any} */ (req.payload).filters
+        : undefined;
+    /** @type {string[]} */
+    const args = ['list', '--json'];
+    if (filters && typeof filters === 'object') {
+      if (typeof filters.status === 'string') {
+        args.push('--status', filters.status);
+      }
+      if (typeof filters.priority === 'number') {
+        args.push('--priority', String(filters.priority));
+      }
+    }
+    const res = await runBdJson(args);
+    if (res.code !== 0) {
+      const err = makeError(req, 'bd_error', res.stderr || 'bd failed');
+      ws.send(JSON.stringify(err));
+      return;
+    }
+    ws.send(JSON.stringify(makeOk(req, res.stdoutJson)));
+    return;
+  }
+
+  // show-issue
+  if (req.type === 'show-issue') {
+    const id = /** @type {any} */ (req.payload)?.id;
+    if (typeof id !== 'string' || id.length === 0) {
+      ws.send(
+        JSON.stringify(makeError(req, 'bad_request', 'payload.id must be a non-empty string'))
+      );
+      return;
+    }
+    const res = await runBdJson(['show', id, '--json']);
+    if (res.code !== 0) {
+      const err = makeError(req, 'bd_error', res.stderr || 'bd failed');
+      ws.send(JSON.stringify(err));
+      return;
+    }
+    ws.send(JSON.stringify(makeOk(req, res.stdoutJson)));
     return;
   }
 
