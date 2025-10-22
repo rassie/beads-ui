@@ -11,21 +11,13 @@ import { createWsClient } from './ws.js';
 export function bootstrap(root_element) {
   /** @type {string} */
   const html_value = `
-    <aside id="list-panel" class="panel">
-      <div class="panel__header"><strong>Issues</strong></div>
-      <div class="panel__body" id="list-root"></div>
-    </aside>
-    <section id="detail-panel" class="panel">
-      <div class="panel__header"><strong>Details</strong></div>
-      <div class="panel__body" id="detail-root"><p class="muted">Select an issue to view details</p></div>
-    </section>
-  `;
+    <aside id="list-panel" class="panel">\n      <div class="panel__header"></div>\n      <div class="panel__body" id="list-root"></div>\n    </aside>\n    <section id="detail-panel" class="panel">\n      <div class="panel__header"></div>\n      <div class="panel__body" id="detail-root"></div>\n    </section>\n  `;
   root_element.innerHTML = html_value;
 
   /** @type {HTMLElement|null} */
-  const list_mount = document.getElementById('list-root');
+  const list_mount = document.getElementById('list-panel');
   /** @type {HTMLElement|null} */
-  const detail_mount = document.getElementById('detail-root');
+  const detail_mount = document.getElementById('detail-panel');
   if (list_mount) {
     const client = createWsClient();
     // Load persisted filters (status/search) from localStorage
@@ -94,6 +86,8 @@ export function bootstrap(root_element) {
           router.gotoIssue(id);
         }
       });
+      // Render placeholder header/body initially
+      detail.clear();
 
       // React to selectedId changes
       store.subscribe((s) => {

@@ -1,5 +1,6 @@
 // Issue Detail view implementation.
 import { renderMarkdown } from '../utils/markdown.js';
+import { priority_levels } from '../utils/priority.js';
 import { createTypeBadge } from '../utils/type-badge.js';
 
 /**
@@ -26,11 +27,11 @@ import { createTypeBadge } from '../utils/type-badge.js';
 /**
  * Create the Issue Detail view.
  * @param {HTMLElement} mount_element - Element to render into.
- * @param {(type: string, payload?: unknown) => Promise<unknown>} send_fn - RPC transport.
- * @param {(hash: string) => void} [navigate_fn] - Navigation function; defaults to setting location.hash.
+ * @param {(type: string, payload?: unknown) => Promise<unknown>} sendFn - RPC transport.
+ * @param {(hash: string) => void} [navigateFn] - Navigation function; defaults to setting location.hash.
  * @returns {{ load: (id: string) => Promise<void>, clear: () => void, destroy: () => void }} View API.
  */
-export function createDetailView(mount_element, send_fn, navigate_fn) {
+export function createDetailView(mount_element, sendFn, navigateFn) {
   /** @type {IssueDetail | null} */
   let current = null;
   /** @type {boolean} */
@@ -77,7 +78,14 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
     const p = document.createElement('p');
     p.className = 'muted';
     p.textContent = message;
-    mount_element.replaceChildren(p);
+    const body = /** @type {HTMLDivElement|null} */ (
+      mount_element.querySelector('.panel__body')
+    );
+    if (body) {
+      body.replaceChildren(p);
+    } else {
+      mount_element.replaceChildren(p);
+    }
   }
 
   /** @param {string} id */
@@ -88,7 +96,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
     a.textContent = id;
     a.addEventListener('click', (ev) => {
       ev.preventDefault();
-      const nav = navigate_fn || ((h) => (window.location.hash = h));
+      const nav = navigateFn || ((h) => (window.location.hash = h));
       nav(a.getAttribute('href') || '#');
     });
     return a;
@@ -99,20 +107,45 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
    * @param {IssueDetail} issue
    */
   function render(issue) {
+    // Ensure panel header/body structure
+    /** @type {HTMLDivElement | null} */
+    let header = mount_element.querySelector('.panel__header');
+    /** @type {HTMLDivElement | null} */
+    let body = mount_element.querySelector('.panel__body');
+    if (!header) {
+      header = document.createElement('div');
+      header.className = 'panel__header';
+      mount_element.appendChild(header);
+    }
+    if (!body) {
+      body = document.createElement('div');
+      body.className = 'panel__body';
+      body.id = 'detail-root';
+      mount_element.appendChild(body);
+    }
+    header.replaceChildren();
+    const hdr = document.createElement('span');
+    hdr.className = 'mono';
+    hdr.textContent = issue.id;
+    header.appendChild(hdr);
+
     /** @type {HTMLElement} */
     const container = document.createElement('div');
     container.style.position = 'relative';
 
-    // Header: ID and Title
+    // Two-column layout wrappers
+    /** @type {HTMLDivElement} */
+    const layout = document.createElement('div');
+    layout.className = 'detail-layout';
+    /** @type {HTMLDivElement} */
+    const mainCol = document.createElement('div');
+    mainCol.className = 'detail-main';
+
+    // Header: Title only (ID shown in panel header)
     /** @type {HTMLHeadingElement} */
     const h = document.createElement('h2');
     h.style.margin = '0 0 8px';
-    /** @type {HTMLSpanElement} */
-    const id_span = document.createElement('span');
-    id_span.textContent = issue.id;
-    id_span.style.fontWeight = '700';
-    id_span.style.marginRight = '8px';
-    h.appendChild(id_span);
+    // Removed redundant ID in detail main
 
     if (edit_title) {
       /** @type {HTMLInputElement} */
@@ -154,7 +187,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
         current.title = next;
         try {
           /** @type {any} */
-          const updated = await send_fn('edit-text', {
+          const updated = await sendFn('edit-text', {
             id: current.id,
             field: 'title',
             value: next
@@ -202,18 +235,9 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
           render(issue);
         }
       });
-      // Type badge next to title
-      const badge = createTypeBadge(/** @type {any} */ (issue).issue_type);
-      badge.style.marginLeft = '8px';
       h.appendChild(title_span);
-      h.appendChild(badge);
     }
 
-    // Meta row
-    /** @type {HTMLDivElement} */
-    const meta = document.createElement('div');
-    meta.className = 'muted';
-    meta.style.marginBottom = '12px';
     // Status select
     /** @type {HTMLSelectElement} */
     const status_select = document.createElement('select');
@@ -240,7 +264,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
       current.status = next;
       try {
         /** @type {any} */
-        const updated = await send_fn('update-status', {
+        const updated = await sendFn('update-status', {
           id: current.id,
           status: next
         });
@@ -260,9 +284,13 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
     // Priority select 0..4
     /** @type {HTMLSelectElement} */
     const priority_select = document.createElement('select');
-    priority_select.innerHTML = [0, 1, 2, 3, 4]
-      .map((n) => `<option value="${n}">p${n}</option>`)
-      .join('');
+    for (let i = 0; i < priority_levels.length; i += 1) {
+      /** @type {HTMLOptionElement} */
+      const option = document.createElement('option');
+      option.value = String(i);
+      option.textContent = priority_levels[i];
+      priority_select.appendChild(option);
+    }
     priority_select.value = String(issue.priority ?? 2);
     priority_select.addEventListener('change', async () => {
       if (pending || !current) {
@@ -278,8 +306,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
       priority_select.disabled = true;
       current.priority = next;
       try {
-        /** @type {any} */
-        const updated = await send_fn('update-priority', {
+        const updated = await sendFn('update-priority', {
           id: current.id,
           priority: next
         });
@@ -296,11 +323,55 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
       }
     });
 
-    meta.replaceChildren(
-      status_select,
-      document.createTextNode(' · '),
-      priority_select
-    );
+    // Build properties card to host editable status/priority
+    /** @type {HTMLDivElement} */
+    const propsCard = document.createElement('div');
+    propsCard.className = 'props-card';
+    const propsTitle = document.createElement('div');
+    propsTitle.className = 'props-card__title';
+    propsTitle.textContent = 'Properties';
+    propsCard.appendChild(propsTitle);
+    // Type row (moved from title)
+    const rowType = document.createElement('div');
+    rowType.className = 'prop';
+    const lblT = document.createElement('div');
+    lblT.className = 'label';
+    lblT.textContent = 'Type';
+    const valT = document.createElement('div');
+    valT.className = 'value';
+    valT.appendChild(createTypeBadge(/** @type {any} */ (issue).issue_type));
+    rowType.appendChild(lblT);
+    rowType.appendChild(valT);
+    propsCard.appendChild(rowType);
+    // Status row
+    const rowStatus = document.createElement('div');
+    rowStatus.className = 'prop';
+    const lbl1 = document.createElement('div');
+    lbl1.className = 'label';
+    lbl1.textContent = 'Status';
+    const val1 = document.createElement('div');
+    val1.className = 'value';
+    val1.appendChild(status_select);
+    rowStatus.appendChild(lbl1);
+    rowStatus.appendChild(val1);
+    // Priority row
+    const rowPri = document.createElement('div');
+    rowPri.className = 'prop';
+    const lbl2 = document.createElement('div');
+    lbl2.className = 'label';
+    lbl2.textContent = 'Priority';
+    const val2 = document.createElement('div');
+    val2.className = 'value';
+    val2.appendChild(priority_select);
+    rowPri.appendChild(lbl2);
+    rowPri.appendChild(val2);
+    propsCard.appendChild(rowStatus);
+    propsCard.appendChild(rowPri);
+
+    // Prepare side column now so it can receive sections below
+    const sideCol = document.createElement('div');
+    sideCol.className = 'detail-side';
+    sideCol.appendChild(propsCard);
 
     // Description (markdown read-mode + inline edit)
     /** @type {HTMLDivElement} */
@@ -345,7 +416,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
         current.description = next;
         try {
           /** @type {any} */
-          const updated = await send_fn('edit-text', {
+          const updated = await sendFn('edit-text', {
             id: current.id,
             field: 'description',
             value: next
@@ -383,8 +454,15 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
       md_wrap.setAttribute('role', 'button');
       md_wrap.setAttribute('aria-label', 'Edit description');
       const text = issue.description || '';
-      const frag = renderMarkdown(text);
-      md_wrap.appendChild(frag);
+      if (text.trim() === '') {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'muted';
+        placeholder.textContent = 'Description';
+        md_wrap.appendChild(placeholder);
+      } else {
+        const frag = renderMarkdown(text);
+        md_wrap.appendChild(frag);
+      }
       md_wrap.addEventListener('click', () => {
         edit_desc = true;
         render(issue);
@@ -413,7 +491,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
       /** @type {HTMLDivElement} */
       const box = document.createElement('div');
 
-      // Header row with inline add controls
+      // Header row
       /** @type {HTMLDivElement} */
       const head_row = document.createElement('div');
       head_row.style.display = 'flex';
@@ -422,7 +500,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
 
       /** @type {HTMLDivElement} */
       const head_label = document.createElement('div');
-      head_label.className = 'muted';
+      head_label.className = 'props-card__title';
       head_label.textContent = title;
       head_row.appendChild(head_label);
 
@@ -461,7 +539,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
         try {
           if (title === 'Dependencies') {
             /** @type {any} */
-            const updated = await send_fn('dep-add', {
+            const updated = await sendFn('dep-add', {
               a: current.id,
               b: target,
               view_id: current.id
@@ -472,7 +550,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
             }
           } else {
             /** @type {any} */
-            const updated = await send_fn('dep-add', {
+            const updated = await sendFn('dep-add', {
               a: target,
               b: current.id,
               view_id: current.id
@@ -490,13 +568,9 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
       });
       add_wrap.appendChild(input);
       add_wrap.appendChild(add_btn);
-      head_row.appendChild(add_wrap);
 
       /** @type {HTMLUListElement} */
       const ul = document.createElement('ul');
-      ul.style.listStyle = 'none';
-      ul.style.padding = '0';
-      ul.style.margin = '4px 0 0';
 
       if (!items || items.length === 0) {
         /** @type {HTMLLIElement} */
@@ -518,7 +592,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
 
           // Navigate on row click
           li.addEventListener('click', () => {
-            const nav = navigate_fn || ((h) => (window.location.hash = h));
+            const nav = navigateFn || ((h) => (window.location.hash = h));
             nav(`#/issue/${did}`);
           });
 
@@ -535,9 +609,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
           /** @type {HTMLSpanElement} */
           const title_span = document.createElement('span');
           title_span.textContent = dep.title || '';
-          title_span.style.overflow = 'hidden';
-          title_span.style.whiteSpace = 'nowrap';
-          title_span.style.textOverflow = 'ellipsis';
+          title_span.classList.add('text-truncate');
           li.appendChild(title_span);
 
           // remove button
@@ -554,7 +626,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
             try {
               if (title === 'Dependencies') {
                 /** @type {any} */
-                const updated = await send_fn('dep-remove', {
+                const updated = await sendFn('dep-remove', {
                   a: current.id,
                   b: did,
                   view_id: current.id
@@ -565,7 +637,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
                 }
               } else {
                 /** @type {any} */
-                const updated = await send_fn('dep-remove', {
+                const updated = await sendFn('dep-remove', {
                   a: did,
                   b: current.id,
                   view_id: current.id
@@ -588,6 +660,8 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
 
       box.appendChild(head_row);
       box.appendChild(ul);
+      // Move add controls to bottom of the section
+      box.appendChild(add_wrap);
       return box;
     }
 
@@ -601,14 +675,12 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
       : [];
 
     const dependencies_box = makeList('Dependencies', dependencies);
+    dependencies_box.classList.add('props-card');
     const dependents_box = makeList('Dependents', dependents);
+    dependents_box.classList.add('props-card');
 
-    deps.appendChild(dependencies_box);
-    deps.appendChild(dependents_box);
-
-    container.appendChild(h);
-    container.appendChild(meta);
-    container.appendChild(desc_box);
+    mainCol.appendChild(h);
+    mainCol.appendChild(desc_box);
 
     // Acceptance (markdown read-mode + inline edit)
     /** @type {HTMLDivElement} */
@@ -658,7 +730,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
         current.acceptance = next;
         try {
           /** @type {any} */
-          const updated = await send_fn('edit-text', {
+          const updated = await sendFn('edit-text', {
             id: current.id,
             field: 'acceptance',
             value: next
@@ -710,10 +782,16 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
       });
       acc_box.appendChild(md_wrap);
     }
-    container.appendChild(acc_box);
-    container.appendChild(deps);
+    mainCol.appendChild(acc_box);
+    sideCol.appendChild(dependencies_box);
+    sideCol.appendChild(dependents_box);
 
-    mount_element.replaceChildren(container);
+    // Side column wraps properties and relations
+    layout.appendChild(mainCol);
+    layout.appendChild(sideCol);
+    container.appendChild(layout);
+
+    body.replaceChildren(container);
   }
 
   return {
@@ -725,7 +803,7 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
       /** @type {unknown} */
       let result;
       try {
-        result = await send_fn('show-issue', { id });
+        result = await sendFn('show-issue', { id });
       } catch {
         result = null;
       }
@@ -743,6 +821,26 @@ export function createDetailView(mount_element, send_fn, navigate_fn) {
       render(issue);
     },
     clear() {
+      // Ensure panel header/body structure and set placeholder header
+      /** @type {HTMLDivElement | null} */
+      let header = mount_element.querySelector('.panel__header');
+      /** @type {HTMLDivElement | null} */
+      let body = mount_element.querySelector('.panel__body');
+      if (!header) {
+        header = document.createElement('div');
+        header.className = 'panel__header';
+        mount_element.appendChild(header);
+      }
+      if (!body) {
+        body = document.createElement('div');
+        body.className = 'panel__body';
+        mount_element.appendChild(body);
+      }
+      header.replaceChildren();
+      const hdr = document.createElement('span');
+      hdr.className = 'mono';
+      hdr.textContent = '—';
+      header.appendChild(hdr);
       renderPlaceholder('Select an issue to view details');
     },
     destroy() {

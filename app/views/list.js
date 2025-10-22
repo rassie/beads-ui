@@ -1,4 +1,5 @@
 /* global NodeListOf */
+import { priority_levels } from '../utils/priority.js';
 import { createTypeBadge } from '../utils/type-badge.js';
 
 // List view implementation; requires a transport send function.
@@ -29,15 +30,19 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
 
   /** @type {HTMLSelectElement} */
   const status_select = document.createElement('select');
-  status_select.innerHTML = [
+  for (const [v, t] of [
     ['all', 'All'],
     ['ready', 'Ready'],
     ['open', 'Open'],
     ['in_progress', 'In progress'],
     ['closed', 'Closed']
-  ]
-    .map(([v, t]) => `<option value="${v}">${t}</option>`)
-    .join('');
+  ]) {
+    /** @type {HTMLOptionElement} */
+    const option = document.createElement('option');
+    option.value = v;
+    option.textContent = t;
+    status_select.appendChild(option);
+  }
   status_select.value = status_filter;
 
   /** @type {HTMLInputElement} */
@@ -47,7 +52,6 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
 
   // Initialize filters from store on first render so reload applies persisted state
   if (store) {
-    /** @type {any} */
     const s = store.getState();
     if (s && s.filters && typeof s.filters === 'object') {
       status_filter = s.filters.status || 'all';
@@ -67,11 +71,9 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
   /** @type {HTMLElement} */
   const body = document.createElement('div');
   body.className = 'panel__body';
+  body.id = 'list-root';
   /** @type {HTMLUListElement} */
   const list = document.createElement('ul');
-  list.style.listStyle = 'none';
-  list.style.padding = '0';
-  list.style.margin = '0';
   body.appendChild(list);
 
   mount_element.replaceChildren(header, body);
@@ -98,8 +100,7 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
     for (const it of filtered) {
       /** @type {HTMLLIElement} */
       const li = document.createElement('li');
-      li.style.padding = '8px 6px';
-      li.style.cursor = 'pointer';
+      li.classList.add('issue-item');
       li.dataset.issueId = it.id;
       li.addEventListener('click', () => {
         const nav = navigate_fn || ((h) => (window.location.hash = h));
@@ -110,30 +111,36 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
         li.classList.add('selected');
       }
 
-      /** @type {HTMLSpanElement} */
-      const id_span = document.createElement('span');
-      id_span.textContent = it.id;
-      id_span.style.fontWeight = '600';
-      id_span.style.marginRight = '8px';
-
+      // Left: title row + meta row
+      const text_wrap = document.createElement('div');
+      text_wrap.classList.add('text-truncate');
+      const title_row = document.createElement('div');
+      title_row.classList.add('issue-title');
       /** @type {HTMLSpanElement} */
       const title_span = document.createElement('span');
       title_span.textContent = it.title || '(no title)';
+      title_row.classList.add('text-truncate');
+      title_row.appendChild(title_span);
+      const meta_row = document.createElement('div');
+      meta_row.classList.add('issue-meta');
+      meta_row.textContent = `${it.status} · ${priority_levels[it.priority]}`;
+      text_wrap.appendChild(title_row);
+      text_wrap.appendChild(meta_row);
 
-      // Type badge next to title
-      const badge = createTypeBadge(/** @type {any} */ (it).issue_type);
-      badge.style.marginRight = '6px';
-
+      // Right: id
+      // Right column with id (top) and type badge (bottom)
+      const right_wrap = document.createElement('div');
+      right_wrap.classList.add('issue-right');
       /** @type {HTMLSpanElement} */
-      const meta_span = document.createElement('span');
-      meta_span.className = 'muted';
-      meta_span.style.float = 'right';
-      meta_span.textContent = `${it.status} · p${it.priority}`;
+      const id_right = document.createElement('span');
+      id_right.classList.add('issue-id', 'mono');
+      id_right.textContent = it.id;
+      const type_badge = createTypeBadge(/** @type {any} */ (it).issue_type);
+      right_wrap.appendChild(id_right);
+      right_wrap.appendChild(type_badge);
 
-      li.appendChild(id_span);
-      li.appendChild(badge);
-      li.appendChild(title_span);
-      li.appendChild(meta_span);
+      li.appendChild(text_wrap);
+      li.appendChild(right_wrap);
       list.appendChild(li);
     }
   }

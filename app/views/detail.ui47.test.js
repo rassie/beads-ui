@@ -57,7 +57,7 @@ describe('detail deps UI (UI-47)', () => {
     expect(navs[navs.length - 1]).toBe('#/issue/UI-9');
   });
 
-  test('add input is inline with section title', async () => {
+  test('add input is placed at the bottom of the section', async () => {
     document.body.innerHTML =
       '<section class="panel"><div id="mount"></div></section>';
     const mount = /** @type {HTMLElement} */ (document.getElementById('mount'));
@@ -71,11 +71,8 @@ describe('detail deps UI (UI-47)', () => {
       mount.querySelector('[data-testid="add-dependency"]')
     );
     expect(input).toBeTruthy();
-    const headRow = input.parentElement?.parentElement;
-    expect(
-      headRow &&
-        headRow.textContent &&
-        headRow.textContent.includes('Dependencies')
-    ).toBe(true);
+    const prev = input.parentElement?.previousElementSibling;
+    // Expect the add controls to follow the list (ul)
+    expect(prev && prev.tagName).toBe('UL');
   });
 });
