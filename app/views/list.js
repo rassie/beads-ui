@@ -9,15 +9,18 @@
  * @param {HTMLElement} mount_element - Element to render into.
  * @param {(type: string, payload?: unknown) => Promise<unknown>} send_fn - RPC transport.
  * @param {(hash: string) => void} [navigate_fn] - Navigation function (defaults to setting location.hash).
+ * @param {{ getState: () => any, setState: (patch: any) => void, subscribe: (fn: (s:any)=>void)=>()=>void }} [store] - Optional state store.
  * @returns {{ load: () => Promise<void>, destroy: () => void }} View API.
  */
-export function createListView(mount_element, send_fn, navigate_fn) {
+export function createListView(mount_element, send_fn, navigate_fn, store) {
   /** @type {string} */
   let status_filter = 'all';
   /** @type {string} */
   let search_text = '';
   /** @type {Issue[]} */
   let issues_cache = [];
+  /** @type {null | (() => void)} */
+  let unsubscribe = null;
 
   /** @type {HTMLSelectElement} */
   const status_select = document.createElement('select');
@@ -110,10 +113,17 @@ export function createListView(mount_element, send_fn, navigate_fn) {
 
   status_select.addEventListener('change', () => {
     status_filter = status_select.value;
+    if (store) {
+      store.setState({ filters: { status: /** @type {any} */ (status_filter) } });
+      void load();
+    }
     render();
   });
   search_input.addEventListener('input', () => {
     search_text = search_input.value;
+    if (store) {
+      store.setState({ filters: { search: search_text } });
+    }
     render();
   });
 
@@ -145,6 +155,10 @@ export function createListView(mount_element, send_fn, navigate_fn) {
     load,
     destroy() {
       mount_element.replaceChildren();
+      if (unsubscribe) {
+        unsubscribe();
+        unsubscribe = null;
+      }
     },
   };
 }
