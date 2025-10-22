@@ -1,6 +1,6 @@
-import { makeRequest, nextId } from './protocol.js';
 import { createDetailView } from './views/detail.js';
 import { createListView } from './views/list.js';
+import { createWsClient } from './ws.js';
 
 /**
  * Bootstrap the SPA shell with two panels.
@@ -25,46 +25,17 @@ export function bootstrap(root_element) {
   /** @type {HTMLElement|null} */
   const detail_mount = document.getElementById('detail-root');
   if (list_mount) {
+    const client = createWsClient();
     /**
      * @param {string} type
      * @param {unknown} payload
      */
     const transport = async (type, payload) => {
-      if (typeof window === 'undefined' || typeof WebSocket === 'undefined') {
+      try {
+        return await client.send(/** @type {any} */ (type), payload);
+      } catch {
         return [];
       }
-      const url = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws';
-      return await new Promise((resolve) => {
-        const ws = new WebSocket(url);
-        const id = nextId();
-        const req = makeRequest(/** @type {any} */ (type), payload, id);
-        ws.addEventListener('open', () => ws.send(JSON.stringify(req)));
-        ws.addEventListener('message', (ev) => {
-          try {
-            /** @type {any} */
-            const msg = JSON.parse(String(ev.data));
-            if (msg && msg.id === id) {
-              ws.close();
-              if (msg.ok) {
-                resolve(msg.payload);
-              } else {
-                resolve([]);
-              }
-            }
-          } catch {
-            ws.close();
-            resolve([]);
-          }
-        });
-        ws.addEventListener('error', () => {
-          try {
-            ws.close();
-          } catch {
-            /* ignore */
-          }
-          resolve([]);
-        });
-      });
     };
     const view = createListView(list_mount, transport, (hash) => {
       window.location.hash = hash;
@@ -95,6 +66,15 @@ export function bootstrap(root_element) {
           detail.clear();
         }
       }
+
+      // Refresh views on push updates
+      client.on('issues-changed', () => {
+        void view.load();
+        const id = currentIssueId();
+        if (id) {
+          void detail.load(id);
+        }
+      });
 
       window.addEventListener('hashchange', handleHashChange);
       handleHashChange();
