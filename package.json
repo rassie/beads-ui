@@ -1,6 +1,6 @@
 {
   "name": "beads-ui",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "private": true,
   "type": "module",
   "bin": {
@@ -17,10 +17,14 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint --ext .js .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "preversion": "npm run all",
+    "version": "changes",
+    "postversion": "git push --follow-tags && npm publish"
   },
   "devDependencies": {
     "@eslint/js": "^9.38.0",
+    "@studio/changes": "^3.0.0",
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/express": "^5.0.3",
     "@types/node": "^22.7.4",
