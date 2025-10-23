@@ -134,13 +134,14 @@ export async function handleMessage(ws, data) {
     const args = ['list', '--json'];
     if (filters && typeof filters === 'object') {
       if (typeof filters.status === 'string') {
+        // Use long flag for clarity and compatibility
         args.push('--status', filters.status);
       }
       if (typeof filters.priority === 'number') {
         args.push('--priority', String(filters.priority));
       }
       if (typeof filters.limit === 'number' && filters.limit > 0) {
-        args.push('-l', String(filters.limit));
+        args.push('--limit', String(filters.limit));
       }
     }
     const res = await runBdJson(args);

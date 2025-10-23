@@ -151,7 +151,7 @@ describe('ws handlers: list/show', () => {
     );
     const call = mocked.mock.calls[mocked.mock.calls.length - 1];
     const args = /** @type {string[]} */ (call[0]);
-    expect(args.includes('-l')).toBe(true);
+    expect(args.includes('--limit')).toBe(true);
     expect(args.includes('10')).toBe(true);
     const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
     expect(obj.ok).toBe(true);
