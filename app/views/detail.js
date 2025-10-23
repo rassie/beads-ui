@@ -449,9 +449,15 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
       .value=${issue.status || 'open'}
       ?disabled=${pending}
     >
-      ${['open', 'in_progress', 'closed'].map(
-        (s) => html`<option value=${s}>${statusLabel(s)}</option>`
-      )}
+      ${(() => {
+        const cur = String(issue.status || 'open');
+        return ['open', 'in_progress', 'closed'].map(
+          (s) =>
+            html`<option value=${s} ?selected=${cur === s}>
+              ${statusLabel(s)}
+            </option>`
+        );
+      })()}
     </select>`;
 
     const priority_select = html`<select
@@ -462,10 +468,17 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
       .value=${String(typeof issue.priority === 'number' ? issue.priority : 2)}
       ?disabled=${pending}
     >
-      ${priority_levels.map(
-        (p, i) =>
-          html`<option value=${String(i)}>${emojiForPriority(i)} ${p}</option>`
-      )}
+      ${(() => {
+        const cur = String(
+          typeof issue.priority === 'number' ? issue.priority : 2
+        );
+        return priority_levels.map(
+          (p, i) =>
+            html`<option value=${String(i)} ?selected=${cur === String(i)}>
+              ${emojiForPriority(i)} ${p}
+            </option>`
+        );
+      })()}
     </select>`;
 
     const desc_block = edit_desc
