@@ -25,6 +25,25 @@ Open http://127.0.0.1:3000 in your browser.
 - Data flow: UI ⇄ WS ⇄ server ⇄ `bd` CLI; DB changes trigger `issues-changed`
   events.
 
+## Navigation & Views
+
+The app provides a top navigation with three tabs:
+
+- Issues — List of issues with quick filters and keyboard navigation. Clicking a
+  row opens the Issue Detail panel.
+- Epics — Grouped table by epic from `bd epic status --json`. Expanding an epic
+  loads its dependents and shows only non‑closed issues. Inline editing supports
+  title, type, priority, status, and assignee; changes persist via `bd update`.
+  Within a group, rows sort by priority (ascending) and then by `updated_at`
+  (descending) when available.
+- Board — Three columns (Ready, In progress, Closed). Data sources:
+  - Ready: `bd ready --json`, sorted by priority asc then `updated_at` desc
+  - In progress: `bd list -s in_progress --json`, sorted by `updated_at` desc
+  - Closed: `bd list -s closed -l 10 --json`, sorted by `updated_at` desc
+
+Tip: The selected tab and Issues filters persist in `localStorage` so the app
+restores your last context.
+
 ## How Edits Propagate
 
 - UI actions (edit title/acceptance, change status/priority, add/remove
@@ -52,3 +71,5 @@ and component overview.
   `PORT`.
 - The active beads database path is resolved consistently and watched for
   changes. See `docs/db-watching.md`.
+- A dark theme is available via the header toggle. Preference is stored in
+  `localStorage` under `beads-ui.theme`.

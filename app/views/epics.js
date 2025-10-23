@@ -1,7 +1,7 @@
 import { html, render } from 'lit-html';
 
 /**
- * @typedef {{ id: string, title?: string, status?: string, priority?: number, issue_type?: string, assignee?: string }} IssueLite
+ * @typedef {{ id: string, title?: string, status?: string, priority?: number, issue_type?: string, assignee?: string, updated_at?: string }} IssueLite
  */
 
 /**
@@ -256,7 +256,9 @@ export function createEpicsView(mount_element, data, goto_issue) {
                   status: full.status,
                   priority: full.priority,
                   issue_type: full.issue_type,
-                  assignee: full.assignee
+                  assignee: full.assignee,
+                  // include updated_at for secondary sort within same priority
+                  updated_at: /** @type {any} */ (full).updated_at
                 });
               }
             } catch {
