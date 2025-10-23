@@ -8,21 +8,144 @@ import { runBd, runBdJson } from './bd.js';
 import { isRequest, makeError, makeOk } from './protocol.js';
 
 /**
+ * @typedef {{
+ *   subscribed: boolean,
+ *   list_filters?: { status?: 'open'|'in_progress'|'closed', ready?: boolean, limit?: number },
+ *   show_id?: string | null
+ * }} ConnectionSubs
+ */
+
+/** @type {WeakMap<WebSocket, ConnectionSubs>} */
+const SUBS = new WeakMap();
+
+/** @type {WebSocketServer | null} */
+let CURRENT_WSS = null;
+
+/**
+ * Get or initialize the subscription state for a socket.
+ * @param {WebSocket} ws
+ * @returns {ConnectionSubs}
+ */
+function getSubs(ws) {
+  let s = SUBS.get(ws);
+  if (!s) {
+    s = { subscribed: false, show_id: null };
+    SUBS.set(ws, s);
+  }
+  return s;
+}
+
+/**
+ * Emit an issues-changed event to relevant clients when possible, or broadcast to all.
+ * Targeting rules:
+ * - If `issue` is provided, send to clients that currently show the same id or whose
+ *   last list filter likely includes the issue (status match or ready=true).
+ * - If only `hint` is provided, but contains ids, send to clients that show one of those ids.
+ * - Otherwise, send to all open clients.
+ * @param {{ ts?: number, hint?: { ids?: string[] } }} payload
+ * @param {{ issue?: any }} [options]
+ */
+export function notifyIssuesChanged(payload, options = {}) {
+  const wss = CURRENT_WSS;
+  if (!wss) {
+    return;
+  }
+  /** @type {Set<WebSocket>} */
+  const recipients = new Set();
+
+  /** @type {any} */
+  const issue = options.issue;
+  /** @type {string[]} */
+  const hint_ids = Array.isArray(payload?.hint?.ids)
+    ? /** @type {string[]} */ (payload.hint.ids)
+    : [];
+
+  if (issue && typeof issue === 'object' && issue.id) {
+    for (const ws of wss.clients) {
+      if (ws.readyState !== ws.OPEN) {
+        continue;
+      }
+      const s = getSubs(/** @type {any} */ (ws));
+      if (!s.subscribed) {
+        continue;
+      }
+      if (s.show_id && s.show_id === issue.id) {
+        recipients.add(ws);
+        continue;
+      }
+      if (s.list_filters) {
+        // Ready lists are conservatively invalidated on any change
+        if (s.list_filters.ready === true) {
+          recipients.add(ws);
+          continue;
+        }
+        // Status lists: invalidate when status matches updated issue
+        if (
+          s.list_filters.status &&
+          String(s.list_filters.status) === String(issue.status || '')
+        ) {
+          recipients.add(ws);
+          continue;
+        }
+      }
+    }
+  } else if (hint_ids.length > 0) {
+    for (const ws of wss.clients) {
+      if (ws.readyState !== ws.OPEN) {
+        continue;
+      }
+      const s = getSubs(/** @type {any} */ (ws));
+      if (!s.subscribed) {
+        continue;
+      }
+      if (s.show_id && hint_ids.includes(s.show_id)) {
+        recipients.add(ws);
+      }
+    }
+  }
+
+  /** @type {string} */
+  const msg = JSON.stringify({
+    id: `evt-${Date.now()}`,
+    ok: true,
+    type: /** @type {MessageType} */ ('issues-changed'),
+    payload: { ts: Date.now(), ...(payload || {}) }
+  });
+
+  if (recipients.size > 0) {
+    for (const ws of recipients) {
+      ws.send(msg);
+    }
+  } else {
+    // Fallback: full broadcast to keep clients consistent
+    for (const ws of wss.clients) {
+      if (ws.readyState === ws.OPEN) {
+        ws.send(msg);
+      }
+    }
+  }
+}
+
+/**
  * Attach a WebSocket server to an existing HTTP server.
  * @param {Server} http_server
  * @param {{ path?: string, heartbeat_ms?: number }} [options]
- * @returns {{ wss: WebSocketServer, broadcast: (type: MessageType, payload?: unknown) => void }}
+ * @returns {{ wss: WebSocketServer, broadcast: (type: MessageType, payload?: unknown) => void, notifyIssuesChanged: (payload: { ts?: number, hint?: { ids?: string[] } }) => void }}
  */
 export function attachWsServer(http_server, options = {}) {
   const path = options.path || '/ws';
   const heartbeat_ms = options.heartbeat_ms ?? 30000;
 
   const wss = new WebSocketServer({ server: http_server, path });
+  CURRENT_WSS = wss;
 
   // Heartbeat: track if client answered the last ping
   wss.on('connection', (ws) => {
     // @ts-expect-error add marker property
     ws.isAlive = true;
+
+    // Initialize subscription state for this connection
+    getSubs(/** @type {any} */ (ws));
 
     ws.on('pong', () => {
       // @ts-expect-error marker
@@ -72,7 +195,7 @@ export function attachWsServer(http_server, options = {}) {
     }
   }
 
-  return { wss, broadcast };
+  return { wss, broadcast, notifyIssuesChanged: (p) => notifyIssuesChanged(p) };
 }
 
 /**
@@ -115,6 +238,14 @@ export async function handleMessage(ws, data) {
     return;
   }
 
+  // subscribe-updates: mark this connection as event subscriber
+  if (req.type === 'subscribe-updates') {
+    const s = getSubs(ws);
+    s.subscribed = true;
+    ws.send(JSON.stringify(makeOk(req, { subscribed: true })));
+    return;
+  }
+
   // list-issues
   if (req.type === 'list-issues') {
     const { filters } = /** @type {any} */ (req.payload || {});
@@ -125,6 +256,13 @@ export async function handleMessage(ws, data) {
         const err = makeError(req, 'bd_error', res.stderr || 'bd failed');
         ws.send(JSON.stringify(err));
         return;
+      }
+      // Remember subscription scope for this connection
+      try {
+        const s = getSubs(ws);
+        s.list_filters = { ready: true };
+      } catch {
+        // ignore tracking errors
       }
       ws.send(JSON.stringify(makeOk(req, res.stdoutJson)));
       return;
@@ -149,6 +287,25 @@ export async function handleMessage(ws, data) {
       const err = makeError(req, 'bd_error', res.stderr || 'bd failed');
       ws.send(JSON.stringify(err));
       return;
+    }
+    // Remember last non-ready list filter
+    try {
+      const s = getSubs(ws);
+      /** @type {{ status?: any, limit?: any }} */
+      const f = filters && typeof filters === 'object' ? filters : {};
+      /** @type {any} */
+      const st = f.status;
+      /** @type {any} */
+      const lim = f.limit;
+      s.list_filters = {};
+      if (st === 'open' || st === 'in_progress' || st === 'closed') {
+        s.list_filters.status = st;
+      }
+      if (typeof lim === 'number') {
+        s.list_filters.limit = lim;
+      }
+    } catch {
+      // ignore tracking errors
     }
     ws.send(JSON.stringify(makeOk(req, res.stdoutJson)));
     return;
@@ -192,6 +349,13 @@ export async function handleMessage(ws, data) {
     if (!out) {
       ws.send(JSON.stringify(makeError(req, 'not_found', 'issue not found')));
       return;
+    }
+    // Track current detail subscription for this connection
+    try {
+      const s = getSubs(ws);
+      s.show_id = String(id);
+    } catch {
+      // ignore
     }
     ws.send(JSON.stringify(makeOk(req, out)));
     return;
@@ -273,6 +437,12 @@ export async function handleMessage(ws, data) {
       return;
     }
     ws.send(JSON.stringify(makeOk(req, shown.stdoutJson)));
+    // Push targeted invalidation with updated issue context
+    try {
+      notifyIssuesChanged({ hint: { ids: [id] } }, { issue: shown.stdoutJson });
+    } catch {
+      // ignore fanout errors
+    }
     return;
   }
 
@@ -312,6 +482,11 @@ export async function handleMessage(ws, data) {
       return;
     }
     ws.send(JSON.stringify(makeOk(req, shown.stdoutJson)));
+    try {
+      notifyIssuesChanged({ hint: { ids: [id] } }, { issue: shown.stdoutJson });
+    } catch {
+      // ignore fanout errors
+    }
     return;
   }
 
@@ -369,6 +544,11 @@ export async function handleMessage(ws, data) {
       return;
     }
     ws.send(JSON.stringify(makeOk(req, shown.stdoutJson)));
+    try {
+      notifyIssuesChanged({ hint: { ids: [id] } }, { issue: shown.stdoutJson });
+    } catch {
+      // ignore fanout errors
+    }
     return;
   }
 
@@ -455,6 +635,12 @@ export async function handleMessage(ws, data) {
       return;
     }
     ws.send(JSON.stringify(makeOk(req, shown.stdoutJson)));
+    try {
+      // Dependencies can affect readiness; conservatively target by issue id
+      notifyIssuesChanged({ hint: { ids: [id] } }, { issue: shown.stdoutJson });
+    } catch {
+      // ignore fanout errors
+    }
     return;
   }
 
@@ -494,6 +680,11 @@ export async function handleMessage(ws, data) {
       return;
     }
     ws.send(JSON.stringify(makeOk(req, shown.stdoutJson)));
+    try {
+      notifyIssuesChanged({ hint: { ids: [id] } }, { issue: shown.stdoutJson });
+    } catch {
+      // ignore fanout errors
+    }
     return;
   }
 

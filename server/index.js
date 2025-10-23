@@ -7,14 +7,14 @@ import { attachWsServer } from './ws.js';
 const config = getConfig();
 const app = createApp(config);
 const server = createServer(app);
-const { broadcast } = attachWsServer(server, {
+const { notifyIssuesChanged } = attachWsServer(server, {
   path: '/ws',
   heartbeat_ms: 30000
 });
 
-// Watch the active beads DB and broadcast invalidation to clients
+// Watch the active beads DB and push invalidation (targeted when possible)
 watchDb(config.root_dir, (payload) => {
-  broadcast('issues-changed', payload);
+  notifyIssuesChanged(payload);
 });
 
 server.listen(config.port, config.host, () => {
