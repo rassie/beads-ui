@@ -70,6 +70,11 @@ body {
   margin: 0;
 }
 
+/* Ensure the HTML hidden attribute wins over any display rules we set on routes */
+[hidden] {
+  display: none !important;
+}
+
 body {
   color: var(--fg);
   background: var(--bg);
