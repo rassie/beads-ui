@@ -228,6 +228,7 @@ a:focus {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  max-height: 100%;
 }
 .route.board .panel__body {
   flex: 1;
@@ -257,8 +258,6 @@ a:focus {
 #list-panel .panel__header {
   /* UI-82: search row uses body background */
   background: var(--bg);
-}
-.panel__body {
 }
 
 #detail-panel .panel__header {
