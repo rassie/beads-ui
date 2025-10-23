@@ -163,12 +163,32 @@ export function bootstrap(root_element) {
       detail.clear();
     }
 
-    // Refresh views on push updates
-    client.on('issues-changed', () => {
-      void issues_view.load();
-      const id = store.getState().selected_id;
-      if (id) {
-        void detail.load(id);
+    // Refresh views on push updates (target minimally and avoid flicker)
+    client.on('issues-changed', (payload) => {
+      const s = store.getState();
+      const hintIds =
+        payload && payload.hint && Array.isArray(payload.hint.ids)
+          ? /** @type {string[]} */ (payload.hint.ids)
+          : null;
+
+      const showingDetail = Boolean(s.selected_id);
+
+      // If a top-level view is visible (and not detail), refresh that view
+      if (!showingDetail) {
+        if (s.view === 'issues') {
+          void issues_view.load();
+        } else if (s.view === 'epics') {
+          void epics_view.load();
+        } else if (s.view === 'board') {
+          void board_view.load();
+        }
+      }
+
+      // If a detail is visible, re-fetch it when relevant or when hints are absent
+      if (showingDetail && s.selected_id) {
+        if (!hintIds || hintIds.includes(s.selected_id)) {
+          void detail.load(s.selected_id);
+        }
       }
     });
 

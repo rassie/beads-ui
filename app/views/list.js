@@ -207,6 +207,12 @@ export function createListView(mount_element, sendFn, navigate_fn, store) {
    * Load issues from backend and re-render.
    */
   async function load() {
+    // Preserve scroll position to avoid jarring jumps on live refresh
+    /** @type {HTMLElement|null} */
+    const beforeEl = /** @type {any} */ (
+      mount_element.querySelector('#list-root')
+    );
+    const prevScroll = beforeEl ? beforeEl.scrollTop : 0;
     /** @type {any} */
     const filters = {};
     if (status_filter !== 'all' && status_filter !== 'ready') {
@@ -228,6 +234,18 @@ export function createListView(mount_element, sendFn, navigate_fn, store) {
       issues_cache = /** @type {Issue[]} */ (result);
     }
     doRender();
+    // Restore scroll position if possible
+    try {
+      /** @type {HTMLElement|null} */
+      const afterEl = /** @type {any} */ (
+        mount_element.querySelector('#list-root')
+      );
+      if (afterEl && prevScroll > 0) {
+        afterEl.scrollTop = prevScroll;
+      }
+    } catch {
+      // ignore
+    }
   }
 
   // Keyboard navigation
