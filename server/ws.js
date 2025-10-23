@@ -196,39 +196,7 @@ export async function handleMessage(ws, data) {
     return;
   }
 
-  // update-type
-  if (req.type === /** @type {any} */ ('update-type')) {
-    const { id, type } = /** @type {any} */ (req.payload || {});
-    const allowed = new Set(['bug', 'feature', 'task', 'epic', 'chore']);
-    if (typeof id !== 'string' || id.length === 0 || !allowed.has(type)) {
-      ws.send(
-        JSON.stringify(
-          makeError(
-            req,
-            'bad_request',
-            "payload requires { id: string, type: 'bug'|'feature'|'task'|'epic'|'chore' }"
-          )
-        )
-      );
-      return;
-    }
-    const res = await runBd(['update', id, '--type', type]);
-    if (res.code !== 0) {
-      ws.send(
-        JSON.stringify(makeError(req, 'bd_error', res.stderr || 'bd failed'))
-      );
-      return;
-    }
-    const shown = await runBdJson(['show', id, '--json']);
-    if (shown.code !== 0) {
-      ws.send(
-        JSON.stringify(makeError(req, 'bd_error', shown.stderr || 'bd failed'))
-      );
-      return;
-    }
-    ws.send(JSON.stringify(makeOk(req, shown.stdoutJson)));
-    return;
-  }
+  // type updates are not exposed via UI; no handler
 
   // update-assignee
   if (req.type === /** @type {any} */ ('update-assignee')) {

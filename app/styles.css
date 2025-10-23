@@ -6,7 +6,7 @@
   --panel-bg: #fafafa;
 
   /* Issue type badge palette (light) */
-  --badge-radius: 10px;
+  --badge-radius: 999px;
   --badge-bg-neutral: #e5e7eb;
   --badge-fg-neutral: #374151;
   --badge-bg-bug: #fee2e2;

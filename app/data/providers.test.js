@@ -50,7 +50,6 @@ function makeTransportRecorder() {
         type === 'update-status' ||
         type === 'update-priority' ||
         type === 'edit-text' ||
-        type === 'update-type' ||
         type === 'update-assignee'
       ) {
         return { id: payload?.id || 'X' };
@@ -116,14 +115,12 @@ describe('data/providers', () => {
       acceptance: 'Y',
       status: 'in_progress',
       priority: 2,
-      type: 'feature',
       assignee: 'max'
     });
     const types = rec.calls.map((c) => c.type);
     expect(types).toContain('edit-text');
     expect(types).toContain('update-status');
     expect(types).toContain('update-priority');
-    expect(types).toContain('update-type');
     expect(types).toContain('update-assignee');
   });
 });
