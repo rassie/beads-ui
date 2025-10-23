@@ -9,7 +9,7 @@ and live updates are pushed to the UI when the database changes.
 
 Prerequisites:
 
-- Node.js >= 18.19
+- Node.js >= 22
 - `bd` CLI on your PATH (or set `BD_BIN=/path/to/bd`)
 
 Install and start:

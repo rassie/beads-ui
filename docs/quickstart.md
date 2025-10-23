@@ -6,7 +6,7 @@ CLI. Changes to the active beads database are pushed live to the browser.
 
 ## Prerequisites
 
-- Node.js >= 18.19
+- Node.js >= 22
 - The `bd` CLI on your PATH (or set `BD_BIN=/path/to/bd`)
 - An initialized beads database (see below)
 
