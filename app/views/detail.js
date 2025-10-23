@@ -1,4 +1,5 @@
-// Issue Detail view implementation.
+// Issue Detail view implementation (lit-html based)
+import { html, render } from 'lit-html';
 import { renderMarkdown } from '../utils/markdown.js';
 import { priority_levels } from '../utils/priority.js';
 import { createTypeBadge } from '../utils/type-badge.js';
@@ -69,729 +70,664 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
       }
     }, 2800);
   }
+
+  /** @param {string} id */
+  function issueHref(id) {
+    return `#/issue/${id}`;
+  }
+
   /**
-   * Render a placeholder message.
    * @param {string} message
    */
   function renderPlaceholder(message) {
-    /** @type {HTMLParagraphElement} */
-    const p = document.createElement('p');
-    p.className = 'muted';
-    p.textContent = message;
-    const body = /** @type {HTMLDivElement|null} */ (
-      mount_element.querySelector('.panel__body')
+    render(
+      html`
+        <div class="panel__header"><span class="mono">—</span></div>
+        <div class="panel__body" id="detail-root">
+          <p class="muted">${message}</p>
+        </div>
+      `,
+      mount_element
     );
-    if (body) {
-      body.replaceChildren(p);
-    } else {
-      mount_element.replaceChildren(p);
-    }
   }
 
-  /** @param {string} id */
-  function linkFor(id) {
-    /** @type {HTMLAnchorElement} */
-    const a = document.createElement('a');
-    a.href = `#/issue/${id}`;
-    a.textContent = id;
-    a.addEventListener('click', (ev) => {
-      ev.preventDefault();
-      const nav = navigateFn || ((h) => (window.location.hash = h));
-      nav(a.getAttribute('href') || '#');
-    });
-    return a;
+  // Handlers
+  const onTitleSpanClick = () => {
+    edit_title = true;
+    doRender();
+  };
+  /**
+   * @param {KeyboardEvent} ev
+   */
+  const onTitleKeydown = (ev) => {
+    if (ev.key === 'Enter') {
+      edit_title = true;
+      doRender();
+    } else if (ev.key === 'Escape') {
+      edit_title = false;
+      doRender();
+    }
+  };
+  const onTitleSave = async () => {
+    if (!current || pending) {
+      return;
+    }
+    /** @type {HTMLInputElement|null} */
+    const input = /** @type {any} */ (mount_element.querySelector('h2 input'));
+    const prev = current.title || '';
+    const next = input ? input.value : '';
+    if (next === prev) {
+      edit_title = false;
+      doRender();
+      return;
+    }
+    pending = true;
+    if (input) {
+      input.disabled = true;
+    }
+    try {
+      /** @type {any} */
+      const updated = await sendFn('edit-text', {
+        id: current.id,
+        field: 'title',
+        value: next
+      });
+      if (updated && typeof updated === 'object') {
+        current = /** @type {IssueDetail} */ (updated);
+        edit_title = false;
+        doRender();
+      }
+    } catch {
+      current.title = prev;
+      edit_title = false;
+      doRender();
+      showToast('Failed to save title');
+    } finally {
+      pending = false;
+    }
+  };
+  const onTitleCancel = () => {
+    edit_title = false;
+    doRender();
+  };
+  /**
+   * @param {Event} ev
+   */
+  const onStatusChange = async (ev) => {
+    if (!current || pending) {
+      doRender();
+      return;
+    }
+    /** @type {HTMLSelectElement} */
+    const sel = /** @type {any} */ (ev.currentTarget);
+    const prev = current.status || 'open';
+    const next = sel.value;
+    if (next === prev) {
+      return;
+    }
+    pending = true;
+    current.status = next;
+    doRender();
+    try {
+      /** @type {any} */
+      const updated = await sendFn('update-status', {
+        id: current.id,
+        status: next
+      });
+      if (updated && typeof updated === 'object') {
+        current = /** @type {IssueDetail} */ (updated);
+        doRender();
+      }
+    } catch {
+      current.status = prev;
+      doRender();
+      showToast('Failed to update status');
+    } finally {
+      pending = false;
+    }
+  };
+  /**
+   * @param {Event} ev
+   */
+  const onPriorityChange = async (ev) => {
+    if (!current || pending) {
+      doRender();
+      return;
+    }
+    /** @type {HTMLSelectElement} */
+    const sel = /** @type {any} */ (ev.currentTarget);
+    const prev = typeof current.priority === 'number' ? current.priority : 2;
+    const next = Number(sel.value);
+    if (next === prev) {
+      return;
+    }
+    pending = true;
+    current.priority = next;
+    doRender();
+    try {
+      const updated = await sendFn('update-priority', {
+        id: current.id,
+        priority: next
+      });
+      if (updated && typeof updated === 'object') {
+        current = /** @type {IssueDetail} */ (updated);
+        doRender();
+      }
+    } catch {
+      current.priority = prev;
+      doRender();
+      showToast('Failed to update priority');
+    } finally {
+      pending = false;
+    }
+  };
+
+  const onDescEdit = () => {
+    edit_desc = true;
+    doRender();
+  };
+  /**
+   * @param {KeyboardEvent} ev
+   */
+  const onDescKeydown = (ev) => {
+    if (ev.key === 'Escape') {
+      edit_desc = false;
+      doRender();
+    } else if (
+      ev.key === 'Enter' &&
+      /** @type {KeyboardEvent} */ (ev).ctrlKey
+    ) {
+      const btn = /** @type {HTMLButtonElement|null} */ (
+        mount_element.querySelector('#detail-root .editable-actions button')
+      );
+      if (btn) {
+        btn.click();
+      }
+    }
+  };
+  const onDescSave = async () => {
+    if (!current || pending) {
+      return;
+    }
+    /** @type {HTMLTextAreaElement|null} */
+    const ta = /** @type {any} */ (
+      mount_element.querySelector('#detail-root textarea')
+    );
+    const prev = current.description || '';
+    const next = ta ? ta.value : '';
+    if (next === prev) {
+      edit_desc = false;
+      doRender();
+      return;
+    }
+    pending = true;
+    if (ta) {
+      ta.disabled = true;
+    }
+    try {
+      /** @type {any} */
+      const updated = await sendFn('edit-text', {
+        id: current.id,
+        field: 'description',
+        value: next
+      });
+      if (updated && typeof updated === 'object') {
+        current = /** @type {IssueDetail} */ (updated);
+        edit_desc = false;
+        doRender();
+      }
+    } catch {
+      current.description = prev;
+      edit_desc = false;
+      doRender();
+      showToast('Failed to save description');
+    } finally {
+      pending = false;
+    }
+  };
+  const onDescCancel = () => {
+    edit_desc = false;
+    doRender();
+  };
+
+  const onAcceptEdit = () => {
+    edit_accept = true;
+    doRender();
+  };
+  /**
+   * @param {KeyboardEvent} ev
+   */
+  const onAcceptKeydown = (ev) => {
+    if (ev.key === 'Escape') {
+      edit_accept = false;
+      doRender();
+    } else if (
+      ev.key === 'Enter' &&
+      /** @type {KeyboardEvent} */ (ev).ctrlKey
+    ) {
+      const btn = /** @type {HTMLButtonElement|null} */ (
+        mount_element.querySelector(
+          '#detail-root .acceptance .editable-actions button'
+        )
+      );
+      if (btn) {
+        btn.click();
+      }
+    }
+  };
+  const onAcceptSave = async () => {
+    if (!current || pending) {
+      return;
+    }
+    /** @type {HTMLTextAreaElement|null} */
+    const ta = /** @type {any} */ (
+      mount_element.querySelector('#detail-root .acceptance textarea')
+    );
+    const prev = current.acceptance || '';
+    const next = ta ? ta.value : '';
+    if (next === prev) {
+      edit_accept = false;
+      doRender();
+      return;
+    }
+    pending = true;
+    if (ta) {
+      ta.disabled = true;
+    }
+    try {
+      /** @type {any} */
+      const updated = await sendFn('edit-text', {
+        id: current.id,
+        field: 'acceptance',
+        value: next
+      });
+      if (updated && typeof updated === 'object') {
+        current = /** @type {IssueDetail} */ (updated);
+        edit_accept = false;
+        doRender();
+      }
+    } catch {
+      current.acceptance = prev;
+      edit_accept = false;
+      doRender();
+      showToast('Failed to save acceptance');
+    } finally {
+      pending = false;
+    }
+  };
+  const onAcceptCancel = () => {
+    edit_accept = false;
+    doRender();
+  };
+
+  /**
+   * @param {'Dependencies'|'Dependents'} title
+   * @param {Dependency[]} items
+   */
+  function depsSection(title, items) {
+    const test_id =
+      title === 'Dependencies' ? 'add-dependency' : 'add-dependent';
+    return html`
+      <div class="props-card">
+        <div
+          style="display:flex;align-items:center;justify-content:space-between;"
+        >
+          <div class="props-card__title">${title}</div>
+        </div>
+        <ul>
+          ${!items || items.length === 0
+            ? html`<li class="muted">(none)</li>`
+            : items.map((dep) => {
+                const did = dep.id;
+                const href = issueHref(did);
+                return html` <li
+                  style="display:grid;grid-template-columns:auto auto 1fr auto;gap:6px;align-items:center;padding:2px 0;cursor:pointer;"
+                  @click=${() => {
+                    const nav =
+                      navigateFn || ((h) => (window.location.hash = h));
+                    nav(href);
+                  }}
+                >
+                  <a href=${href} @click=${makeDepLinkClick(href)}>${did}</a>
+                  ${createTypeBadge(dep.issue_type || '')}
+                  <span class="text-truncate">${dep.title || ''}</span>
+                  <button
+                    aria-label=${`Remove dependency ${did}`}
+                    @click=${makeDepRemoveClick(did, title)}
+                  >
+                    ×
+                  </button>
+                </li>`;
+              })}
+        </ul>
+        <div>
+          <input type="text" placeholder="Issue ID" data-testid=${test_id} />
+          <button @click=${makeDepAddClick(items, title)}>Add</button>
+        </div>
+      </div>
+    `;
   }
 
   /**
-   * Render an IssueDetail object.
    * @param {IssueDetail} issue
    */
-  function render(issue) {
-    // Ensure panel header/body structure
-    /** @type {HTMLDivElement | null} */
-    let header = mount_element.querySelector('.panel__header');
-    /** @type {HTMLDivElement | null} */
-    let body = mount_element.querySelector('.panel__body');
-    if (!header) {
-      header = document.createElement('div');
-      header.className = 'panel__header';
-      mount_element.appendChild(header);
+  function detailTemplate(issue) {
+    const title_zone = edit_title
+      ? html`<h2 style="margin:0 0 8px">
+          <input
+            type="text"
+            aria-label="Edit title"
+            .value=${issue.title || ''}
+            size=${Math.min(80, Math.max(20, (issue.title || '').length + 5))}
+            @keydown=${onTitleInputKeydown}
+          />
+          <button style="margin-left:6px" @click=${onTitleSave}>Save</button>
+          <button style="margin-left:6px" @click=${onTitleCancel}>
+            Cancel
+          </button>
+        </h2>`
+      : html`<h2 style="margin:0 0 8px">
+          <span
+            class="editable"
+            tabindex="0"
+            role="button"
+            aria-label="Edit title"
+            @click=${onTitleSpanClick}
+            @keydown=${onTitleKeydown}
+            >${issue.title || ''}</span
+          >
+        </h2>`;
+
+    const status_select = html`<select
+      @change=${onStatusChange}
+      .value=${issue.status || 'open'}
+      ?disabled=${pending}
+    >
+      <option value="open">Open</option>
+      <option value="in_progress">In progress</option>
+      <option value="closed">Closed</option>
+    </select>`;
+
+    const priority_select = html`<select
+      @change=${onPriorityChange}
+      .value=${String(typeof issue.priority === 'number' ? issue.priority : 2)}
+      ?disabled=${pending}
+    >
+      ${priority_levels.map(
+        (p, i) => html`<option value=${String(i)}>${p}</option>`
+      )}
+    </select>`;
+
+    const desc_block = edit_desc
+      ? html`<div class="description">
+          <textarea
+            @keydown=${onDescKeydown}
+            .value=${issue.description || ''}
+            rows="8"
+            style="width:100%"
+          ></textarea>
+          <div class="editable-actions">
+            <button @click=${onDescSave}>Save</button>
+            <button @click=${onDescCancel}>Cancel</button>
+          </div>
+        </div>`
+      : html`<div
+          class="md editable"
+          tabindex="0"
+          role="button"
+          aria-label="Edit description"
+          @click=${onDescEdit}
+          @keydown=${onDescEditableKeydown}
+        >
+          ${(() => {
+            const text = issue.description || '';
+            if (text.trim() === '') {
+              return html`<div class="muted">Description</div>`;
+            }
+            return renderMarkdown(text);
+          })()}
+        </div>`;
+
+    const accept_block = edit_accept
+      ? html`<div class="acceptance">
+          <div class="props-card__title">Acceptance</div>
+          <textarea
+            @keydown=${onAcceptKeydown}
+            .value=${current && current.acceptance ? current.acceptance : ''}
+            rows="6"
+            style="width:100%"
+          ></textarea>
+          <div class="editable-actions">
+            <button @click=${onAcceptSave}>Save</button>
+            <button @click=${onAcceptCancel}>Cancel</button>
+          </div>
+        </div>`
+      : html`<div class="acceptance">
+          <div class="props-card__title">Acceptance</div>
+          <div
+            class="md editable"
+            tabindex="0"
+            role="button"
+            aria-label="Edit acceptance"
+            @click=${onAcceptEdit}
+            @keydown=${onAcceptEditableKeydown}
+          >
+            ${renderMarkdown(
+              current && current.acceptance ? current.acceptance : ''
+            )}
+          </div>
+        </div>`;
+
+    return html`
+      <div class="panel__header"><span class="mono">${issue.id}</span></div>
+      <div class="panel__body" id="detail-root">
+        <div style="position:relative">
+          <div class="detail-layout">
+            <div class="detail-main">
+              ${title_zone} ${desc_block} ${accept_block}
+            </div>
+            <div class="detail-side">
+              <div class="props-card">
+                <div class="props-card__title">Properties</div>
+                <div class="prop">
+                  <div class="label">Type</div>
+                  <div class="value">
+                    ${createTypeBadge(/** @type {any} */ (issue).issue_type)}
+                  </div>
+                </div>
+                <div class="prop">
+                  <div class="label">Status</div>
+                  <div class="value">${status_select}</div>
+                </div>
+                <div class="prop">
+                  <div class="label">Priority</div>
+                  <div class="value">${priority_select}</div>
+                </div>
+              </div>
+              ${depsSection('Dependencies', issue.dependencies || [])}
+              ${depsSection('Dependents', issue.dependents || [])}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function doRender() {
+    if (!current) {
+      renderPlaceholder('No issue selected');
+      return;
     }
-    if (!body) {
-      body = document.createElement('div');
-      body.className = 'panel__body';
-      body.id = 'detail-root';
-      mount_element.appendChild(body);
+    render(detailTemplate(current), mount_element);
+    // Defensive: ensure header text is set for environments where a stale
+    // skeleton header may be queried before lit updates propagate.
+    const hdr = /** @type {HTMLElement|null} */ (
+      mount_element.querySelector('.panel__header')
+    );
+    if (hdr && (hdr.textContent || '').trim() === '') {
+      const span = document.createElement('span');
+      span.className = 'mono';
+      span.textContent = current.id;
+      hdr.replaceChildren(span);
     }
-    header.replaceChildren();
-    const hdr = document.createElement('span');
-    hdr.className = 'mono';
-    hdr.textContent = issue.id;
-    header.appendChild(hdr);
+  }
 
-    /** @type {HTMLElement} */
-    const container = document.createElement('div');
-    container.style.position = 'relative';
+  /**
+   * Create an anchor click handler for dependency links.
+   * @param {string} href
+   * @returns {(ev: Event) => void}
+   */
+  function makeDepLinkClick(href) {
+    return (ev) => {
+      ev.preventDefault();
+      /** @type {Event} */
+      const e = ev;
+      // stop bubbling to the li row click
+      e.stopPropagation();
+      const nav = navigateFn || ((h) => (window.location.hash = h));
+      nav(href);
+    };
+  }
 
-    // Two-column layout wrappers
-    /** @type {HTMLDivElement} */
-    const layout = document.createElement('div');
-    layout.className = 'detail-layout';
-    /** @type {HTMLDivElement} */
-    const mainCol = document.createElement('div');
-    mainCol.className = 'detail-main';
-
-    // Header: Title only (ID shown in panel header)
-    /** @type {HTMLHeadingElement} */
-    const h = document.createElement('h2');
-    h.style.margin = '0 0 8px';
-    // Removed redundant ID in detail main
-
-    if (edit_title) {
-      /** @type {HTMLInputElement} */
-      const title_input = document.createElement('input');
-      title_input.type = 'text';
-      title_input.value = issue.title || '';
-      title_input.size = Math.min(
-        80,
-        Math.max(20, (issue.title || '').length + 5)
-      );
-      title_input.setAttribute('aria-label', 'Edit title');
-      title_input.addEventListener('keydown', (ev) => {
-        if (ev.key === 'Escape') {
-          edit_title = false;
-          render(current || issue);
-        } else if (ev.key === 'Enter') {
-          ev.preventDefault();
-          title_save.click();
-        }
-      });
-      /** @type {HTMLButtonElement} */
-      const title_save = document.createElement('button');
-      title_save.textContent = 'Save';
-      title_save.style.marginLeft = '6px';
-      title_save.addEventListener('click', async () => {
-        if (pending || !current) {
-          return;
-        }
-        const prev = current.title || '';
-        const next = title_input.value;
-        if (next === prev) {
-          edit_title = false;
-          render(current);
-          return;
-        }
-        pending = true;
-        title_input.disabled = true;
-        title_save.disabled = true;
-        current.title = next;
-        try {
-          /** @type {any} */
-          const updated = await sendFn('edit-text', {
-            id: current.id,
-            field: 'title',
-            value: next
-          });
-          if (updated && typeof updated === 'object') {
-            current = /** @type {IssueDetail} */ (updated);
-            edit_title = false;
-            render(current);
-          }
-        } catch {
-          current.title = prev;
-          edit_title = false;
-          render(current);
-          showToast('Failed to save title');
-        } finally {
-          pending = false;
-        }
-      });
-      /** @type {HTMLButtonElement} */
-      const title_cancel = document.createElement('button');
-      title_cancel.textContent = 'Cancel';
-      title_cancel.style.marginLeft = '6px';
-      title_cancel.addEventListener('click', () => {
-        edit_title = false;
-        render(current || issue);
-      });
-      h.appendChild(title_input);
-      h.appendChild(title_save);
-      h.appendChild(title_cancel);
-    } else {
-      /** @type {HTMLSpanElement} */
-      const title_span = document.createElement('span');
-      title_span.className = 'editable';
-      title_span.setAttribute('tabindex', '0');
-      title_span.setAttribute('role', 'button');
-      title_span.setAttribute('aria-label', 'Edit title');
-      title_span.textContent = issue.title || '';
-      title_span.addEventListener('click', () => {
-        edit_title = true;
-        render(issue);
-      });
-      title_span.addEventListener('keydown', (ev) => {
-        if (ev.key === 'Enter') {
-          edit_title = true;
-          render(issue);
-        }
-      });
-      h.appendChild(title_span);
-    }
-
-    // Status select
-    /** @type {HTMLSelectElement} */
-    const status_select = document.createElement('select');
-    status_select.innerHTML = [
-      ['open', 'Open'],
-      ['in_progress', 'In progress'],
-      ['closed', 'Closed']
-    ]
-      .map(([v, t]) => `<option value="${v}">${t}</option>`)
-      .join('');
-    status_select.value = issue.status || 'open';
-    status_select.addEventListener('change', async () => {
-      if (pending || !current) {
-        status_select.value = current?.status || 'open';
-        return;
-      }
-      const prev = current.status || 'open';
-      const next = status_select.value;
-      if (next === prev) {
-        return;
-      }
-      pending = true;
-      status_select.disabled = true;
-      current.status = next;
-      try {
-        /** @type {any} */
-        const updated = await sendFn('update-status', {
-          id: current.id,
-          status: next
-        });
-        if (updated && typeof updated === 'object') {
-          current = /** @type {IssueDetail} */ (updated);
-          render(current);
-        }
-      } catch {
-        current.status = prev;
-        render(current);
-        showToast('Failed to update status');
-      } finally {
-        pending = false;
-      }
-    });
-
-    // Priority select 0..4
-    /** @type {HTMLSelectElement} */
-    const priority_select = document.createElement('select');
-    for (let i = 0; i < priority_levels.length; i += 1) {
-      /** @type {HTMLOptionElement} */
-      const option = document.createElement('option');
-      option.value = String(i);
-      option.textContent = priority_levels[i];
-      priority_select.appendChild(option);
-    }
-    priority_select.value = String(issue.priority ?? 2);
-    priority_select.addEventListener('change', async () => {
-      if (pending || !current) {
-        priority_select.value = String(current?.priority ?? 2);
-        return;
-      }
-      const prev = typeof current.priority === 'number' ? current.priority : 2;
-      const next = Number(priority_select.value);
-      if (next === prev) {
+  /**
+   * Create a click handler for the remove button of a dependency row.
+   * @param {string} did
+   * @param {'Dependencies'|'Dependents'} title
+   * @returns {(ev: Event) => Promise<void>}
+   */
+  function makeDepRemoveClick(did, title) {
+    return async (ev) => {
+      /** @type {Event} */
+      const e = ev;
+      e.stopPropagation();
+      if (!current || pending) {
         return;
       }
       pending = true;
-      priority_select.disabled = true;
-      current.priority = next;
       try {
-        const updated = await sendFn('update-priority', {
-          id: current.id,
-          priority: next
-        });
-        if (updated && typeof updated === 'object') {
-          current = /** @type {IssueDetail} */ (updated);
-          render(current);
-        }
-      } catch {
-        current.priority = prev;
-        render(current);
-        showToast('Failed to update priority');
-      } finally {
-        pending = false;
-      }
-    });
-
-    // Build properties card to host editable status/priority
-    /** @type {HTMLDivElement} */
-    const propsCard = document.createElement('div');
-    propsCard.className = 'props-card';
-    const propsTitle = document.createElement('div');
-    propsTitle.className = 'props-card__title';
-    propsTitle.textContent = 'Properties';
-    propsCard.appendChild(propsTitle);
-    // Type row (moved from title)
-    const rowType = document.createElement('div');
-    rowType.className = 'prop';
-    const lblT = document.createElement('div');
-    lblT.className = 'label';
-    lblT.textContent = 'Type';
-    const valT = document.createElement('div');
-    valT.className = 'value';
-    valT.appendChild(createTypeBadge(/** @type {any} */ (issue).issue_type));
-    rowType.appendChild(lblT);
-    rowType.appendChild(valT);
-    propsCard.appendChild(rowType);
-    // Status row
-    const rowStatus = document.createElement('div');
-    rowStatus.className = 'prop';
-    const lbl1 = document.createElement('div');
-    lbl1.className = 'label';
-    lbl1.textContent = 'Status';
-    const val1 = document.createElement('div');
-    val1.className = 'value';
-    val1.appendChild(status_select);
-    rowStatus.appendChild(lbl1);
-    rowStatus.appendChild(val1);
-    // Priority row
-    const rowPri = document.createElement('div');
-    rowPri.className = 'prop';
-    const lbl2 = document.createElement('div');
-    lbl2.className = 'label';
-    lbl2.textContent = 'Priority';
-    const val2 = document.createElement('div');
-    val2.className = 'value';
-    val2.appendChild(priority_select);
-    rowPri.appendChild(lbl2);
-    rowPri.appendChild(val2);
-    propsCard.appendChild(rowStatus);
-    propsCard.appendChild(rowPri);
-
-    // Prepare side column now so it can receive sections below
-    const sideCol = document.createElement('div');
-    sideCol.className = 'detail-side';
-    sideCol.appendChild(propsCard);
-
-    // Description (markdown read-mode + inline edit)
-    /** @type {HTMLDivElement} */
-    const desc_box = document.createElement('div');
-    desc_box.style.marginBottom = '8px';
-    if (edit_desc) {
-      /** @type {HTMLTextAreaElement} */
-      const desc_input = document.createElement('textarea');
-      desc_input.value = issue.description || '';
-      desc_input.rows = 8;
-      desc_input.style.width = '100%';
-      desc_input.setAttribute('aria-label', 'Edit description');
-      desc_input.addEventListener('keydown', (ev) => {
-        if (ev.key === 'Escape') {
-          edit_desc = false;
-          render(current || issue);
-        } else if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) {
-          ev.preventDefault();
-          desc_save.click();
-        }
-      });
-      /** @type {HTMLDivElement} */
-      const actions = document.createElement('div');
-      actions.className = 'editable-actions';
-      /** @type {HTMLButtonElement} */
-      const desc_save = document.createElement('button');
-      desc_save.textContent = 'Save';
-      desc_save.addEventListener('click', async () => {
-        if (pending || !current) {
-          return;
-        }
-        const prev = current.description || '';
-        const next = desc_input.value;
-        if (next === prev) {
-          edit_desc = false;
-          render(current);
-          return;
-        }
-        pending = true;
-        desc_input.disabled = true;
-        desc_save.disabled = true;
-        current.description = next;
-        try {
+        if (title === 'Dependencies') {
           /** @type {any} */
-          const updated = await sendFn('edit-text', {
-            id: current.id,
-            field: 'description',
-            value: next
+          const updated = await sendFn('dep-remove', {
+            a: current.id,
+            b: did,
+            view_id: current.id
           });
           if (updated && typeof updated === 'object') {
             current = /** @type {IssueDetail} */ (updated);
-            edit_desc = false;
-            render(current);
+            doRender();
           }
-        } catch {
-          current.description = prev;
-          edit_desc = false;
-          render(current);
-          showToast('Failed to save description');
-        } finally {
-          pending = false;
+        } else {
+          /** @type {any} */
+          const updated = await sendFn('dep-remove', {
+            a: did,
+            b: current.id,
+            view_id: current.id
+          });
+          if (updated && typeof updated === 'object') {
+            current = /** @type {IssueDetail} */ (updated);
+            doRender();
+          }
         }
-      });
-      /** @type {HTMLButtonElement} */
-      const desc_cancel = document.createElement('button');
-      desc_cancel.textContent = 'Cancel';
-      desc_cancel.addEventListener('click', () => {
-        edit_desc = false;
-        render(current || issue);
-      });
-      actions.appendChild(desc_save);
-      actions.appendChild(desc_cancel);
-      desc_box.appendChild(desc_input);
-      desc_box.appendChild(actions);
-    } else {
-      /** @type {HTMLDivElement} */
-      const md_wrap = document.createElement('div');
-      md_wrap.className = 'md editable';
-      md_wrap.setAttribute('tabindex', '0');
-      md_wrap.setAttribute('role', 'button');
-      md_wrap.setAttribute('aria-label', 'Edit description');
-      const text = issue.description || '';
-      if (text.trim() === '') {
-        const placeholder = document.createElement('div');
-        placeholder.className = 'muted';
-        placeholder.textContent = 'Description';
-        md_wrap.appendChild(placeholder);
-      } else {
-        const frag = renderMarkdown(text);
-        md_wrap.appendChild(frag);
+      } catch {
+        // ignore
+      } finally {
+        pending = false;
       }
-      md_wrap.addEventListener('click', () => {
-        edit_desc = true;
-        render(issue);
-      });
-      md_wrap.addEventListener('keydown', (ev) => {
-        if (ev.key === 'Enter') {
-          edit_desc = true;
-          render(issue);
-        }
-      });
-      desc_box.appendChild(md_wrap);
-    }
+    };
+  }
 
-    // Dependencies
-    /** @type {HTMLDivElement} */
-    const deps = document.createElement('div');
-    deps.style.display = 'grid';
-    deps.style.gridTemplateColumns = '1fr 1fr';
-    deps.style.gap = '12px';
-
-    /**
-     * @param {'Dependencies'|'Dependents'} title
-     * @param {Dependency[]} items
-     */
-    function makeList(title, items) {
-      /** @type {HTMLDivElement} */
-      const box = document.createElement('div');
-
-      // Header row
-      /** @type {HTMLDivElement} */
-      const head_row = document.createElement('div');
-      head_row.style.display = 'flex';
-      head_row.style.alignItems = 'center';
-      head_row.style.justifyContent = 'space-between';
-
-      /** @type {HTMLDivElement} */
-      const head_label = document.createElement('div');
-      head_label.className = 'props-card__title';
-      head_label.textContent = title;
-      head_row.appendChild(head_label);
-
-      /** @type {HTMLDivElement} */
-      const add_wrap = document.createElement('div');
-      /** @type {HTMLInputElement} */
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.placeholder = 'Issue ID';
-      input.setAttribute(
-        'data-testid',
-        title === 'Dependencies' ? 'add-dependency' : 'add-dependent'
-      );
+  /**
+   * Create a click handler for the Add button in a dependency section.
+   * @param {Dependency[]} items
+   * @param {'Dependencies'|'Dependents'} title
+   * @returns {(ev: Event) => Promise<void>}
+   */
+  function makeDepAddClick(items, title) {
+    return async (ev) => {
+      if (!current || pending) {
+        return;
+      }
       /** @type {HTMLButtonElement} */
-      const add_btn = document.createElement('button');
-      add_btn.textContent = 'Add';
-      add_btn.style.marginLeft = '6px';
-      add_btn.addEventListener('click', async () => {
-        if (!current || pending) {
-          return;
-        }
-        const target = input.value.trim();
-        if (!target || target === current.id) {
-          showToast('Enter a different issue id');
-          return;
-        }
-        // duplicate prevention by id
-        const set = new Set(items.map((d) => d.id));
-        if (set.has(target)) {
-          showToast('Link already exists');
-          return;
-        }
-        pending = true;
-        add_btn.disabled = true;
+      const btn = /** @type {any} */ (ev.currentTarget);
+      /** @type {HTMLInputElement|null} */
+      const input = /** @type {any} */ (btn.previousElementSibling);
+      const target = input ? input.value.trim() : '';
+      if (!target || target === current.id) {
+        showToast('Enter a different issue id');
+        return;
+      }
+      const set = new Set((items || []).map((d) => d.id));
+      if (set.has(target)) {
+        showToast('Link already exists');
+        return;
+      }
+      pending = true;
+      if (btn) {
+        btn.disabled = true;
+      }
+      if (input) {
         input.disabled = true;
-        try {
-          if (title === 'Dependencies') {
-            /** @type {any} */
-            const updated = await sendFn('dep-add', {
-              a: current.id,
-              b: target,
-              view_id: current.id
-            });
-            if (updated && typeof updated === 'object') {
-              current = /** @type {IssueDetail} */ (updated);
-              render(current);
-            }
-          } else {
-            /** @type {any} */
-            const updated = await sendFn('dep-add', {
-              a: target,
-              b: current.id,
-              view_id: current.id
-            });
-            if (updated && typeof updated === 'object') {
-              current = /** @type {IssueDetail} */ (updated);
-              render(current);
-            }
-          }
-        } catch {
-          showToast('Failed to add dependency');
-        } finally {
-          pending = false;
-        }
-      });
-      add_wrap.appendChild(input);
-      add_wrap.appendChild(add_btn);
-
-      /** @type {HTMLUListElement} */
-      const ul = document.createElement('ul');
-
-      if (!items || items.length === 0) {
-        /** @type {HTMLLIElement} */
-        const li = document.createElement('li');
-        li.textContent = '(none)';
-        li.className = 'muted';
-        ul.appendChild(li);
-      } else {
-        for (const dep of items) {
-          const did = dep.id;
-          /** @type {HTMLLIElement} */
-          const li = document.createElement('li');
-          li.style.display = 'grid';
-          li.style.gridTemplateColumns = 'auto auto 1fr auto';
-          li.style.gap = '6px';
-          li.style.alignItems = 'center';
-          li.style.padding = '2px 0';
-          li.style.cursor = 'pointer';
-
-          // Navigate on row click
-          li.addEventListener('click', () => {
-            const nav = navigateFn || ((h) => (window.location.hash = h));
-            nav(`#/issue/${did}`);
-          });
-
-          // ID link
-          const id_link = linkFor(did);
-          id_link.addEventListener('click', (ev) => ev.stopPropagation());
-          li.appendChild(id_link);
-
-          // Type badge
-          const type_badge = createTypeBadge(dep.issue_type || '');
-          li.appendChild(type_badge);
-
-          // Title span (ellipsis)
-          /** @type {HTMLSpanElement} */
-          const title_span = document.createElement('span');
-          title_span.textContent = dep.title || '';
-          title_span.classList.add('text-truncate');
-          li.appendChild(title_span);
-
-          // remove button
-          /** @type {HTMLButtonElement} */
-          const rm = document.createElement('button');
-          rm.textContent = '×';
-          rm.setAttribute('aria-label', `Remove dependency ${did}`);
-          rm.addEventListener('click', async (ev) => {
-            ev.stopPropagation();
-            if (!current || pending) {
-              return;
-            }
-            pending = true;
-            try {
-              if (title === 'Dependencies') {
-                /** @type {any} */
-                const updated = await sendFn('dep-remove', {
-                  a: current.id,
-                  b: did,
-                  view_id: current.id
-                });
-                if (updated && typeof updated === 'object') {
-                  current = /** @type {IssueDetail} */ (updated);
-                  render(current);
-                }
-              } else {
-                /** @type {any} */
-                const updated = await sendFn('dep-remove', {
-                  a: did,
-                  b: current.id,
-                  view_id: current.id
-                });
-                if (updated && typeof updated === 'object') {
-                  current = /** @type {IssueDetail} */ (updated);
-                  render(current);
-                }
-              }
-            } catch {
-              showToast('Failed to remove dependency');
-            } finally {
-              pending = false;
-            }
-          });
-          li.appendChild(rm);
-          ul.appendChild(li);
-        }
       }
-
-      box.appendChild(head_row);
-      box.appendChild(ul);
-      // Move add controls to bottom of the section
-      box.appendChild(add_wrap);
-      return box;
-    }
-
-    /** @type {Dependency[]} */
-    const dependencies = Array.isArray(issue.dependencies)
-      ? issue.dependencies.slice()
-      : [];
-    /** @type {Dependency[]} */
-    const dependents = Array.isArray(issue.dependents)
-      ? issue.dependents.slice()
-      : [];
-
-    const dependencies_box = makeList('Dependencies', dependencies);
-    dependencies_box.classList.add('props-card');
-    const dependents_box = makeList('Dependents', dependents);
-    dependents_box.classList.add('props-card');
-
-    mainCol.appendChild(h);
-    mainCol.appendChild(desc_box);
-
-    // Acceptance (markdown read-mode + inline edit)
-    /** @type {HTMLDivElement} */
-    const acc_box = document.createElement('div');
-    acc_box.style.marginBottom = '8px';
-    /** @type {HTMLDivElement} */
-    const acc_head = document.createElement('div');
-    acc_head.className = 'muted';
-    acc_head.textContent = 'Acceptance';
-    acc_box.appendChild(acc_head);
-    if (edit_accept) {
-      /** @type {HTMLTextAreaElement} */
-      const acc_input = document.createElement('textarea');
-      acc_input.value = issue.acceptance || '';
-      acc_input.rows = 6;
-      acc_input.style.width = '100%';
-      acc_input.setAttribute('aria-label', 'Edit acceptance');
-      acc_input.addEventListener('keydown', (ev) => {
-        if (ev.key === 'Escape') {
-          edit_accept = false;
-          render(current || issue);
-        } else if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) {
-          ev.preventDefault();
-          acc_save.click();
-        }
-      });
-      /** @type {HTMLDivElement} */
-      const actions = document.createElement('div');
-      actions.className = 'editable-actions';
-      /** @type {HTMLButtonElement} */
-      const acc_save = document.createElement('button');
-      acc_save.textContent = 'Save';
-      acc_save.addEventListener('click', async () => {
-        if (pending || !current) {
-          return;
-        }
-        const prev = current.acceptance || '';
-        const next = acc_input.value;
-        if (next === prev) {
-          edit_accept = false;
-          render(current);
-          return;
-        }
-        pending = true;
-        acc_input.disabled = true;
-        acc_save.disabled = true;
-        current.acceptance = next;
-        try {
+      try {
+        if (title === 'Dependencies') {
           /** @type {any} */
-          const updated = await sendFn('edit-text', {
-            id: current.id,
-            field: 'acceptance',
-            value: next
+          const updated = await sendFn('dep-add', {
+            a: current.id,
+            b: target,
+            view_id: current.id
           });
           if (updated && typeof updated === 'object') {
             current = /** @type {IssueDetail} */ (updated);
-            edit_accept = false;
-            render(current);
+            doRender();
           }
-        } catch {
-          current.acceptance = prev;
-          edit_accept = false;
-          render(current);
-          showToast('Failed to save acceptance');
-        } finally {
-          pending = false;
+        } else {
+          /** @type {any} */
+          const updated = await sendFn('dep-add', {
+            a: target,
+            b: current.id,
+            view_id: current.id
+          });
+          if (updated && typeof updated === 'object') {
+            current = /** @type {IssueDetail} */ (updated);
+            doRender();
+          }
         }
-      });
-      /** @type {HTMLButtonElement} */
-      const acc_cancel = document.createElement('button');
-      acc_cancel.textContent = 'Cancel';
-      acc_cancel.addEventListener('click', () => {
-        edit_accept = false;
-        render(current || issue);
-      });
-      actions.appendChild(acc_save);
-      actions.appendChild(acc_cancel);
-      acc_box.appendChild(acc_input);
-      acc_box.appendChild(actions);
-    } else {
-      /** @type {HTMLDivElement} */
-      const md_wrap = document.createElement('div');
-      md_wrap.className = 'md editable';
-      md_wrap.setAttribute('tabindex', '0');
-      md_wrap.setAttribute('role', 'button');
-      md_wrap.setAttribute('aria-label', 'Edit acceptance');
-      const text = issue.acceptance || '';
-      const frag = renderMarkdown(text);
-      md_wrap.appendChild(frag);
-      md_wrap.addEventListener('click', () => {
-        edit_accept = true;
-        render(issue);
-      });
-      md_wrap.addEventListener('keydown', (ev) => {
-        if (ev.key === 'Enter') {
-          edit_accept = true;
-          render(issue);
-        }
-      });
-      acc_box.appendChild(md_wrap);
+      } catch {
+        showToast('Failed to add dependency');
+      } finally {
+        pending = false;
+      }
+    };
+  }
+  /**
+   * @param {KeyboardEvent} ev
+   */
+  function onTitleInputKeydown(ev) {
+    if (ev.key === 'Escape') {
+      edit_title = false;
+      doRender();
+    } else if (ev.key === 'Enter') {
+      ev.preventDefault();
+      onTitleSave();
     }
-    mainCol.appendChild(acc_box);
-    sideCol.appendChild(dependencies_box);
-    sideCol.appendChild(dependents_box);
+  }
 
-    // Side column wraps properties and relations
-    layout.appendChild(mainCol);
-    layout.appendChild(sideCol);
-    container.appendChild(layout);
+  /**
+   * @param {KeyboardEvent} ev
+   */
+  function onDescEditableKeydown(ev) {
+    if (ev.key === 'Enter') {
+      onDescEdit();
+    }
+  }
 
-    body.replaceChildren(container);
+  /**
+   * @param {KeyboardEvent} ev
+   */
+  function onAcceptEditableKeydown(ev) {
+    if (ev.key === 'Enter') {
+      onAcceptEdit();
+    }
   }
 
   return {
@@ -818,29 +754,9 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
       }
       current = issue;
       pending = false;
-      render(issue);
+      doRender();
     },
     clear() {
-      // Ensure panel header/body structure and set placeholder header
-      /** @type {HTMLDivElement | null} */
-      let header = mount_element.querySelector('.panel__header');
-      /** @type {HTMLDivElement | null} */
-      let body = mount_element.querySelector('.panel__body');
-      if (!header) {
-        header = document.createElement('div');
-        header.className = 'panel__header';
-        mount_element.appendChild(header);
-      }
-      if (!body) {
-        body = document.createElement('div');
-        body.className = 'panel__body';
-        mount_element.appendChild(body);
-      }
-      header.replaceChildren();
-      const hdr = document.createElement('span');
-      hdr.className = 'mono';
-      hdr.textContent = '—';
-      header.appendChild(hdr);
       renderPlaceholder('Select an issue to view details');
     },
     destroy() {

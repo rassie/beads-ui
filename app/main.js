@@ -1,3 +1,4 @@
+import { html, render } from 'lit-html';
 import { createHashRouter } from './router.js';
 import { createStore } from './state.js';
 import { createDetailView } from './views/detail.js';
@@ -9,10 +10,12 @@ import { createWsClient } from './ws.js';
  * @param {HTMLElement} root_element - The container element to render into.
  */
 export function bootstrap(root_element) {
-  /** @type {string} */
-  const html_value = `
-    <aside id="list-panel" class="panel">\n      <div class="panel__header"></div>\n      <div class="panel__body" id="list-root"></div>\n    </aside>\n    <section id="detail-panel" class="panel">\n      <div class="panel__header"></div>\n      <div class="panel__body" id="detail-root"></div>\n    </section>\n  `;
-  root_element.innerHTML = html_value;
+  // Render the two-panel shell with lit-html
+  const shell = html`
+    <aside id="list-panel" class="panel"></aside>
+    <section id="detail-panel" class="panel"></section>
+  `;
+  render(shell, root_element);
 
   /** @type {HTMLElement|null} */
   const list_mount = document.getElementById('list-panel');
@@ -86,8 +89,6 @@ export function bootstrap(root_element) {
           router.gotoIssue(id);
         }
       });
-      // Render placeholder header/body initially
-      detail.clear();
 
       // React to selectedId changes
       store.subscribe((s) => {
@@ -103,6 +104,8 @@ export function bootstrap(root_element) {
       const initialId = store.getState().selected_id;
       if (initialId) {
         void detail.load(initialId);
+      } else {
+        detail.clear();
       }
 
       // Refresh views on push updates

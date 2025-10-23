@@ -1,4 +1,5 @@
 /* global NodeListOf */
+import { html, render } from 'lit-html';
 import { priority_levels } from '../utils/priority.js';
 import { createTypeBadge } from '../utils/type-badge.js';
 
@@ -28,27 +29,40 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
   /** @type {null | (() => void)} */
   let unsubscribe = null;
 
-  /** @type {HTMLSelectElement} */
-  const status_select = document.createElement('select');
-  for (const [v, t] of [
-    ['all', 'All'],
-    ['ready', 'Ready'],
-    ['open', 'Open'],
-    ['in_progress', 'In progress'],
-    ['closed', 'Closed']
-  ]) {
-    /** @type {HTMLOptionElement} */
-    const option = document.createElement('option');
-    option.value = v;
-    option.textContent = t;
-    status_select.appendChild(option);
-  }
-  status_select.value = status_filter;
+  /**
+   * Event: select status change.
+   */
+  /**
+   * @param {Event} ev
+   */
+  const onStatusChange = async (ev) => {
+    /** @type {HTMLSelectElement} */
+    const sel = /** @type {any} */ (ev.currentTarget);
+    status_filter = sel.value;
+    if (store) {
+      store.setState({
+        filters: { status: /** @type {any} */ (status_filter) }
+      });
+    }
+    // Always reload on status changes
+    await load();
+  };
 
-  /** @type {HTMLInputElement} */
-  const search_input = document.createElement('input');
-  search_input.type = 'search';
-  search_input.placeholder = 'Search…';
+  /**
+   * Event: search input.
+   */
+  /**
+   * @param {Event} ev
+   */
+  const onSearchInput = (ev) => {
+    /** @type {HTMLInputElement} */
+    const input = /** @type {any} */ (ev.currentTarget);
+    search_text = input.value;
+    if (store) {
+      store.setState({ filters: { search: search_text } });
+    }
+    doRender();
+  };
 
   // Initialize filters from store on first render so reload applies persisted state
   if (store) {
@@ -58,30 +72,12 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
       search_text = s.filters.search || '';
     }
   }
-  status_select.value = status_filter;
-  search_input.value = search_text;
-
-  /** @type {HTMLElement} */
-  const header = document.createElement('div');
-  header.className = 'panel__header';
-  header.appendChild(status_select);
-  header.appendChild(document.createTextNode(' '));
-  header.appendChild(search_input);
-
-  /** @type {HTMLElement} */
-  const body = document.createElement('div');
-  body.className = 'panel__body';
-  body.id = 'list-root';
-  /** @type {HTMLUListElement} */
-  const list = document.createElement('ul');
-  body.appendChild(list);
-
-  mount_element.replaceChildren(header, body);
+  // Initial values are reflected via bound `.value` in the template
 
   /**
-   * Render the current issues_cache with filters applied.
+   * Build lit-html template for the list view.
    */
-  function render() {
+  function template() {
     /** @type {Issue[]} */
     let filtered = issues_cache;
     if (status_filter !== 'all' && status_filter !== 'ready') {
@@ -89,80 +85,73 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
     }
     if (search_text) {
       const needle = search_text.toLowerCase();
-      filtered = filtered.filter(
-        (it) =>
-          String(it.id).toLowerCase().includes(needle) ||
-          String(it.title).toLowerCase().includes(needle)
-      );
-    }
-
-    list.replaceChildren();
-    for (const it of filtered) {
-      /** @type {HTMLLIElement} */
-      const li = document.createElement('li');
-      li.classList.add('issue-item');
-      li.dataset.issueId = it.id;
-      li.addEventListener('click', () => {
-        const nav = navigate_fn || ((h) => (window.location.hash = h));
-        nav(`#/issue/${it.id}`);
+      filtered = filtered.filter((it) => {
+        const a = String(it.id).toLowerCase();
+        const b = String(it.title).toLowerCase();
+        return a.includes(needle) || b.includes(needle);
       });
-
-      if (selected_id === it.id) {
-        li.classList.add('selected');
-      }
-
-      // Left: title row + meta row
-      const text_wrap = document.createElement('div');
-      text_wrap.classList.add('text-truncate');
-      const title_row = document.createElement('div');
-      title_row.classList.add('issue-title');
-      /** @type {HTMLSpanElement} */
-      const title_span = document.createElement('span');
-      title_span.textContent = it.title || '(no title)';
-      title_row.classList.add('text-truncate');
-      title_row.appendChild(title_span);
-      const meta_row = document.createElement('div');
-      meta_row.classList.add('issue-meta');
-      meta_row.textContent = `${it.status} · ${priority_levels[it.priority]}`;
-      text_wrap.appendChild(title_row);
-      text_wrap.appendChild(meta_row);
-
-      // Right: id
-      // Right column with id (top) and type badge (bottom)
-      const right_wrap = document.createElement('div');
-      right_wrap.classList.add('issue-right');
-      /** @type {HTMLSpanElement} */
-      const id_right = document.createElement('span');
-      id_right.classList.add('issue-id', 'mono');
-      id_right.textContent = it.id;
-      const type_badge = createTypeBadge(/** @type {any} */ (it).issue_type);
-      right_wrap.appendChild(id_right);
-      right_wrap.appendChild(type_badge);
-
-      li.appendChild(text_wrap);
-      li.appendChild(right_wrap);
-      list.appendChild(li);
     }
+
+    return html`
+      <div class="panel__header">
+        <select @change=${onStatusChange} .value=${status_filter}>
+          <option value="all">All</option>
+          <option value="ready">Ready</option>
+          <option value="open">Open</option>
+          <option value="in_progress">In progress</option>
+          <option value="closed">Closed</option>
+        </select>
+        ${' '}
+        <input
+          type="search"
+          placeholder="Search…"
+          @input=${onSearchInput}
+          .value=${search_text}
+        />
+      </div>
+      <div class="panel__body" id="list-root">
+        <ul>
+          ${filtered.map((it) => {
+            const is_selected = selected_id === it.id;
+            return html`
+              <li
+                class="issue-item ${is_selected ? 'selected' : ''}"
+                data-issue-id=${it.id}
+                @click=${() => {
+                  const nav =
+                    navigate_fn || ((h) => (window.location.hash = h));
+                  nav(`#/issue/${it.id}`);
+                }}
+              >
+                <div class="text-truncate">
+                  <div class="issue-title text-truncate">
+                    <span>${it.title || '(no title)'}</span>
+                  </div>
+                  <div class="issue-meta">
+                    ${it.status} · ${priority_levels[it.priority]}
+                  </div>
+                </div>
+                <div class="issue-right">
+                  <span class="issue-id mono">${it.id}</span>
+                  ${createTypeBadge(/** @type {any} */ (it).issue_type)}
+                </div>
+              </li>
+            `;
+          })}
+        </ul>
+      </div>
+    `;
   }
 
-  status_select.addEventListener('change', () => {
-    status_filter = status_select.value;
-    if (store) {
-      store.setState({
-        filters: { status: /** @type {any} */ (status_filter) }
-      });
-    }
-    // Always reload on status changes to ensure cache matches scope
-    // (e.g., switching from 'ready' back to 'all').
-    void load();
-  });
-  search_input.addEventListener('input', () => {
-    search_text = search_input.value;
-    if (store) {
-      store.setState({ filters: { search: search_text } });
-    }
-    render();
-  });
+  /**
+   * Render the current issues_cache with filters applied.
+   */
+  function doRender() {
+    render(template(), mount_element);
+  }
+
+  // Initial render (header + body shell with current state)
+  doRender();
   // no separate ready checkbox when using select option
 
   /**
@@ -189,47 +178,56 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
     } else {
       issues_cache = /** @type {Issue[]} */ (result);
     }
-    render();
+    doRender();
   }
 
   // Keyboard navigation
   mount_element.tabIndex = 0;
   mount_element.addEventListener('keydown', (ev) => {
+    /** @type {HTMLUListElement|null} */
+    const ul = /** @type {any} */ (
+      mount_element.querySelector('#list-root ul')
+    );
     /** @type {NodeListOf<HTMLLIElement>} */
-    const items = list.querySelectorAll('li');
+    const items = ul ? ul.querySelectorAll('li') : /** @type {any} */ ([]);
     if (items.length === 0) {
       return;
     }
-    const idx = Math.max(
-      0,
-      selected_id
-        ? Array.from(items).findIndex(
-            (el) => el.dataset.issueId === selected_id
-          )
-        : 0
-    );
+    let idx = 0;
+    if (selected_id) {
+      const arr = Array.from(items);
+      idx = arr.findIndex((el) => {
+        const did = el.getAttribute('data-issue-id') || '';
+        return did === selected_id;
+      });
+      if (idx < 0) {
+        idx = 0;
+      }
+    }
     if (ev.key === 'ArrowDown') {
       ev.preventDefault();
       const next = items[Math.min(idx + 1, items.length - 1)];
-      const nextId = next?.dataset.issueId || null;
-      if (store && nextId) {
-        store.setState({ selected_id: nextId });
+      const next_id = next ? next.getAttribute('data-issue-id') : '';
+      const set = next_id ? next_id : null;
+      if (store && set) {
+        store.setState({ selected_id: set });
       }
-      selected_id = nextId;
-      render();
+      selected_id = set;
+      doRender();
     } else if (ev.key === 'ArrowUp') {
       ev.preventDefault();
       const prev = items[Math.max(idx - 1, 0)];
-      const prevId = prev?.dataset.issueId || null;
-      if (store && prevId) {
-        store.setState({ selected_id: prevId });
+      const prev_id = prev ? prev.getAttribute('data-issue-id') : '';
+      const set = prev_id ? prev_id : null;
+      if (store && set) {
+        store.setState({ selected_id: set });
       }
-      selected_id = prevId;
-      render();
+      selected_id = set;
+      doRender();
     } else if (ev.key === 'Enter') {
       ev.preventDefault();
       const current = items[idx];
-      const id = current?.dataset.issueId;
+      const id = current ? current.getAttribute('data-issue-id') : '';
       if (id) {
         const nav = navigate_fn || ((h) => (window.location.hash = h));
         nav(`#/issue/${id}`);
@@ -242,7 +240,7 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
     unsubscribe = store.subscribe((s) => {
       if (s.selected_id !== selected_id) {
         selected_id = s.selected_id;
-        render();
+        doRender();
       }
       if (s.filters && typeof s.filters === 'object') {
         const next_status = s.filters.status;
@@ -250,18 +248,16 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
         let needs_render = false;
         if (next_status !== status_filter) {
           status_filter = next_status;
-          status_select.value = status_filter;
           // Reload on any status scope change to keep cache correct
           void load();
           return;
         }
         if (next_search !== search_text) {
           search_text = next_search;
-          search_input.value = search_text;
           needs_render = true;
         }
         if (needs_render) {
-          render();
+          doRender();
         }
       }
     });
