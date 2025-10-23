@@ -76,17 +76,44 @@ Link locally (from the repo root):
 npm link
 ```
 
-Verify it’s available and prints usage:
+Usage:
 
 ```sh
+# Start the server as a background daemon and open the browser
+bdui start
+
+# Start without opening a browser
+bdui start --no-open         # or BDUI_NO_OPEN=1 bdui start
+
+# Stop the background server
+bdui stop                    # exits with code 2 if not running
+
+# Restart the background server
+bdui restart
+
+# Help
 bdui --help
 ```
 
-Notes:
+Behavior:
 
-- Requires Node.js >= 22 (enforced via `package.json`).
-- Commands `start|stop|restart` are currently stubs; daemon behavior lands in a
-  later issue. Use `npm start` for the server until then.
+- Writes a PID file under a runtime directory and logs to `daemon.log` there.
+- Prints the server URL on successful `start` (or if already running).
+- Ensures only one instance is running; `start` is idempotent.
+
+Environment variables:
+
+- `BDUI_RUNTIME_DIR`: override runtime directory for PID/logs. Defaults to
+  `$XDG_RUNTIME_DIR/beads-ui` or the system temp dir.
+- `BDUI_NO_OPEN=1`: disable opening the default browser on `start`.
+- `PORT`: overrides the listen port (default `3000`). The server binds to
+  `127.0.0.1`.
+
+Platform notes:
+
+- macOS/Linux are fully supported. On Windows, the CLI uses `cmd /c start` to
+  open URLs and relies on Node’s `process.kill` semantics for stopping the
+  daemon.
 
 ## Notes
 
@@ -96,3 +123,11 @@ Notes:
   changes. See `docs/db-watching.md`.
 - A dark theme is available via the header toggle. Preference is stored in
   `localStorage` under `beads-ui.theme`.
+
+### Troubleshooting (`bdui`)
+
+- Logs/PID location: see the runtime dir (`$XDG_RUNTIME_DIR/beads-ui` or system
+  temp). Override with `BDUI_RUNTIME_DIR`.
+- Stop when not running: `bdui stop` exits with code `2`; remove a stale
+  `server.pid` if present and retry.
+- Port collisions: restart with a different port: `PORT=4000 bdui restart`.

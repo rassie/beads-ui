@@ -18,6 +18,14 @@ npm install
 
 ## Run
 
+Use the CLI to daemonize the server and open your browser:
+
+```sh
+bdui start
+```
+
+Or run in the foreground for quick debugging:
+
 ```sh
 npm start
 ```
@@ -80,14 +88,26 @@ it available on your PATH:
 npm link
 ```
 
-Then verify:
+Common commands:
 
 ```sh
-bdui --help
+bdui start           # daemonize the server and open the browser
+bdui start --no-open # start without opening a browser (or set BDUI_NO_OPEN=1)
+bdui stop            # stop the daemon (exit code 2 if not running)
+bdui restart         # stop then start
+bdui --help          # usage
 ```
 
-Until the daemon functionality is implemented, `start|stop|restart` are stubbed
-and have no side effects. Use `npm start` to run the server.
+Runtime directory and logs:
+
+- PID and log files live under `$XDG_RUNTIME_DIR/beads-ui` or the system temp
+  directory. Override with `BDUI_RUNTIME_DIR=/path`.
+
+Environment knobs also used by `bdui`:
+
+- `PORT` to change the listen port (default: `3000`)
+- `BDUI_NO_OPEN=1` to disable auto-opening the browser on `start`
+- `BDUI_RUNTIME_DIR` to set a custom runtime directory
 
 ## Protocol
 
@@ -100,3 +120,23 @@ and client via `server/protocol.js` re-exports.
   workspace.
 - To target a specific DB, set `BEADS_DB=/path/to/file.db` before `npm start`.
 - If `bd` isn’t on your PATH, set `BD_BIN` to the full path.
+
+### `bdui` specific
+
+- Logs and PID: check the runtime dir for `daemon.log` and `server.pid`.
+  - Default: `$XDG_RUNTIME_DIR/beads-ui` (Linux), otherwise your system temp
+    directory (see `os.tmpdir()`).
+  - Override: set `BDUI_RUNTIME_DIR=/path`.
+- Stale process: if `bdui stop` reports exit code `2` but `server.pid` exists,
+  remove the PID file and try again:
+
+  ```sh
+  rm "$(bdui --help >/dev/null 2>&1; echo ${BDUI_RUNTIME_DIR:-$(echo ${XDG_RUNTIME_DIR:-/tmp})/beads-ui})/server.pid" 2>/dev/null || true
+  bdui stop
+  ```
+
+- Port in use: set a different port and restart:
+
+  ```sh
+  PORT=4000 bdui restart
+  ```
