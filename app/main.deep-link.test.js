@@ -57,7 +57,7 @@ describe('deep link on initial load (UI-44)', () => {
       document.getElementById('list-root')
     );
     const selected = /** @type {HTMLElement|null} */ (
-      list.querySelector('li.selected')
+      list.querySelector('tr.issue-row.selected')
     );
     expect(selected && selected.getAttribute('data-issue-id')).toBe('UI-2');
   });

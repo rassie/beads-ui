@@ -1,15 +1,13 @@
 /* global NodeListOf */
 import { html, render } from 'lit-html';
-import { issueDisplayId } from '../utils/issue-id.js';
-import { createPriorityBadge } from '../utils/priority-badge.js';
-import { createStatusBadge } from '../utils/status-badge.js';
+// issueDisplayId not used directly in this file; rendered in shared row
 import { statusLabel } from '../utils/status.js';
-import { createTypeBadge } from '../utils/type-badge.js';
+import { createIssueRowRenderer } from './issue-row.js';
 
 // List view implementation; requires a transport send function.
 
 /**
- * @typedef {{ id: string, title: string, status: string, priority: number, issue_type?: string }} Issue
+ * @typedef {{ id: string, title?: string, status?: string, priority?: number, issue_type?: string, assignee?: string }} Issue
  */
 
 /**
@@ -31,6 +29,17 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
   let selected_id = store ? store.getState().selected_id : null;
   /** @type {null | (() => void)} */
   let unsubscribe = null;
+  // Shared row renderer (used in template below)
+  const row_renderer = createIssueRowRenderer({
+    navigate: (id) => {
+      const nav = navigate_fn || ((h) => (window.location.hash = h));
+      nav(`#/issue/${id}`);
+    },
+    onUpdate: updateInline,
+    requestRender: doRender,
+    getSelectedId: () => selected_id,
+    row_class: 'issue-row'
+  });
 
   /**
    * Event: select status change.
@@ -84,13 +93,15 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
     /** @type {Issue[]} */
     let filtered = issues_cache;
     if (status_filter !== 'all' && status_filter !== 'ready') {
-      filtered = filtered.filter((it) => it.status === status_filter);
+      filtered = filtered.filter(
+        (it) => String(it.status || '') === status_filter
+      );
     }
     if (search_text) {
       const needle = search_text.toLowerCase();
       filtered = filtered.filter((it) => {
         const a = String(it.id).toLowerCase();
-        const b = String(it.title).toLowerCase();
+        const b = String(it.title || '').toLowerCase();
         return a.includes(needle) || b.includes(needle);
       });
     }
@@ -113,43 +124,31 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
         />
       </div>
       <div class="panel__body" id="list-root">
-        <ul>
-          ${filtered.map((it) => {
-            const is_selected = selected_id === it.id;
-            return html`
-              <li
-                class="issue-item ${is_selected ? 'selected' : ''}"
-                data-issue-id=${it.id}
-                @click=${() => {
-                  const nav =
-                    navigate_fn || ((h) => (window.location.hash = h));
-                  nav(`#/issue/${it.id}`);
-                }}
-              >
-                <div class="text-truncate">
-                  <div class="issue-title text-truncate">
-                    <span>${it.title || '(no title)'}</span>
-                  </div>
-                  <div class="issue-meta" data-testid="meta">
-                    ${(() => {
-                      const s = createStatusBadge(it.status);
-                      const p = createPriorityBadge(it.priority);
-                      const span = document.createElement('span');
-                      span.appendChild(s);
-                      span.appendChild(document.createTextNode(' '));
-                      span.appendChild(p);
-                      return span;
-                    })()}
-                  </div>
-                </div>
-                <div class="issue-right">
-                  <span class="issue-id mono">${issueDisplayId(it.id)}</span>
-                  ${createTypeBadge(/** @type {any} */ (it).issue_type)}
-                </div>
-              </li>
-            `;
-          })}
-        </ul>
+        ${filtered.length === 0
+          ? html`<div class="muted">No issues</div>`
+          : html`<table class="table">
+              <colgroup>
+                <col style="width: 100px" />
+                <col style="width: 120px" />
+                <col />
+                <col style="width: 120px" />
+                <col style="width: 160px" />
+                <col style="width: 130px" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Type</th>
+                  <th>Title</th>
+                  <th>Status</th>
+                  <th>Assignee</th>
+                  <th>Priority</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filtered.map((it) => row_renderer(it))}
+              </tbody>
+            </table>`}
       </div>
     `;
   }
@@ -195,12 +194,14 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
   // Keyboard navigation
   mount_element.tabIndex = 0;
   mount_element.addEventListener('keydown', (ev) => {
-    /** @type {HTMLUListElement|null} */
-    const ul = /** @type {any} */ (
-      mount_element.querySelector('#list-root ul')
+    /** @type {HTMLTableSectionElement|null} */
+    const tbody = /** @type {any} */ (
+      mount_element.querySelector('#list-root tbody')
     );
-    /** @type {NodeListOf<HTMLLIElement>} */
-    const items = ul ? ul.querySelectorAll('li') : /** @type {any} */ ([]);
+    /** @type {NodeListOf<HTMLTableRowElement>} */
+    const items = tbody
+      ? tbody.querySelectorAll('tr')
+      : /** @type {any} */ ([]);
     if (items.length === 0) {
       return;
     }
@@ -284,4 +285,45 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
       }
     }
   };
+
+  /**
+   * Update minimal fields inline via ws mutations and refresh that row's data.
+   * @param {string} id
+   * @param {{ [k: string]: any }} patch
+   */
+  async function updateInline(id, patch) {
+    try {
+      // Dispatch specific mutations based on provided keys
+      if (typeof patch.title === 'string') {
+        await send_fn('edit-text', { id, field: 'title', value: patch.title });
+      }
+      if (typeof patch.assignee === 'string') {
+        await send_fn('update-assignee', { id, assignee: patch.assignee });
+      }
+      if (typeof patch.status === 'string') {
+        await send_fn('update-status', { id, status: patch.status });
+      }
+      if (typeof patch.priority === 'number') {
+        await send_fn('update-priority', { id, priority: patch.priority });
+      }
+      // Refresh the item from backend
+      /** @type {any} */
+      const full = await send_fn('show-issue', { id });
+      // Replace in cache
+      const idx = issues_cache.findIndex((x) => x.id === id);
+      if (idx >= 0 && full && typeof full === 'object') {
+        issues_cache[idx] = /** @type {Issue} */ ({
+          id: full.id,
+          title: full.title,
+          status: full.status,
+          priority: full.priority,
+          issue_type: full.issue_type,
+          assignee: /** @type {any} */ (full).assignee
+        });
+      }
+      doRender();
+    } catch {
+      // ignore failures; UI state remains as-is
+    }
+  }
 }

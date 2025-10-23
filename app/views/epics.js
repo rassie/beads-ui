@@ -1,9 +1,6 @@
 import { html, render } from 'lit-html';
 import { issueDisplayId } from '../utils/issue-id.js';
-import { emojiForPriority } from '../utils/priority-badge.js';
-import { priority_levels } from '../utils/priority.js';
-import { statusLabel } from '../utils/status.js';
-import { createTypeBadge } from '../utils/type-badge.js';
+import { createIssueRowRenderer } from './issue-row.js';
 
 /**
  * @typedef {{ id: string, title?: string, status?: string, priority?: number, issue_type?: string, assignee?: string, updated_at?: string }} IssueLite
@@ -26,6 +23,15 @@ export function createEpicsView(mount_element, data, goto_issue) {
   const children = new Map();
   /** @type {Set<string>} */
   const loading = new Set();
+
+  // Shared row renderer used for children rows
+  const row_renderer = createIssueRowRenderer({
+    navigate: (id) => goto_issue(id),
+    onUpdate: updateInline,
+    requestRender: doRender,
+    getSelectedId: () => null,
+    row_class: 'epic-row'
+  });
 
   function doRender() {
     render(template(), mount_element);
@@ -96,168 +102,13 @@ export function createEpicsView(mount_element, data, goto_issue) {
                         </tr>
                       </thead>
                       <tbody>
-                        ${list.map((it) => rowTemplate(it))}
+                        ${list.map((it) => row_renderer(it))}
                       </tbody>
                     </table>`}
             </div>`
           : null}
       </div>
     `;
-  }
-
-  /**
-   * @param {IssueLite} it
-   */
-  function rowTemplate(it) {
-    return html`<tr class="epic-row" @click=${makeRowClick(it.id)}>
-      <td class="mono">${issueDisplayId(it.id)}</td>
-      <td>${createTypeBadge(/** @type {any} */ (it).issue_type)}</td>
-      <td>${editableText(it.id, 'title', it.title || '')}</td>
-      <td>
-        ${(() => {
-          const cur = String(it.status || 'open');
-          return html`<select
-            class="badge-select badge--status is-${cur}"
-            .value=${cur}
-            @change=${makeSelectChange(it.id, 'status')}
-          >
-            ${['open', 'in_progress', 'closed'].map(
-              (s) =>
-                html`<option value=${s} ?selected=${cur === s}>
-                  ${statusLabel(s)}
-                </option>`
-            )}
-          </select>`;
-        })()}
-      </td>
-      <td>${editableText(it.id, 'assignee', it.assignee || '')}</td>
-      <td>
-        ${(() => {
-          const cur = String(it.priority ?? 2);
-          return html`<select
-            class="badge-select badge--priority ${'is-p' + cur}"
-            .value=${cur}
-            @change=${makeSelectChange(it.id, 'priority')}
-          >
-            ${priority_levels.map(
-              (p, i) =>
-                html`<option value=${String(i)} ?selected=${cur === String(i)}>
-                  ${emojiForPriority(i)} ${p}
-                </option>`
-            )}
-          </select>`;
-        })()}
-      </td>
-    </tr>`;
-  }
-
-  /**
-   * Create row click handler that avoids triggering on input/select child clicks.
-   * @param {string} id
-   * @returns {(ev: Event) => void}
-   */
-  function makeRowClick(id) {
-    return (ev) => {
-      /** @type {HTMLElement|null} */
-      const el = /** @type {any} */ (ev.target);
-      if (el && (el.tagName === 'INPUT' || el.tagName === 'SELECT')) {
-        return;
-      }
-      goto_issue(id);
-    };
-  }
-
-  /**
-   * @param {Event} ev
-   */
-  // Former helper for text inputs removed; inline editing handles values directly.
-
-  /**
-   * @param {Event} ev
-   */
-  function selectValue(ev) {
-    /** @type {HTMLSelectElement} */
-    const el = /** @type {any} */ (ev.currentTarget);
-    return el.value || '';
-  }
-
-  /**
-   * Render editable text field using the same UX pattern as detail view:
-   * shows a span with focus ring on hover, switches to input on click.
-   * @param {string} id
-   * @param {'title'|'assignee'} key
-   * @param {string} value
-   */
-  function editableText(id, key, value) {
-    /** @type {string} */
-    const k = `${id}:${key}`;
-    const is_edit = editing.has(k);
-    if (is_edit) {
-      return html`<span>
-        <input
-          type="text"
-          .value=${value}
-          class="inline-edit"
-          @keydown=${
-            /** @param {KeyboardEvent} e */ (e) => {
-              if (e.key === 'Escape') {
-                editing.delete(k);
-                doRender();
-              } else if (e.key === 'Enter') {
-                // Commit
-                /** @type {HTMLInputElement} */ const el = /** @type {any} */ (
-                  e.currentTarget
-                );
-                const next = el.value || '';
-                if (next !== value) {
-                  void updateInline(id, { [key]: next });
-                }
-                editing.delete(k);
-                doRender();
-              }
-            }
-          }
-          @blur=${
-            /** @param {Event} ev */ (ev) => {
-              /** @type {HTMLInputElement} */ const el = /** @type {any} */ (
-                ev.currentTarget
-              );
-              const next = el.value || '';
-              if (next !== value) {
-                void updateInline(id, { [key]: next });
-              }
-              editing.delete(k);
-              doRender();
-            }
-          }
-          autofocus
-        />
-      </span>`;
-    }
-    return html`<span
-      class="editable"
-      tabindex="0"
-      role="button"
-      @click=${
-        /** @param {MouseEvent} e */ (e) => {
-          /** @type {Event} */ (e).stopPropagation();
-          /** @type {Event} */ (e).preventDefault();
-          editing.add(k);
-          doRender();
-        }
-      }
-      @keydown=${
-        /** @param {KeyboardEvent} e */ (e) => {
-          e.stopPropagation();
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            editing.add(k);
-            doRender();
-          }
-        }
-      }
-      >${value || ''}</span
-    >`;
   }
 
   /**
@@ -289,27 +140,6 @@ export function createEpicsView(mount_element, data, goto_issue) {
     } catch {
       // swallow; UI remains
     }
-  }
-
-  /** @type {Set<string>} */
-  const editing = new Set();
-
-  // Text inputs now use editableText pattern (see editableText)
-
-  /**
-   * Create a change handler for select inputs.
-   * @param {string} id
-   * @param {'type'|'priority'|'status'} key
-   * @returns {(ev: Event) => Promise<void>}
-   */
-  function makeSelectChange(id, key) {
-    return async (ev) => {
-      const val = selectValue(ev);
-      /** @type {{ [k:string]: any }} */
-      const patch = {};
-      patch[key] = key === 'priority' ? Number(val) : val;
-      await updateInline(id, patch);
-    };
   }
 
   /**

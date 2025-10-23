@@ -10,7 +10,7 @@ const stubSend = (expected) => async (type) => {
 };
 
 describe('views/list', () => {
-  test('renders issues and navigates on click', async () => {
+  test('renders issues in table and navigates on row click', async () => {
     document.body.innerHTML = '<aside id="mount" class="panel"></aside>';
     const mount = /** @type {HTMLElement} */ (document.getElementById('mount'));
     const issues = [
@@ -33,15 +33,15 @@ describe('views/list', () => {
       window.location.hash = hash;
     });
     await view.load();
-    const items = mount.querySelectorAll('li');
-    expect(items.length).toBe(2);
+    const rows = mount.querySelectorAll('tr.issue-row');
+    expect(rows.length).toBe(2);
 
     // badge present
     const badges = mount.querySelectorAll('.type-badge');
     expect(badges.length).toBeGreaterThanOrEqual(2);
 
-    const first = /** @type {HTMLElement} */ (items[0]);
-    first.click();
+    const first = /** @type {HTMLElement} */ (rows[0]);
+    first.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(window.location.hash).toBe('#/issue/UI-1');
   });
 
@@ -66,17 +66,19 @@ describe('views/list', () => {
     select.value = 'open';
     select.dispatchEvent(new Event('change'));
     await Promise.resolve();
-    expect(mount.querySelectorAll('li').length).toBe(1);
+    expect(mount.querySelectorAll('tr.issue-row').length).toBe(1);
 
     // Search filters further
     select.value = 'all';
     select.dispatchEvent(new Event('change'));
     input.value = 'ga';
     input.dispatchEvent(new Event('input'));
-    const visible = Array.from(mount.querySelectorAll('li')).map((el) => ({
-      id: el.getAttribute('data-issue-id') || '',
-      text: el.textContent || ''
-    }));
+    const visible = Array.from(mount.querySelectorAll('tr.issue-row')).map(
+      (el) => ({
+        id: el.getAttribute('data-issue-id') || '',
+        text: el.textContent || ''
+      })
+    );
     expect(visible.length).toBe(1);
     expect(visible[0].id).toBe('UI-3');
     expect(visible[0].text.toLowerCase()).toContain('gamma');
@@ -108,7 +110,7 @@ describe('views/list', () => {
 
     const view = createListView(mount, send);
     await view.load();
-    expect(mount.querySelectorAll('li').length).toBe(2);
+    expect(mount.querySelectorAll('tr.issue-row').length).toBe(2);
 
     const select = /** @type {HTMLSelectElement} */ (
       mount.querySelector('select')
@@ -127,7 +129,7 @@ describe('views/list', () => {
         c.payload.filters.ready === true
     );
     expect(has_ready).toBe(true);
-    expect(mount.querySelectorAll('li').length).toBe(1);
+    expect(mount.querySelectorAll('tr.issue-row').length).toBe(1);
   });
 
   test('switching ready → all reloads full list', async () => {
@@ -156,7 +158,7 @@ describe('views/list', () => {
 
     const view = createListView(mount, send);
     await view.load();
-    expect(mount.querySelectorAll('li').length).toBe(2);
+    expect(mount.querySelectorAll('tr.issue-row').length).toBe(2);
 
     const select = /** @type {HTMLSelectElement} */ (
       mount.querySelector('select')
@@ -166,13 +168,13 @@ describe('views/list', () => {
     select.value = 'ready';
     select.dispatchEvent(new Event('change'));
     await Promise.resolve();
-    expect(mount.querySelectorAll('li').length).toBe(1);
+    expect(mount.querySelectorAll('tr.issue-row').length).toBe(1);
 
     // Switch back to all; view should reload full list from backend
     select.value = 'all';
     select.dispatchEvent(new Event('change'));
     await Promise.resolve();
-    expect(mount.querySelectorAll('li').length).toBe(2);
+    expect(mount.querySelectorAll('tr.issue-row').length).toBe(2);
 
     // Verify that a request without ready=true was made after switching to all
     const lastCall = spy.calls[spy.calls.length - 1];
@@ -220,10 +222,12 @@ describe('views/list', () => {
     await view.load();
 
     // Expect only UI-2 ("Gamma" open) to be visible
-    const items = Array.from(mount.querySelectorAll('li')).map((el) => ({
-      id: el.getAttribute('data-issue-id') || '',
-      text: el.textContent || ''
-    }));
+    const items = Array.from(mount.querySelectorAll('tr.issue-row')).map(
+      (el) => ({
+        id: el.getAttribute('data-issue-id') || '',
+        text: el.textContent || ''
+      })
+    );
     expect(items.length).toBe(1);
     expect(items[0].id).toBe('UI-2');
 
