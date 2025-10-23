@@ -11,7 +11,11 @@
  */
 
 /**
- * @typedef {{ selected_id: string | null, filters: Filters }} AppState
+ * @typedef {'issues'|'epics'|'board'} ViewName
+ */
+
+/**
+ * @typedef {{ selected_id: string | null, view: ViewName, filters: Filters }} AppState
  */
 
 /**
@@ -22,10 +26,11 @@
 export function createStore(initial = {}) {
   /** @type {AppState} */
   let state = {
-    selected_id: initial.selected_id ?? null,
+    selected_id: /** @type {any} */ (initial).selected_id ?? null,
+    view: /** @type {any} */ (initial).view ?? 'issues',
     filters: {
-      status: initial.filters?.status ?? 'all',
-      search: initial.filters?.search ?? ''
+      status: /** @type {any} */ (initial).filters?.status ?? 'all',
+      search: /** @type {any} */ (initial).filters?.search ?? ''
     }
   };
 
@@ -60,6 +65,7 @@ export function createStore(initial = {}) {
       // Avoid emitting if nothing changed (shallow compare)
       if (
         next.selected_id === state.selected_id &&
+        next.view === state.view &&
         next.filters.status === state.filters.status &&
         next.filters.search === state.filters.search
       ) {

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { createHashRouter, parseHash } from './router.js';
+import { createHashRouter, parseHash, parseView } from './router.js';
 import { createStore } from './state.js';
 
 describe('router', () => {
@@ -22,5 +22,13 @@ describe('router', () => {
     router.gotoIssue('UI-11');
     expect(window.location.hash).toBe('#/issue/UI-11');
     router.stop();
+  });
+
+  test('parseView resolves from hash and defaults to issues', () => {
+    expect(parseView('#/issues')).toBe('issues');
+    expect(parseView('#/epics')).toBe('epics');
+    expect(parseView('#/board')).toBe('board');
+    expect(parseView('')).toBe('issues');
+    expect(parseView('#/unknown')).toBe('issues');
   });
 });

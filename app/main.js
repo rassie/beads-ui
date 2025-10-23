@@ -1,8 +1,11 @@
 import { html, render } from 'lit-html';
+import { createDataLayer } from './data/providers.js';
 import { createHashRouter } from './router.js';
 import { createStore } from './state.js';
 import { createDetailView } from './views/detail.js';
+import { createEpicsView } from './views/epics.js';
 import { createListView } from './views/list.js';
+import { createTopNav } from './views/nav.js';
 import { createWsClient } from './ws.js';
 
 /**
@@ -10,18 +13,36 @@ import { createWsClient } from './ws.js';
  * @param {HTMLElement} root_element - The container element to render into.
  */
 export function bootstrap(root_element) {
-  // Render the two-panel shell with lit-html
+  // Render nav + three route shells
   const shell = html`
-    <aside id="list-panel" class="panel"></aside>
-    <section id="detail-panel" class="panel"></section>
+    <div id="top-nav"></div>
+    <section id="issues-root" class="route issues">
+      <aside id="list-panel" class="panel"></aside>
+      <section id="detail-panel" class="panel"></section>
+    </section>
+    <section id="epics-root" class="route epics" hidden>
+      <div class="placeholder">Epics view placeholder</div>
+    </section>
+    <section id="board-root" class="route board" hidden>
+      <div class="placeholder">Board view placeholder</div>
+    </section>
   `;
   render(shell, root_element);
+
+  /** @type {HTMLElement|null} */
+  const nav_mount = document.getElementById('top-nav');
+  /** @type {HTMLElement|null} */
+  const issues_root = document.getElementById('issues-root');
+  /** @type {HTMLElement|null} */
+  const epics_root = document.getElementById('epics-root');
+  /** @type {HTMLElement|null} */
+  const board_root = document.getElementById('board-root');
 
   /** @type {HTMLElement|null} */
   const list_mount = document.getElementById('list-panel');
   /** @type {HTMLElement|null} */
   const detail_mount = document.getElementById('detail-panel');
-  if (list_mount) {
+  if (list_mount && nav_mount && issues_root && epics_root && board_root) {
     const client = createWsClient();
     // Load persisted filters (status/search) from localStorage
     /** @type {{ status: 'all'|'open'|'in_progress'|'closed'|'ready', search: string }} */
@@ -44,7 +65,22 @@ export function bootstrap(root_element) {
     } catch {
       // ignore parse errors
     }
-    const store = createStore({ filters: persistedFilters });
+    // Load last-view from storage
+    /** @type {'issues'|'epics'|'board'} */
+    let last_view = 'issues';
+    try {
+      const raw_view = window.localStorage.getItem('beads-ui.view');
+      if (
+        raw_view === 'issues' ||
+        raw_view === 'epics' ||
+        raw_view === 'board'
+      ) {
+        last_view = raw_view;
+      }
+    } catch {
+      // ignore
+    }
+    const store = createStore({ filters: persistedFilters, view: last_view });
     const router = createHashRouter(store);
     router.start();
     /**
@@ -58,7 +94,10 @@ export function bootstrap(root_element) {
         return [];
       }
     };
-    const view = createListView(
+    // Top navigation
+    createTopNav(nav_mount, store, router);
+
+    const issues_view = createListView(
       list_mount,
       transport,
       (hash) => {
@@ -81,7 +120,7 @@ export function bootstrap(root_element) {
         // ignore
       }
     });
-    void view.load();
+    void issues_view.load();
     if (detail_mount) {
       const detail = createDetailView(detail_mount, transport, (hash) => {
         const id = hash.replace('#/issue/', '');
@@ -110,13 +149,35 @@ export function bootstrap(root_element) {
 
       // Refresh views on push updates
       client.on('issues-changed', () => {
-        void view.load();
+        void issues_view.load();
         const id = store.getState().selected_id;
         if (id) {
           void detail.load(id);
         }
       });
     }
+
+    // Toggle route shells on view change and persist
+    const data = createDataLayer(/** @type {any} */ (transport), client.on);
+    const epics_view = createEpicsView(epics_root, data, (id) =>
+      router.gotoIssue(id)
+    );
+    // Preload epics when switching to view
+    store.subscribe((s) => {
+      if (issues_root && epics_root && board_root) {
+        issues_root.hidden = s.view !== 'issues';
+        epics_root.hidden = s.view !== 'epics';
+        board_root.hidden = s.view !== 'board';
+      }
+      if (s.view === 'epics') {
+        void epics_view.load();
+      }
+      try {
+        window.localStorage.setItem('beads-ui.view', s.view);
+      } catch {
+        // ignore
+      }
+    });
   }
 }
 
