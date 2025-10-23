@@ -23,16 +23,15 @@ export function createEpicsView(mount_element, data, goto_issue) {
   const expanded = new Set();
   /** @type {Map<string, IssueLite[]>} */
   const children = new Map();
+  /** @type {Set<string>} */
+  const loading = new Set();
 
   function doRender() {
     render(template(), mount_element);
   }
 
   function template() {
-    return html`
-      <div class="panel__header">Epics</div>
-      <div class="panel__body">${groups.map((g) => groupTemplate(g))}</div>
-    `;
+    return html`${groups.map((g) => groupTemplate(g))}`;
   }
 
   /**
@@ -43,6 +42,7 @@ export function createEpicsView(mount_element, data, goto_issue) {
     const id = String(epic.id || '');
     const is_open = expanded.has(id);
     const list = children.get(id) || [];
+    const is_loading = loading.has(id);
     return html`
       <div class="epic-group" data-epic-id=${id}>
         <div
@@ -56,15 +56,26 @@ export function createEpicsView(mount_element, data, goto_issue) {
           <span class="text-truncate" style="margin-left:8px"
             >${epic.title || '(no title)'}</span
           >
-          <span class="muted" style="margin-left:auto"
-            >${g.closed_children}/${g.total_children} closed</span
+          <span
+            class="epic-progress"
+            style="margin-left:auto; display:flex; align-items:center; gap:8px;"
           >
+            <progress
+              value=${Number(g.closed_children || 0)}
+              max=${Math.max(1, Number(g.total_children || 0))}
+            ></progress>
+            <span class="muted mono"
+              >${g.closed_children}/${g.total_children}</span
+            >
+          </span>
         </div>
         ${is_open
           ? html`<div class="epic-children">
-              ${list.length === 0
-                ? html`<div class="muted">No open issues</div>`
-                : html`<table class="table">
+              ${is_loading
+                ? html`<div class="muted">Loading…</div>`
+                : list.length === 0
+                  ? html`<div class="muted">No open issues</div>`
+                  : html`<table class="table">
                     <thead>
                       <tr>
                         <th>ID</th>
@@ -98,7 +109,7 @@ export function createEpicsView(mount_element, data, goto_issue) {
           @change=${makeSelectChange(it.id, 'type')}
         >
           ${ISSUE_TYPES.map(
-            (t) => html`<option value=${t}>${typeLabel(t)}</option>`
+            (t) => html`<option value=${t} ?selected=${(it.issue_type || '') === t}>${typeLabel(t)}</option>`
           )}
         </select>
       </td>
@@ -108,7 +119,7 @@ export function createEpicsView(mount_element, data, goto_issue) {
           @change=${makeSelectChange(it.id, 'priority')}
         >
           ${priority_levels.map(
-            (p, i) => html`<option value=${String(i)}>${p}</option>`
+            (p, i) => html`<option value=${String(i)} ?selected=${String(it.priority ?? 2) === String(i)}>${p}</option>`
           )}
         </select>
       </td>
@@ -118,7 +129,7 @@ export function createEpicsView(mount_element, data, goto_issue) {
           @change=${makeSelectChange(it.id, 'status')}
         >
           ${['open', 'in_progress', 'closed'].map(
-            (s) => html`<option value=${s}>${statusLabel(s)}</option>`
+            (s) => html`<option value=${s} ?selected=${(it.status || 'open') === s}>${statusLabel(s)}</option>`
           )}
         </select>
       </td>
@@ -212,13 +223,19 @@ export function createEpicsView(mount_element, data, goto_issue) {
       class="editable"
       tabindex="0"
       role="button"
-      @click=${() => {
-        editing.add(k);
-        doRender();
-      }}
+      @click=${
+        /** @param {MouseEvent} e */ (e) => {
+          /** @type {Event} */ (e).stopPropagation();
+          /** @type {Event} */ (e).preventDefault();
+          editing.add(k);
+          doRender();
+        }
+      }
       @keydown=${
         /** @param {KeyboardEvent} e */ (e) => {
+          e.stopPropagation();
           if (e.key === 'Enter') {
+            e.preventDefault();
             editing.add(k);
             doRender();
           }
@@ -288,6 +305,7 @@ export function createEpicsView(mount_element, data, goto_issue) {
       expanded.add(epic_id);
       // Load children if not present
       if (!children.has(epic_id)) {
+        loading.add(epic_id);
         doRender();
         try {
           const epic = await data.getIssue(epic_id);
@@ -331,7 +349,7 @@ export function createEpicsView(mount_element, data, goto_issue) {
           });
           children.set(epic_id, list);
         } finally {
-          // no-op
+          loading.delete(epic_id);
         }
       }
     } else {
@@ -345,6 +363,18 @@ export function createEpicsView(mount_element, data, goto_issue) {
       const res = await data.getEpicStatus();
       groups = Array.isArray(res) ? res : [];
       doRender();
+      // Auto-expand first epic on screen
+      try {
+        if (groups.length > 0) {
+          const first_id = String((groups[0].epic && groups[0].epic.id) || '');
+          if (first_id && !expanded.has(first_id)) {
+            // This will render and load children lazily
+            await toggle(first_id);
+          }
+        }
+      } catch {
+        // ignore auto-expand failures
+      }
     }
   };
 }

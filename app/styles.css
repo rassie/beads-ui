@@ -496,6 +496,11 @@ button:disabled {
 .epic-children {
   padding: 8px 12px 12px;
 }
+/* Compact native progress for epic status */
+.epic-header progress {
+  width: 140px;
+  height: 8px;
+}
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -505,6 +510,16 @@ button:disabled {
   text-align: left;
   padding: 6px 8px;
   border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+/* Ensure form controls fill the cell */
+.table td input[type='text'],
+.table td select {
+  width: 100%;
+  box-sizing: border-box;
+}
+.table td .editable {
+  display: block;
+  width: 100%;
 }
 .table th {
   font-size: 12px;

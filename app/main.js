@@ -168,7 +168,10 @@ export function bootstrap(root_element) {
       router.gotoIssue(id)
     );
     // Preload epics when switching to view
-    store.subscribe((s) => {
+    /**
+     * @param {{ selected_id: string | null, view: 'issues'|'epics'|'board', filters: any }} s
+     */
+    const onRouteChange = (s) => {
       const showDetail = Boolean(s.selected_id);
       if (issues_root && epics_root && board_root && detail_mount) {
         issues_root.hidden = showDetail || s.view !== 'issues';
@@ -187,7 +190,10 @@ export function bootstrap(root_element) {
       } catch {
         // ignore
       }
-    });
+    };
+    store.subscribe(onRouteChange);
+    // Ensure initial state is reflected (fixes reload on #/epics)
+    onRouteChange(store.getState());
   }
 }
 
