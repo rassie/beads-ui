@@ -42,8 +42,8 @@ Only `blocks` dependencies affect the ready work queue.
 If no issue is specified, run `bd ready` and claim an unblocked issue.
 
 1. Open issue with `bd show <id>` and read all linked docs.
-2. Update status as you work (`in_progress` → `closed`); maintain dependencies,
-   and attach notes/links for traceability.
+2. Assign to `agent`, update status as you work (`in_progress` → `closed`);
+   maintain dependencies, and attach notes/links for traceability.
 3. Discover new work? Create linked issue with dependency
    `discovered-from:<parent-id>`.
 4. Land the change; run tests/lint; update any referenced docs.
