@@ -24,15 +24,15 @@ Upstream beads (CLI and docs): https://github.com/steveyegge/beads
 
 Issues
 
-![Issues view](media/bdui-issues.png)
+![Issues view](https://github.com/mantoni/beads-ui/raw/main/media/bdui-issues.png)
 
 Epics
 
-![Epics view](media/bdui-epics.png)
+![Epics view](https://github.com/mantoni/beads-ui/raw/main/media/bdui-epics.png)
 
 Board
 
-![Board view](media/bdui-board.png)
+![Board view](https://github.com/mantoni/beads-ui/raw/main/media/bdui-board.png)
 
 ## Quickstart
 
@@ -73,3 +73,7 @@ Platform notes:
 
 See `docs/quickstart.md` for details and `docs/architecture.md` for the protocol
 and component overview.
+
+## License
+
+MIT
