@@ -154,6 +154,13 @@ export function createBoardView(mount_element, data, goto_issue) {
         o = o.filter((it) => !ready_ids.has(it.id));
       }
 
+      // Remove items from Ready that are already In Progress by id
+      if (r.length > 0 && p.length > 0) {
+        /** @type {Set<string>} */
+        const in_progress_ids = new Set(p.map((it) => it.id));
+        r = r.filter((it) => !in_progress_ids.has(it.id));
+      }
+
       sortByUpdatedDesc(o);
       sortReady(r);
       sortByUpdatedDesc(p);

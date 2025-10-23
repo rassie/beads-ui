@@ -122,4 +122,63 @@ describe('views/board', () => {
     first_ready?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(navigations[0]).toBe('R-1');
   });
+
+  test('filters Ready to exclude items that are In Progress', async () => {
+    document.body.innerHTML = '<div id="m"></div>';
+    const mount = /** @type {HTMLElement} */ (document.getElementById('m'));
+
+    /** @type {{ getOpen: () => Promise<any[]>, getReady: () => Promise<any[]>, getInProgress: () => Promise<any[]>, getClosed: () => Promise<any[]> }} */
+    const data = {
+      async getOpen() {
+        return [];
+      },
+      async getReady() {
+        return [
+          {
+            id: 'X-1',
+            title: 'x1',
+            priority: 1,
+            updated_at: '2025-10-23T10:00:00.000Z',
+            issue_type: 'task'
+          },
+          {
+            id: 'X-2',
+            title: 'x2',
+            priority: 1,
+            updated_at: '2025-10-23T09:00:00.000Z',
+            issue_type: 'task'
+          }
+        ];
+      },
+      async getInProgress() {
+        return [
+          {
+            id: 'X-2',
+            title: 'x2',
+            updated_at: '2025-10-23T11:00:00.000Z',
+            issue_type: 'task'
+          }
+        ];
+      },
+      async getClosed() {
+        return [];
+      }
+    };
+
+    const view = createBoardView(mount, /** @type {any} */ (data), () => {});
+
+    await view.load();
+
+    const ready_ids = Array.from(
+      mount.querySelectorAll('#ready-col .board-card .mono')
+    ).map((el) => el.textContent?.trim());
+
+    // X-2 is in progress, so Ready should only show X-1
+    expect(ready_ids).toEqual(['#1']);
+
+    const prog_ids = Array.from(
+      mount.querySelectorAll('#in-progress-col .board-card .mono')
+    ).map((el) => el.textContent?.trim());
+    expect(prog_ids).toEqual(['#2']);
+  });
 });
