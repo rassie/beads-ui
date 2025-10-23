@@ -49,16 +49,16 @@ describe('deep link on initial load (UI-44)', () => {
     await Promise.resolve();
 
     const detailHeader = /** @type {HTMLElement} */ (
-      document.querySelector('#detail-panel .panel__header')
+      document.querySelector('#detail-panel .panel__header .mono')
     );
-    expect(detailHeader.textContent || '').toContain('UI-2');
+    expect(detailHeader && detailHeader.textContent).toBe('#2');
 
     const list = /** @type {HTMLElement} */ (
       document.getElementById('list-root')
     );
-    const selected = list.querySelector('li.selected');
-    expect(selected && (selected.textContent || '').includes('UI-2')).toBe(
-      true
+    const selected = /** @type {HTMLElement|null} */ (
+      list.querySelector('li.selected')
     );
+    expect(selected && selected.getAttribute('data-issue-id')).toBe('UI-2');
   });
 });

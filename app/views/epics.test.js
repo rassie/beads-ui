@@ -122,7 +122,7 @@ describe('views/epics', () => {
         r.querySelector('td.mono')
       )?.textContent?.trim()
     );
-    expect(ids).toEqual(['UI-11', 'UI-12', 'UI-13']);
+    expect(ids).toEqual(['#11', '#12', '#13']);
   });
 
   test('clicking inputs/selects inside a row does not navigate', async () => {
@@ -164,11 +164,11 @@ describe('views/epics', () => {
     const header = mount.querySelector('.epic-header');
     header?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await new Promise((r) => setTimeout(r, 0));
-    // Click the title input; should not navigate
-    const input = /** @type {HTMLInputElement|null} */ (
-      mount.querySelector('tr.epic-row input[type="text"]')
+    // Click a select inside the row; should not navigate
+    const sel = /** @type {HTMLSelectElement|null} */ (
+      mount.querySelector('tr.epic-row select')
     );
-    input?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    sel?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(navCalls.length).toBe(0);
   });
 });

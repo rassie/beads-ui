@@ -60,10 +60,10 @@ describe('views/detail dependencies', () => {
     const view = createDetailView(mount, /** @type {any} */ (send));
     await view.load('UI-20');
 
-    // Find the remove button next to link UI-5
+    // Find the remove button next to link #5
     const btns = mount.querySelectorAll('button');
     const rm = Array.from(btns).find((b) =>
-      b.getAttribute('aria-label')?.includes('UI-5')
+      b.getAttribute('aria-label')?.includes('#5')
     );
     expect(rm).toBeTruthy();
     rm?.dispatchEvent(new window.Event('click'));

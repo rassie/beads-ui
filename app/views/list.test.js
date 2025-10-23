@@ -73,11 +73,13 @@ describe('views/list', () => {
     select.dispatchEvent(new Event('change'));
     input.value = 'ga';
     input.dispatchEvent(new Event('input'));
-    const visible = Array.from(mount.querySelectorAll('li')).map(
-      (el) => el.textContent || ''
-    );
+    const visible = Array.from(mount.querySelectorAll('li')).map((el) => ({
+      id: el.getAttribute('data-issue-id') || '',
+      text: el.textContent || ''
+    }));
     expect(visible.length).toBe(1);
-    expect(visible[0].toLowerCase()).toContain('gamma');
+    expect(visible[0].id).toBe('UI-3');
+    expect(visible[0].text.toLowerCase()).toContain('gamma');
   });
 
   test('ready filter via select triggers backend reload', async () => {
@@ -218,11 +220,12 @@ describe('views/list', () => {
     await view.load();
 
     // Expect only UI-2 ("Gamma" open) to be visible
-    const items = Array.from(mount.querySelectorAll('li')).map(
-      (el) => el.textContent || ''
-    );
+    const items = Array.from(mount.querySelectorAll('li')).map((el) => ({
+      id: el.getAttribute('data-issue-id') || '',
+      text: el.textContent || ''
+    }));
     expect(items.length).toBe(1);
-    expect(items[0].toLowerCase()).toContain('ui-2');
+    expect(items[0].id).toBe('UI-2');
 
     // Controls reflect persisted filters
     const select = /** @type {HTMLSelectElement} */ (

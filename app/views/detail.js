@@ -1,7 +1,9 @@
 // Issue Detail view implementation (lit-html based)
 import { html, render } from 'lit-html';
+import { issueDisplayId } from '../utils/issue-id.js';
 import { renderMarkdown } from '../utils/markdown.js';
 import { priority_levels } from '../utils/priority.js';
+import { statusLabel } from '../utils/status.js';
 import { createTypeBadge } from '../utils/type-badge.js';
 
 /**
@@ -388,11 +390,13 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
                     nav(href);
                   }}
                 >
-                  <a href=${href} @click=${makeDepLinkClick(href)}>${did}</a>
+                  <a href=${href} @click=${makeDepLinkClick(href)}
+                    >${issueDisplayId(did)}</a
+                  >
                   ${createTypeBadge(dep.issue_type || '')}
                   <span class="text-truncate">${dep.title || ''}</span>
                   <button
-                    aria-label=${`Remove dependency ${did}`}
+                    aria-label=${`Remove dependency ${issueDisplayId(did)}`}
                     @click=${makeDepRemoveClick(did, title)}
                   >
                     ×
@@ -443,9 +447,9 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
       .value=${issue.status || 'open'}
       ?disabled=${pending}
     >
-      <option value="open">Open</option>
-      <option value="in_progress">In progress</option>
-      <option value="closed">Closed</option>
+      ${['open', 'in_progress', 'closed'].map(
+        (s) => html`<option value=${s}>${statusLabel(s)}</option>`
+      )}
     </select>`;
 
     const priority_select = html`<select
@@ -519,7 +523,9 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
         </div>`;
 
     return html`
-      <div class="panel__header"><span class="mono">${issue.id}</span></div>
+      <div class="panel__header">
+        <span class="mono">${issueDisplayId(issue.id)}</span>
+      </div>
       <div class="panel__body" id="detail-root">
         <div style="position:relative">
           <div class="detail-layout">
@@ -567,7 +573,7 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
     if (hdr && (hdr.textContent || '').trim() === '') {
       const span = document.createElement('span');
       span.className = 'mono';
-      span.textContent = current.id;
+      span.textContent = issueDisplayId(current.id);
       hdr.replaceChildren(span);
     }
   }

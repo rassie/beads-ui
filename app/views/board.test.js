@@ -79,19 +79,19 @@ describe('views/board', () => {
     const ready_ids = Array.from(
       mount.querySelectorAll('#ready-col .board-card .mono')
     ).map((el) => el.textContent?.trim());
-    expect(ready_ids).toEqual(['R-1', 'R-3', 'R-2']);
+    expect(ready_ids).toEqual(['#1', '#3', '#2']);
 
     // In progress: updated_at desc
     const prog_ids = Array.from(
       mount.querySelectorAll('#in-progress-col .board-card .mono')
     ).map((el) => el.textContent?.trim());
-    expect(prog_ids).toEqual(['P-1', 'P-2']);
+    expect(prog_ids).toEqual(['#1', '#2']);
 
     // Closed: updated_at desc
     const closed_ids = Array.from(
       mount.querySelectorAll('#closed-col .board-card .mono')
     ).map((el) => el.textContent?.trim());
-    expect(closed_ids).toEqual(['C-1', 'C-2']);
+    expect(closed_ids).toEqual(['#1', '#2']);
 
     // Click navigates
     const first_ready = /** @type {HTMLElement|null} */ (

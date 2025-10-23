@@ -1,4 +1,7 @@
 import { html, render } from 'lit-html';
+import { issueDisplayId } from '../utils/issue-id.js';
+import { priority_levels } from '../utils/priority.js';
+import { createTypeBadge } from '../utils/type-badge.js';
 
 /**
  * @typedef {{ id: string, title?: string, status?: 'open'|'in_progress'|'closed', priority?: number, issue_type?: string, updated_at?: string }} IssueLite
@@ -66,9 +69,13 @@ export function createBoardView(mount_element, data, goto_issue) {
           ${it.title || '(no title)'}
         </div>
         <div class="board-card__meta">
-          <span class="mono">${it.id}</span>
-          <span class="badge">${it.issue_type || ''}</span>
-          <span class="muted">p${String(it.priority ?? '')}</span>
+          <span class="mono">${issueDisplayId(it.id)}</span>
+          ${createTypeBadge(/** @type {any} */ (it).issue_type)}
+          <span class="muted"
+            >${typeof it.priority === 'number'
+              ? priority_levels[it.priority]
+              : ''}</span
+          >
         </div>
       </article>
     `;

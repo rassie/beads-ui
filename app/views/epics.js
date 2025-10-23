@@ -1,4 +1,8 @@
 import { html, render } from 'lit-html';
+import { issueDisplayId } from '../utils/issue-id.js';
+import { ISSUE_TYPES, typeLabel } from '../utils/issue-type.js';
+import { priority_levels } from '../utils/priority.js';
+import { statusLabel } from '../utils/status.js';
 
 /**
  * @typedef {{ id: string, title?: string, status?: string, priority?: number, issue_type?: string, assignee?: string, updated_at?: string }} IssueLite
@@ -48,7 +52,7 @@ export function createEpicsView(mount_element, data, goto_issue) {
           tabindex="0"
           aria-expanded=${is_open}
         >
-          <span class="mono">${id}</span>
+          <span class="mono">${issueDisplayId(id)}</span>
           <span class="text-truncate" style="margin-left:8px"
             >${epic.title || '(no title)'}</span
           >
@@ -86,21 +90,15 @@ export function createEpicsView(mount_element, data, goto_issue) {
    */
   function rowTemplate(it) {
     return html`<tr class="epic-row" @click=${makeRowClick(it.id)}>
-      <td class="mono">${it.id}</td>
-      <td>
-        <input
-          type="text"
-          .value=${it.title || ''}
-          @change=${makeTextChange(it.id, 'title')}
-        />
-      </td>
+      <td class="mono">${issueDisplayId(it.id)}</td>
+      <td>${editableText(it.id, 'title', it.title || '')}</td>
       <td>
         <select
           .value=${it.issue_type || ''}
           @change=${makeSelectChange(it.id, 'type')}
         >
-          ${['bug', 'feature', 'task', 'epic', 'chore'].map(
-            (t) => html`<option value=${t}>${t}</option>`
+          ${ISSUE_TYPES.map(
+            (t) => html`<option value=${t}>${typeLabel(t)}</option>`
           )}
         </select>
       </td>
@@ -109,8 +107,8 @@ export function createEpicsView(mount_element, data, goto_issue) {
           .value=${String(it.priority ?? 2)}
           @change=${makeSelectChange(it.id, 'priority')}
         >
-          ${[0, 1, 2, 3, 4].map(
-            (p) => html`<option value=${String(p)}>${String(p)}</option>`
+          ${priority_levels.map(
+            (p, i) => html`<option value=${String(i)}>${p}</option>`
           )}
         </select>
       </td>
@@ -120,17 +118,11 @@ export function createEpicsView(mount_element, data, goto_issue) {
           @change=${makeSelectChange(it.id, 'status')}
         >
           ${['open', 'in_progress', 'closed'].map(
-            (s) => html`<option value=${s}>${s}</option>`
+            (s) => html`<option value=${s}>${statusLabel(s)}</option>`
           )}
         </select>
       </td>
-      <td>
-        <input
-          type="text"
-          .value=${it.assignee || ''}
-          @change=${makeTextChange(it.id, 'assignee')}
-        />
-      </td>
+      <td>${editableText(it.id, 'assignee', it.assignee || '')}</td>
     </tr>`;
   }
 
@@ -153,11 +145,7 @@ export function createEpicsView(mount_element, data, goto_issue) {
   /**
    * @param {Event} ev
    */
-  function inputValue(ev) {
-    /** @type {HTMLInputElement} */
-    const el = /** @type {any} */ (ev.currentTarget);
-    return el.value || '';
-  }
+  // Former helper for text inputs removed; inline editing handles values directly.
 
   /**
    * @param {Event} ev
@@ -166,6 +154,78 @@ export function createEpicsView(mount_element, data, goto_issue) {
     /** @type {HTMLSelectElement} */
     const el = /** @type {any} */ (ev.currentTarget);
     return el.value || '';
+  }
+
+  /**
+   * Render editable text field using the same UX pattern as detail view:
+   * shows a span with focus ring on hover, switches to input on click.
+   * @param {string} id
+   * @param {'title'|'assignee'} key
+   * @param {string} value
+   */
+  function editableText(id, key, value) {
+    /** @type {string} */
+    const k = `${id}:${key}`;
+    const is_edit = editing.has(k);
+    if (is_edit) {
+      return html`<span>
+        <input
+          type="text"
+          .value=${value}
+          @keydown=${
+            /** @param {KeyboardEvent} e */ (e) => {
+              if (e.key === 'Escape') {
+                editing.delete(k);
+                doRender();
+              } else if (e.key === 'Enter') {
+                // Commit
+                /** @type {HTMLInputElement} */ const el = /** @type {any} */ (
+                  e.currentTarget
+                );
+                const next = el.value || '';
+                if (next !== value) {
+                  void updateInline(id, { [key]: next });
+                }
+                editing.delete(k);
+                doRender();
+              }
+            }
+          }
+          @blur=${
+            /** @param {Event} ev */ (ev) => {
+              /** @type {HTMLInputElement} */ const el = /** @type {any} */ (
+                ev.currentTarget
+              );
+              const next = el.value || '';
+              if (next !== value) {
+                void updateInline(id, { [key]: next });
+              }
+              editing.delete(k);
+              doRender();
+            }
+          }
+          autofocus
+        />
+      </span>`;
+    }
+    return html`<span
+      class="editable"
+      tabindex="0"
+      role="button"
+      @click=${() => {
+        editing.add(k);
+        doRender();
+      }}
+      @keydown=${
+        /** @param {KeyboardEvent} e */ (e) => {
+          if (e.key === 'Enter') {
+            editing.add(k);
+            doRender();
+          }
+        }
+      }
+      >${value || ''}</span
+    >`;
   }
 
   /**
@@ -199,21 +259,10 @@ export function createEpicsView(mount_element, data, goto_issue) {
     }
   }
 
-  /**
-   * Create a change handler for text inputs.
-   * @param {string} id
-   * @param {'title'|'assignee'} key
-   * @returns {(ev: Event) => Promise<void>}
-   */
-  function makeTextChange(id, key) {
-    return async (ev) => {
-      const val = inputValue(ev);
-      /** @type {{ [k:string]: any }} */
-      const patch = {};
-      patch[key] = val;
-      await updateInline(id, patch);
-    };
-  }
+  /** @type {Set<string>} */
+  const editing = new Set();
+
+  // Text inputs now use editableText pattern (see editableText)
 
   /**
    * Create a change handler for select inputs.
@@ -245,9 +294,7 @@ export function createEpicsView(mount_element, data, goto_issue) {
           // Children for the Epics view come from dependents: issues that list
           // the epic as a dependency. This matches how progress is tracked.
           /** @type {{ id: string }[]} */
-          const deps = Array.isArray(epic.dependents)
-            ? epic.dependents
-            : [];
+          const deps = Array.isArray(epic.dependents) ? epic.dependents : [];
           /** @type {IssueLite[]} */
           const list = [];
           for (const d of deps) {

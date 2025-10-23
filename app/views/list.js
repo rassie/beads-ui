@@ -1,6 +1,8 @@
 /* global NodeListOf */
 import { html, render } from 'lit-html';
+import { issueDisplayId } from '../utils/issue-id.js';
 import { priority_levels } from '../utils/priority.js';
+import { statusLabel } from '../utils/status.js';
 import { createTypeBadge } from '../utils/type-badge.js';
 
 // List view implementation; requires a transport send function.
@@ -97,9 +99,9 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
         <select @change=${onStatusChange} .value=${status_filter}>
           <option value="all">All</option>
           <option value="ready">Ready</option>
-          <option value="open">Open</option>
-          <option value="in_progress">In progress</option>
-          <option value="closed">Closed</option>
+          <option value="open">${statusLabel('open')}</option>
+          <option value="in_progress">${statusLabel('in_progress')}</option>
+          <option value="closed">${statusLabel('closed')}</option>
         </select>
         ${' '}
         <input
@@ -128,11 +130,11 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
                     <span>${it.title || '(no title)'}</span>
                   </div>
                   <div class="issue-meta">
-                    ${it.status} · ${priority_levels[it.priority]}
+                    ${statusLabel(it.status)} · ${priority_levels[it.priority]}
                   </div>
                 </div>
                 <div class="issue-right">
-                  <span class="issue-id mono">${it.id}</span>
+                  <span class="issue-id mono">${issueDisplayId(it.id)}</span>
                   ${createTypeBadge(/** @type {any} */ (it).issue_type)}
                 </div>
               </li>

@@ -41,8 +41,10 @@ describe('views/detail', () => {
 
     await view.load('UI-29');
 
-    const text = mount.textContent || '';
-    expect(text).toContain('UI-29');
+    const headerMono = /** @type {HTMLElement|null} */ (
+      mount.querySelector('.panel__header .mono')
+    );
+    expect(headerMono && headerMono.textContent).toBe('#29');
     const titleSpan = /** @type {HTMLSpanElement} */ (
       mount.querySelector('h2 .editable')
     );
@@ -104,7 +106,7 @@ describe('views/detail', () => {
     await view.load('UI-50');
     const badge = mount.querySelector('.props-card .type-badge');
     expect(badge).toBeTruthy();
-    expect(badge && badge.textContent).toBe('feature');
+    expect(badge && badge.textContent).toBe('Feature');
   });
 
   test('inline editing toggles for title and description', async () => {
