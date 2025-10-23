@@ -1,0 +1,103 @@
+import { describe, expect, test } from 'vitest';
+import { createBoardView } from './board.js';
+
+describe('views/board', () => {
+  test('renders three columns with sorted cards and navigates on click', async () => {
+    document.body.innerHTML = '<div id="m"></div>';
+    const mount = /** @type {HTMLElement} */ (document.getElementById('m'));
+
+    /** @type {{ getReady: () => Promise<any[]>, getInProgress: () => Promise<any[]>, getClosed: () => Promise<any[]> }} */
+    const data = {
+      async getReady() {
+        return [
+          {
+            id: 'R-2',
+            title: 'r2',
+            priority: 1,
+            updated_at: '2025-10-20T08:00:00.000Z',
+            issue_type: 'task'
+          },
+          {
+            id: 'R-1',
+            title: 'r1',
+            priority: 0,
+            updated_at: '2025-10-21T08:00:00.000Z',
+            issue_type: 'bug'
+          },
+          {
+            id: 'R-3',
+            title: 'r3',
+            priority: 1,
+            updated_at: '2025-10-22T08:00:00.000Z',
+            issue_type: 'feature'
+          }
+        ];
+      },
+      async getInProgress() {
+        return [
+          {
+            id: 'P-1',
+            title: 'p1',
+            updated_at: '2025-10-23T09:00:00.000Z',
+            issue_type: 'task'
+          },
+          {
+            id: 'P-2',
+            title: 'p2',
+            updated_at: '2025-10-22T09:00:00.000Z',
+            issue_type: 'feature'
+          }
+        ];
+      },
+      async getClosed() {
+        return [
+          {
+            id: 'C-2',
+            title: 'c2',
+            updated_at: '2025-10-20T09:00:00.000Z',
+            issue_type: 'task'
+          },
+          {
+            id: 'C-1',
+            title: 'c1',
+            updated_at: '2025-10-21T09:00:00.000Z',
+            issue_type: 'bug'
+          }
+        ];
+      }
+    };
+
+    /** @type {string[]} */
+    const navigations = [];
+    const view = createBoardView(mount, /** @type {any} */ (data), (id) => {
+      navigations.push(id);
+    });
+
+    await view.load();
+
+    // Ready: priority asc, then updated_at desc for equal priority
+    const ready_ids = Array.from(
+      mount.querySelectorAll('#ready-col .board-card .mono')
+    ).map((el) => el.textContent?.trim());
+    expect(ready_ids).toEqual(['R-1', 'R-3', 'R-2']);
+
+    // In progress: updated_at desc
+    const prog_ids = Array.from(
+      mount.querySelectorAll('#in-progress-col .board-card .mono')
+    ).map((el) => el.textContent?.trim());
+    expect(prog_ids).toEqual(['P-1', 'P-2']);
+
+    // Closed: updated_at desc
+    const closed_ids = Array.from(
+      mount.querySelectorAll('#closed-col .board-card .mono')
+    ).map((el) => el.textContent?.trim());
+    expect(closed_ids).toEqual(['C-1', 'C-2']);
+
+    // Click navigates
+    const first_ready = /** @type {HTMLElement|null} */ (
+      mount.querySelector('#ready-col .board-card')
+    );
+    first_ready?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(navigations[0]).toBe('R-1');
+  });
+});

@@ -2,6 +2,7 @@ import { html, render } from 'lit-html';
 import { createDataLayer } from './data/providers.js';
 import { createHashRouter } from './router.js';
 import { createStore } from './state.js';
+import { createBoardView } from './views/board.js';
 import { createDetailView } from './views/detail.js';
 import { createEpicsView } from './views/epics.js';
 import { createListView } from './views/list.js';
@@ -23,9 +24,7 @@ export function bootstrap(root_element) {
     <section id="epics-root" class="route epics" hidden>
       <div class="placeholder">Epics view placeholder</div>
     </section>
-    <section id="board-root" class="route board" hidden>
-      <div class="placeholder">Board view placeholder</div>
-    </section>
+    <section id="board-root" class="route board" hidden></section>
   `;
   render(shell, root_element);
 
@@ -162,6 +161,9 @@ export function bootstrap(root_element) {
     const epics_view = createEpicsView(epics_root, data, (id) =>
       router.gotoIssue(id)
     );
+    const board_view = createBoardView(board_root, data, (id) =>
+      router.gotoIssue(id)
+    );
     // Preload epics when switching to view
     store.subscribe((s) => {
       if (issues_root && epics_root && board_root) {
@@ -171,6 +173,9 @@ export function bootstrap(root_element) {
       }
       if (s.view === 'epics') {
         void epics_view.load();
+      }
+      if (s.view === 'board') {
+        void board_view.load();
       }
       try {
         window.localStorage.setItem('beads-ui.view', s.view);
