@@ -45,6 +45,12 @@ export default defineConfig([
     }
   },
   {
+    files: ['bin/**/*.js'],
+    languageOptions: {
+      globals: globals.node
+    }
+  },
+  {
     files: ['app/**/*.js'],
     languageOptions: {
       globals: globals.browser

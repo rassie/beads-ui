@@ -1,11 +1,12 @@
 import { describe, expect, test, vi } from 'vitest';
+import { bootstrap } from './main.js';
+
 // Provide a mutable client instance for module-level mock
 /** @type {any} */
 let CLIENT = null;
 vi.mock('./ws.js', () => ({
   createWsClient: () => CLIENT
 }));
-import { bootstrap } from './main.js';
 
 describe('live updates: issues-changed handling', () => {
   test('refreshes list only when on issues view and preserves scroll', async () => {
@@ -26,13 +27,19 @@ describe('live updates: issues-changed handling', () => {
         }
         return null;
       }),
-      on(type, handler) {
-        // @ts-expect-error attach directly
+      /**
+       * @param {string} _type
+       * @param {(p:any)=>void} handler
+       */
+      on(_type, handler) {
         this._handler = handler;
         return () => {};
       },
+      /**
+       * @param {string} type
+       * @param {any} payload
+       */
       trigger(type, payload) {
-        // @ts-expect-error invoke
         if (type === 'issues-changed' && this._handler) this._handler(payload);
       },
       close() {},
@@ -62,7 +69,7 @@ describe('live updates: issues-changed handling', () => {
     const callsAfter = CLIENT.send.mock.calls.length;
     // One additional list-issues request, no detail fetch
     const newCalls = CLIENT.send.mock.calls.slice(callsBefore);
-    const types = newCalls.map((c) => c[0]);
+    const types = newCalls.map(/** @param {any} c */ (c) => c[0]);
     expect(types).toEqual(['list-issues']);
 
     // Scroll should remain
@@ -88,13 +95,19 @@ describe('live updates: issues-changed handling', () => {
         }
         return null;
       }),
-      on(type, handler) {
-        // @ts-expect-error attach directly
+      /**
+       * @param {string} _type
+       * @param {(p:any)=>void} handler
+       */
+      on(_type, handler) {
         this._handler = handler;
         return () => {};
       },
+      /**
+       * @param {string} type
+       * @param {any} payload
+       */
       trigger(type, payload) {
-        // @ts-expect-error invoke
         if (type === 'issues-changed' && this._handler) this._handler(payload);
       },
       close() {},
@@ -112,10 +125,13 @@ describe('live updates: issues-changed handling', () => {
     await Promise.resolve();
 
     CLIENT.send.mockClear();
-    CLIENT.trigger('issues-changed', { ts: Date.now(), hint: { ids: ['UI-1'] } });
+    CLIENT.trigger('issues-changed', {
+      ts: Date.now(),
+      hint: { ids: ['UI-1'] }
+    });
     await Promise.resolve();
 
-    const calls = CLIENT.send.mock.calls.map((c) => c[0]);
+    const calls = CLIENT.send.mock.calls.map(/** @param {any} c */ (c) => c[0]);
     expect(calls).toEqual(['show-issue']);
   });
 
@@ -127,13 +143,19 @@ describe('live updates: issues-changed handling', () => {
         }
         return [];
       }),
-      on(type, handler) {
-        // @ts-expect-error attach directly
+      /**
+       * @param {string} _type
+       * @param {(p:any)=>void} handler
+       */
+      on(_type, handler) {
         this._handler = handler;
         return () => {};
       },
+      /**
+       * @param {string} type
+       * @param {any} payload
+       */
       trigger(type, payload) {
-        // @ts-expect-error invoke
         if (type === 'issues-changed' && this._handler) this._handler(payload);
       },
       close() {},
@@ -153,7 +175,7 @@ describe('live updates: issues-changed handling', () => {
     CLIENT.trigger('issues-changed', { ts: Date.now() });
     await Promise.resolve();
 
-    const calls = CLIENT.send.mock.calls.map((c) => c[0]);
+    const calls = CLIENT.send.mock.calls.map(/** @param {any} c */ (c) => c[0]);
     expect(calls).toEqual(['epic-status']);
   });
 
@@ -168,13 +190,19 @@ describe('live updates: issues-changed handling', () => {
         }
         return [];
       }),
-      on(type, handler) {
-        // @ts-expect-error attach directly
+      /**
+       * @param {string} _type
+       * @param {(p:any)=>void} handler
+       */
+      on(_type, handler) {
         this._handler = handler;
         return () => {};
       },
+      /**
+       * @param {string} type
+       * @param {any} payload
+       */
       trigger(type, payload) {
-        // @ts-expect-error invoke
         if (type === 'issues-changed' && this._handler) this._handler(payload);
       },
       close() {},
@@ -193,7 +221,7 @@ describe('live updates: issues-changed handling', () => {
     CLIENT.trigger('issues-changed', { ts: Date.now() });
     await Promise.resolve();
 
-    const calls = CLIENT.send.mock.calls.map((c) => c[0]);
+    const calls = CLIENT.send.mock.calls.map(/** @param {any} c */ (c) => c[0]);
     // Board loads multiple list-issues, assert at least one
     expect(calls.length > 0).toBe(true);
     expect(new Set(calls).has('list-issues')).toBe(true);
