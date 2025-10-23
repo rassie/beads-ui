@@ -389,6 +389,170 @@ button:disabled {
   color: var(--badge-fg-chore);
 }
 
+/* Generic badge base (shared look) */
+.badge,
+.status-badge,
+.priority-badge,
+.badge-select {
+  display: inline-block;
+  padding: 0 8px;
+  line-height: 18px;
+  height: 18px;
+  border-radius: var(--badge-radius);
+  font-size: 11px;
+  font-weight: 600;
+  vertical-align: middle;
+  user-select: none;
+  box-shadow: 0 0 0 1px color-mix(in srgb, #000 5%, transparent) inset;
+}
+.badge + .badge,
+.status-badge + .status-badge,
+.priority-badge + .priority-badge,
+.badge-select + .badge-select {
+  margin-left: 4px;
+}
+
+/* Status badge palette */
+:root {
+  --badge-bg-open: #dbeafe;
+  --badge-fg-open: #1e3a8a;
+  --badge-bg-in-progress: #fef3c7;
+  --badge-fg-in-progress: #92400e;
+  --badge-bg-closed: #dcfce7;
+  --badge-fg-closed: #166534;
+
+  /* Priority palette */
+  --badge-bg-p0: #fee2e2;
+  --badge-fg-p0: #991b1b;
+  --badge-bg-p1: #ffedd5;
+  --badge-fg-p1: #9a3412;
+  --badge-bg-p2: #e5e7eb;
+  --badge-fg-p2: #374151;
+  --badge-bg-p3: #dbeafe;
+  --badge-fg-p3: #1e3a8a;
+  --badge-bg-p4: #e5e7eb;
+  --badge-fg-p4: #374151;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --badge-bg-open: #1e3a8a;
+    --badge-fg-open: #dbeafe;
+    --badge-bg-in-progress: #92400e;
+    --badge-fg-in-progress: #ffedd5;
+    --badge-bg-closed: #065f46;
+    --badge-fg-closed: #d1fae5;
+
+    --badge-bg-p0: #7f1d1d;
+    --badge-fg-p0: #fee2e2;
+    --badge-bg-p1: #7c2d12;
+    --badge-fg-p1: #ffedd5;
+    --badge-bg-p2: #374151;
+    --badge-fg-p2: #f3f4f6;
+    --badge-bg-p3: #1e3a8a;
+    --badge-fg-p3: #dbeafe;
+    --badge-bg-p4: #374151;
+    --badge-fg-p4: #f3f4f6;
+  }
+}
+
+html[data-theme='dark'] {
+  --badge-bg-open: #1e3a8a;
+  --badge-fg-open: #dbeafe;
+  --badge-bg-in-progress: #92400e;
+  --badge-fg-in-progress: #ffedd5;
+  --badge-bg-closed: #065f46;
+  --badge-fg-closed: #d1fae5;
+
+  --badge-bg-p0: #7f1d1d;
+  --badge-fg-p0: #fee2e2;
+  --badge-bg-p1: #7c2d12;
+  --badge-fg-p1: #ffedd5;
+  --badge-bg-p2: #374151;
+  --badge-fg-p2: #f3f4f6;
+  --badge-bg-p3: #1e3a8a;
+  --badge-fg-p3: #dbeafe;
+  --badge-bg-p4: #374151;
+  --badge-fg-p4: #f3f4f6;
+}
+
+.status-badge.is-open,
+.badge-select.badge--status.is-open {
+  background: var(--badge-bg-open);
+  color: var(--badge-fg-open);
+}
+.status-badge.is-in_progress,
+.badge-select.badge--status.is-in_progress {
+  background: var(--badge-bg-in-progress);
+  color: var(--badge-fg-in-progress);
+}
+.status-badge.is-closed,
+.badge-select.badge--status.is-closed {
+  background: var(--badge-bg-closed);
+  color: var(--badge-fg-closed);
+}
+
+.priority-badge.is-p0,
+.badge-select.badge--priority.is-p0 {
+  background: var(--badge-bg-p0);
+  color: var(--badge-fg-p0);
+}
+.priority-badge.is-p1,
+.badge-select.badge--priority.is-p1 {
+  background: var(--badge-bg-p1);
+  color: var(--badge-fg-p1);
+}
+.priority-badge.is-p2,
+.badge-select.badge--priority.is-p2 {
+  background: var(--badge-bg-p2);
+  color: var(--badge-fg-p2);
+}
+.priority-badge.is-p3,
+.badge-select.badge--priority.is-p3 {
+  background: var(--badge-bg-p3);
+  color: var(--badge-fg-p3);
+}
+.priority-badge.is-p4,
+.badge-select.badge--priority.is-p4 {
+  background: var(--badge-bg-p4);
+  color: var(--badge-fg-p4);
+}
+
+/* Make selects look like badges while keeping the native arrow */
+.badge-select {
+  appearance: none;
+  border: none;
+  padding: 0 22px 0 8px; /* room for arrow */
+  height: 20px;
+  line-height: 18px;
+  background-clip: padding-box;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7l5 5 5-5H5z' fill='%23000' opacity='0.45'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  background-size: 12px 12px;
+}
+.badge-select:focus {
+  outline: 2px solid color-mix(in srgb, var(--link) 50%, transparent);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+/* Inline, minimal text input for table editing */
+input.inline-edit {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  line-height: inherit;
+  font: inherit;
+}
+input.inline-edit:focus {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
 #list-panel .panel__header input {
   flex: 1;
 }
@@ -504,6 +668,7 @@ button:disabled {
 .table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed; /* keep column proportions stable while editing */
 }
 .table th,
 .table td {

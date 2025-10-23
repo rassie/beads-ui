@@ -2,6 +2,7 @@
 import { html, render } from 'lit-html';
 import { issueDisplayId } from '../utils/issue-id.js';
 import { renderMarkdown } from '../utils/markdown.js';
+import { emojiForPriority } from '../utils/priority-badge.js';
 import { priority_levels } from '../utils/priority.js';
 import { statusLabel } from '../utils/status.js';
 import { createTypeBadge } from '../utils/type-badge.js';
@@ -443,6 +444,7 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
         </h2>`;
 
     const status_select = html`<select
+      class=${`badge-select badge--status is-${issue.status || 'open'}`}
       @change=${onStatusChange}
       .value=${issue.status || 'open'}
       ?disabled=${pending}
@@ -453,12 +455,16 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
     </select>`;
 
     const priority_select = html`<select
+      class=${`badge-select badge--priority is-p${String(
+        typeof issue.priority === 'number' ? issue.priority : 2
+      )}`}
       @change=${onPriorityChange}
       .value=${String(typeof issue.priority === 'number' ? issue.priority : 2)}
       ?disabled=${pending}
     >
       ${priority_levels.map(
-        (p, i) => html`<option value=${String(i)}>${p}</option>`
+        (p, i) =>
+          html`<option value=${String(i)}>${emojiForPriority(i)} ${p}</option>`
       )}
     </select>`;
 

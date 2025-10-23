@@ -1,8 +1,9 @@
 import { html, render } from 'lit-html';
 import { issueDisplayId } from '../utils/issue-id.js';
-import { ISSUE_TYPES, typeLabel } from '../utils/issue-type.js';
+import { emojiForPriority } from '../utils/priority-badge.js';
 import { priority_levels } from '../utils/priority.js';
 import { statusLabel } from '../utils/status.js';
+import { createTypeBadge } from '../utils/type-badge.js';
 
 /**
  * @typedef {{ id: string, title?: string, status?: string, priority?: number, issue_type?: string, assignee?: string, updated_at?: string }} IssueLite
@@ -76,20 +77,28 @@ export function createEpicsView(mount_element, data, goto_issue) {
                 : list.length === 0
                   ? html`<div class="muted">No open issues</div>`
                   : html`<table class="table">
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>Title</th>
-                        <th>Type</th>
-                        <th>Priority</th>
-                        <th>Status</th>
-                        <th>Assignee</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${list.map((it) => rowTemplate(it))}
-                    </tbody>
-                  </table>`}
+                      <colgroup>
+                        <col style="width: 100px" />
+                        <col />
+                        <col style="width: 120px" />
+                        <col style="width: 120px" />
+                        <col style="width: 130px" />
+                        <col style="width: 160px" />
+                      </colgroup>
+                      <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>Title</th>
+                          <th>Type</th>
+                          <th>Priority</th>
+                          <th>Status</th>
+                          <th>Assignee</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${list.map((it) => rowTemplate(it))}
+                      </tbody>
+                    </table>`}
             </div>`
           : null}
       </div>
@@ -103,35 +112,40 @@ export function createEpicsView(mount_element, data, goto_issue) {
     return html`<tr class="epic-row" @click=${makeRowClick(it.id)}>
       <td class="mono">${issueDisplayId(it.id)}</td>
       <td>${editableText(it.id, 'title', it.title || '')}</td>
+      <td>${createTypeBadge(/** @type {any} */ (it).issue_type)}</td>
       <td>
-        <select
-          .value=${it.issue_type || ''}
-          @change=${makeSelectChange(it.id, 'type')}
-        >
-          ${ISSUE_TYPES.map(
-            (t) => html`<option value=${t} ?selected=${(it.issue_type || '') === t}>${typeLabel(t)}</option>`
-          )}
-        </select>
+        ${(() => {
+          const cur = String(it.priority ?? 2);
+          return html`<select
+            class="badge-select badge--priority ${'is-p' + cur}"
+            .value=${cur}
+            @change=${makeSelectChange(it.id, 'priority')}
+          >
+            ${priority_levels.map(
+              (p, i) =>
+                html`<option value=${String(i)} ?selected=${cur === String(i)}>
+                  ${emojiForPriority(i)} ${p}
+                </option>`
+            )}
+          </select>`;
+        })()}
       </td>
       <td>
-        <select
-          .value=${String(it.priority ?? 2)}
-          @change=${makeSelectChange(it.id, 'priority')}
-        >
-          ${priority_levels.map(
-            (p, i) => html`<option value=${String(i)} ?selected=${String(it.priority ?? 2) === String(i)}>${p}</option>`
-          )}
-        </select>
-      </td>
-      <td>
-        <select
-          .value=${it.status || 'open'}
-          @change=${makeSelectChange(it.id, 'status')}
-        >
-          ${['open', 'in_progress', 'closed'].map(
-            (s) => html`<option value=${s} ?selected=${(it.status || 'open') === s}>${statusLabel(s)}</option>`
-          )}
-        </select>
+        ${(() => {
+          const cur = String(it.status || 'open');
+          return html`<select
+            class="badge-select badge--status is-${cur}"
+            .value=${cur}
+            @change=${makeSelectChange(it.id, 'status')}
+          >
+            ${['open', 'in_progress', 'closed'].map(
+              (s) =>
+                html`<option value=${s} ?selected=${cur === s}>
+                  ${statusLabel(s)}
+                </option>`
+            )}
+          </select>`;
+        })()}
       </td>
       <td>${editableText(it.id, 'assignee', it.assignee || '')}</td>
     </tr>`;
@@ -183,6 +197,7 @@ export function createEpicsView(mount_element, data, goto_issue) {
         <input
           type="text"
           .value=${value}
+          class="inline-edit"
           @keydown=${
             /** @param {KeyboardEvent} e */ (e) => {
               if (e.key === 'Escape') {

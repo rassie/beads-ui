@@ -211,7 +211,9 @@ describe('views/epics', () => {
     await view.load();
     // Expand the second group manually
     const groups = Array.from(mount.querySelectorAll('.epic-group'));
-    const manual = groups.find((g) => g.getAttribute('data-epic-id') === 'UI-41');
+    const manual = groups.find(
+      (g) => g.getAttribute('data-epic-id') === 'UI-41'
+    );
     expect(manual).toBeDefined();
     manual
       ?.querySelector('.epic-header')

@@ -1,6 +1,6 @@
 import { html, render } from 'lit-html';
 import { issueDisplayId } from '../utils/issue-id.js';
-import { priority_levels } from '../utils/priority.js';
+import { createPriorityBadge } from '../utils/priority-badge.js';
 import { createTypeBadge } from '../utils/type-badge.js';
 
 /**
@@ -71,11 +71,7 @@ export function createBoardView(mount_element, data, goto_issue) {
         <div class="board-card__meta">
           <span class="mono">${issueDisplayId(it.id)}</span>
           ${createTypeBadge(/** @type {any} */ (it).issue_type)}
-          <span class="muted"
-            >${typeof it.priority === 'number'
-              ? priority_levels[it.priority]
-              : ''}</span
-          >
+          ${createPriorityBadge(/** @type {any} */ (it).priority)}
         </div>
       </article>
     `;

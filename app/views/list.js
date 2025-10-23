@@ -1,7 +1,8 @@
 /* global NodeListOf */
 import { html, render } from 'lit-html';
 import { issueDisplayId } from '../utils/issue-id.js';
-import { priority_levels } from '../utils/priority.js';
+import { createPriorityBadge } from '../utils/priority-badge.js';
+import { createStatusBadge } from '../utils/status-badge.js';
 import { statusLabel } from '../utils/status.js';
 import { createTypeBadge } from '../utils/type-badge.js';
 
@@ -129,8 +130,16 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
                   <div class="issue-title text-truncate">
                     <span>${it.title || '(no title)'}</span>
                   </div>
-                  <div class="issue-meta">
-                    ${statusLabel(it.status)} · ${priority_levels[it.priority]}
+                  <div class="issue-meta" data-testid="meta">
+                    ${(() => {
+                      const s = createStatusBadge(it.status);
+                      const p = createPriorityBadge(it.priority);
+                      const span = document.createElement('span');
+                      span.appendChild(s);
+                      span.appendChild(document.createTextNode(' '));
+                      span.appendChild(p);
+                      return span;
+                    })()}
                   </div>
                 </div>
                 <div class="issue-right">
