@@ -33,7 +33,6 @@ export function createBoardView(mount_element, data, goto_issue) {
 
   function template() {
     return html`
-      <div class="panel__header">Board</div>
       <div class="panel__body board-root">
         ${columnTemplate('Open', 'open-col', list_open)}
         ${columnTemplate('Ready', 'ready-col', list_ready)}
@@ -51,7 +50,9 @@ export function createBoardView(mount_element, data, goto_issue) {
   function columnTemplate(title, id, items) {
     return html`
       <section class="board-column" id=${id}>
-        <header class="board-column__header">${title}</header>
+        <header class="board-column__header" role="heading" aria-level="2">
+          ${title}
+        </header>
         <div class="board-column__body">
           ${items.map((it) => cardTemplate(it))}
         </div>
