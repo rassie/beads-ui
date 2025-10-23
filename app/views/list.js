@@ -13,12 +13,12 @@ import { createIssueRowRenderer } from './issue-row.js';
 /**
  * Create the Issues List view.
  * @param {HTMLElement} mount_element - Element to render into.
- * @param {(type: string, payload?: unknown) => Promise<unknown>} send_fn - RPC transport.
+ * @param {(type: string, payload?: unknown) => Promise<unknown>} sendFn - RPC transport.
  * @param {(hash: string) => void} [navigate_fn] - Navigation function (defaults to setting location.hash).
  * @param {{ getState: () => any, setState: (patch: any) => void, subscribe: (fn: (s:any)=>void)=>()=>void }} [store] - Optional state store.
  * @returns {{ load: () => Promise<void>, destroy: () => void }} View API.
  */
-export function createListView(mount_element, send_fn, navigate_fn, store) {
+export function createListView(mount_element, sendFn, navigate_fn, store) {
   /** @type {string} */
   let status_filter = 'all';
   /** @type {string} */
@@ -183,7 +183,7 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
     /** @type {unknown} */
     let result;
     try {
-      result = await send_fn('list-issues', { filters });
+      result = await sendFn('list-issues', { filters });
     } catch {
       result = [];
     }
@@ -299,20 +299,20 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
     try {
       // Dispatch specific mutations based on provided keys
       if (typeof patch.title === 'string') {
-        await send_fn('edit-text', { id, field: 'title', value: patch.title });
+        await sendFn('edit-text', { id, field: 'title', value: patch.title });
       }
       if (typeof patch.assignee === 'string') {
-        await send_fn('update-assignee', { id, assignee: patch.assignee });
+        await sendFn('update-assignee', { id, assignee: patch.assignee });
       }
       if (typeof patch.status === 'string') {
-        await send_fn('update-status', { id, status: patch.status });
+        await sendFn('update-status', { id, status: patch.status });
       }
       if (typeof patch.priority === 'number') {
-        await send_fn('update-priority', { id, priority: patch.priority });
+        await sendFn('update-priority', { id, priority: patch.priority });
       }
       // Refresh the item from backend
       /** @type {any} */
-      const full = await send_fn('show-issue', { id });
+      const full = await sendFn('show-issue', { id });
       // Replace in cache
       const idx = issues_cache.findIndex((x) => x.id === id);
       if (idx >= 0 && full && typeof full === 'object') {
@@ -322,7 +322,7 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
           status: full.status,
           priority: full.priority,
           issue_type: full.issue_type,
-          assignee: /** @type {any} */ (full).assignee
+          assignee: full.assignee
         });
       }
       doRender();

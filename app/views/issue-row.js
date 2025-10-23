@@ -35,8 +35,9 @@ export function createIssueRowRenderer(options) {
    * @param {string} id
    * @param {'title'|'assignee'} key
    * @param {string} value
+   * @param {string} [placeholder]
    */
-  function editableText(id, key, value) {
+  function editableText(id, key, value, placeholder = '') {
     /** @type {string} */
     const k = `${id}:${key}`;
     const is_edit = editing.has(k);
@@ -52,9 +53,7 @@ export function createIssueRowRenderer(options) {
                 editing.delete(k);
                 request_render();
               } else if (e.key === 'Enter') {
-                /** @type {HTMLInputElement} */ const el = /** @type {any} */ (
-                  e.currentTarget
-                );
+                const el = /** @type {HTMLInputElement} */ (e.currentTarget);
                 const next = el.value || '';
                 if (next !== value) {
                   await on_update(id, { [key]: next });
@@ -66,9 +65,7 @@ export function createIssueRowRenderer(options) {
           }
           @blur=${
             /** @param {Event} ev */ async (ev) => {
-              /** @type {HTMLInputElement} */ const el = /** @type {any} */ (
-                ev.currentTarget
-              );
+              const el = /** @type {HTMLInputElement} */ (ev.currentTarget);
               const next = el.value || '';
               if (next !== value) {
                 await on_update(id, { [key]: next });
@@ -82,13 +79,13 @@ export function createIssueRowRenderer(options) {
       </span>`;
     }
     return html`<span
-      class="editable"
+      class="editable ${value ? '' : 'muted'}"
       tabindex="0"
       role="button"
       @click=${
         /** @param {MouseEvent} e */ (e) => {
-          /** @type {Event} */ (e).stopPropagation();
-          /** @type {Event} */ (e).preventDefault();
+          e.stopPropagation();
+          e.preventDefault();
           editing.add(k);
           request_render();
         }
@@ -103,7 +100,7 @@ export function createIssueRowRenderer(options) {
           }
         }
       }
-      >${value || ''}</span
+      >${value || placeholder}</span
     >`;
   }
 
@@ -130,8 +127,7 @@ export function createIssueRowRenderer(options) {
    */
   function makeRowClick(id) {
     return (ev) => {
-      /** @type {HTMLElement|null} */
-      const el = /** @type {any} */ (ev.target);
+      const el = /** @type {HTMLElement|null} */ (ev.target);
       if (el && (el.tagName === 'INPUT' || el.tagName === 'SELECT')) {
         return;
       }
@@ -152,7 +148,7 @@ export function createIssueRowRenderer(options) {
       @click=${makeRowClick(it.id)}
     >
       <td class="mono">${issueDisplayId(it.id)}</td>
-      <td>${createTypeBadge(/** @type {any} */ (it).issue_type)}</td>
+      <td>${createTypeBadge(it.issue_type)}</td>
       <td>${editableText(it.id, 'title', it.title || '')}</td>
       <td>
         <select
@@ -168,7 +164,9 @@ export function createIssueRowRenderer(options) {
           )}
         </select>
       </td>
-      <td>${editableText(it.id, 'assignee', it.assignee || '')}</td>
+      <td>
+        ${editableText(it.id, 'assignee', it.assignee || '', 'Unassigned')}
+      </td>
       <td>
         <select
           class="badge-select badge--priority ${'is-p' + cur_prio}"

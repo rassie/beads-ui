@@ -62,6 +62,9 @@
   --code-fg: #111827;
   --pre-bg: #0b1021;
   --pre-fg: #e5e7eb;
+
+  /* focus ring */
+  --outline-offset: 6px;
 }
 
 html,
@@ -233,7 +236,7 @@ a:focus {
 .route.board .panel__body {
   flex: 1;
   min-height: 0;
-  overflow: hidden; /* columns manage their own scroll */
+  overflow-x: auto; /* scroll columns horizontal */
 }
 
 .panel {
@@ -279,10 +282,13 @@ a:focus {
   position: relative;
   border-radius: 4px;
 }
-.editable:hover,
+.editable:hover {
+  outline: 2px solid var(--control-border, var(--border));
+  outline-offset: var(--outline-offset);
+}
 .editable:focus-within {
   outline: 2px solid #93c5fd;
-  outline-offset: 2px;
+  outline-offset: var(--outline-offset);
   cursor: text;
 }
 .editable-actions {
@@ -324,7 +330,7 @@ a:focus {
 .md code {
   background: var(--code-bg);
   color: var(--code-fg);
-  padding: 0 3px;
+  padding: 3px 4px;
   border-radius: 3px;
 }
 .md pre {
@@ -682,10 +688,12 @@ input.inline-edit {
   margin: 0;
   line-height: inherit;
   font: inherit;
+  outline: 2px solid var(--control-border, var(--border));
+  outline-offset: var(--outline-offset);
 }
 input.inline-edit:focus {
   outline: 2px solid #93c5fd;
-  outline-offset: 2px;
+  outline-offset: var(--outline-offset);
   box-shadow: none;
 }
 
@@ -736,7 +744,7 @@ input.inline-edit:focus {
 /* Keyboard focus ring helper */
 :focus-visible {
   outline: 2px solid color-mix(in srgb, var(--link) 60%, transparent);
-  outline-offset: 2px;
+  outline-offset: var(--outline-offset);
 }
 
 /* Subtle scrollbars (WebKit/Blink) */
@@ -799,7 +807,7 @@ input.inline-edit:focus {
   border: none;
   background: transparent;
   outline: 2px solid var(--control-border, var(--border));
-  outline-offset: 2px;
+  outline-offset: var(--outline-offset);
 }
 #detail-root input[type='text']:focus,
 #detail-root textarea:focus {
@@ -853,7 +861,7 @@ input.inline-edit:focus {
 .table th,
 .table td {
   text-align: left;
-  padding: 6px 8px;
+  padding: 12px 16px;
   border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
 }
 /* Ensure form controls fill the cell */
@@ -886,6 +894,7 @@ input.inline-edit:focus {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 380px;
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -997,7 +1006,7 @@ input.inline-edit:focus {
     --link-hover: #bfdbfe;
     --link-visited: #c4b5fd;
 
-    --code-bg: #111827;
+    --code-bg: #1f2937;
     --code-fg: #e5e7eb;
     --pre-bg: #0a0f1f;
     --pre-fg: #e5e7eb;
@@ -1045,7 +1054,7 @@ html[data-theme='dark'] {
   --link-hover: #bfdbfe;
   --link-visited: #c4b5fd;
 
-  --code-bg: #111827;
+  --code-bg: #1f2937;
   --code-fg: #e5e7eb;
   --pre-bg: #0a0f1f;
   --pre-fg: #e5e7eb;
@@ -1093,7 +1102,7 @@ html[data-theme='light'] {
   --link-visited: #6d28d9;
 
   --code-bg: #f3f4f6;
-  --code-fg: #111827;
+  --code-fg: #1f2937;
   --pre-bg: #0b1021;
   --pre-fg: #e5e7eb;
 
