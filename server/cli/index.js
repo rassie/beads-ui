@@ -17,6 +17,10 @@ export function parseArgs(args) {
       flags.push('help');
       continue;
     }
+    if (token === '--no-open') {
+      flags.push('no-open');
+      continue;
+    }
     if (
       !command &&
       (token === 'start' || token === 'stop' || token === 'restart')
@@ -49,7 +53,13 @@ export async function main(args) {
   }
 
   if (command === 'start') {
-    return await handleStart();
+    /** @type {{ no_open: boolean }} */
+    const options = {
+      no_open:
+        flags.includes('no-open') ||
+        String(process.env.BDUI_NO_OPEN || '') === '1'
+    };
+    return await handleStart(options);
   }
   if (command === 'stop') {
     return await handleStop();

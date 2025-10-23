@@ -1,3 +1,4 @@
+import { getConfig } from '../config.js';
 import {
   isProcessRunning,
   printServerUrl,
@@ -6,6 +7,7 @@ import {
   startDaemon,
   terminateProcess
 } from './daemon.js';
+import { openUrl, waitForServer } from './open.js';
 
 /**
  * Handle `start` command. Idempotent when already running.
@@ -13,7 +15,11 @@ import {
  * - If already running (PID file present and process alive), prints URL and returns 0.
  * @returns {Promise<number>} Exit code (0 on success)
  */
-export async function handleStart() {
+/**
+ * @param {{ no_open?: boolean }} [options]
+ */
+export async function handleStart(options) {
+  const no_open = options?.no_open === true;
   const existing_pid = readPidFile();
   if (existing_pid && isProcessRunning(existing_pid)) {
     printServerUrl();
@@ -27,6 +33,15 @@ export async function handleStart() {
   const started = startDaemon();
   if (started && started.pid > 0) {
     printServerUrl();
+    // Auto-open the browser once for a fresh daemon start
+    if (!no_open) {
+      const cfg = getConfig();
+      const url = 'http://' + cfg.host + ':' + String(cfg.port);
+      // Wait briefly for the server to accept connections (single retry window)
+      await waitForServer(url, 600);
+      // Best-effort open; ignore result
+      await openUrl(url);
+    }
     return 0;
   }
 

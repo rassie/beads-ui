@@ -12,7 +12,8 @@ export function printUsage(out_stream) {
     '  restart     Restart the UI server',
     '',
     'Options:',
-    '  -h, --help  Show this help message',
+    '  -h, --help   Show this help message',
+    '      --no-open  Do not open the browser on start',
     ''
   ];
   for (const line of lines) {

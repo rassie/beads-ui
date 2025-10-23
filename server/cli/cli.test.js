@@ -33,6 +33,12 @@ describe('parseArgs', () => {
     expect(parseArgs(['stop']).command).toBe('stop');
     expect(parseArgs(['restart']).command).toBe('restart');
   });
+
+  test('recognizes --no-open flag', () => {
+    const r = parseArgs(['start', '--no-open']);
+
+    expect(r.flags.includes('no-open')).toBe(true);
+  });
 });
 
 describe('main', () => {
@@ -55,6 +61,29 @@ describe('main', () => {
 
     expect(code).toBe(0);
     expect(commands.handleStart).toHaveBeenCalledTimes(1);
+  });
+
+  test('propagates --no-open to start handler', async () => {
+    await main(['start', '--no-open']);
+
+    expect(commands.handleStart).toHaveBeenCalledWith({ no_open: true });
+  });
+
+  test('reads BDUI_NO_OPEN=1 to disable open', async () => {
+    const prev = process.env.BDUI_NO_OPEN;
+    try {
+      process.env.BDUI_NO_OPEN = '1';
+
+      await main(['start']);
+
+      expect(commands.handleStart).toHaveBeenCalledWith({ no_open: true });
+    } finally {
+      if (prev === undefined) {
+        delete process.env.BDUI_NO_OPEN;
+      } else {
+        process.env.BDUI_NO_OPEN = prev;
+      }
+    }
   });
 
   test('dispatches to stop handler', async () => {
