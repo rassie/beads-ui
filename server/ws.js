@@ -205,20 +205,20 @@ export async function handleMessage(ws, data) {
     if (
       typeof id !== 'string' ||
       id.length === 0 ||
-      typeof assignee !== 'string' ||
-      assignee.length === 0
+      typeof assignee !== 'string'
     ) {
       ws.send(
         JSON.stringify(
           makeError(
             req,
             'bad_request',
-            'payload requires { id: string, assignee: non-empty string }'
+            'payload requires { id: string, assignee: string }'
           )
         )
       );
       return;
     }
+    // Pass empty string to clear assignee when requested
     const res = await runBd(['update', id, '--assignee', assignee]);
     if (res.code !== 0) {
       ws.send(

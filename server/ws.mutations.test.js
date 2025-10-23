@@ -133,6 +133,28 @@ describe('ws mutation handlers', () => {
     expect(obj.payload.id).toBe('UI-2');
   });
 
+  test('update-assignee allows clearing with empty string', async () => {
+    const mRun = /** @type {import('vitest').Mock} */ (runBd);
+    const mJson = /** @type {import('vitest').Mock} */ (runBdJson);
+    mRun.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
+    mJson.mockResolvedValueOnce({ code: 0, stdoutJson: { id: 'UI-31' } });
+    const ws = makeStubSocket();
+    const req = {
+      id: 'rua2',
+      type: /** @type {any} */ ('update-assignee'),
+      payload: { id: 'UI-31', assignee: '' }
+    };
+    await handleMessage(
+      /** @type {any} */ (ws),
+      Buffer.from(JSON.stringify(req))
+    );
+    const call = mRun.mock.calls[mRun.mock.calls.length - 1];
+    expect(call[0]).toEqual(['update', 'UI-31', '--assignee', '']);
+    const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
+    expect(obj.ok).toBe(true);
+    expect(obj.payload.id).toBe('UI-31');
+  });
+
   test('edit-text acceptance success', async () => {
     const mRun = /** @type {import('vitest').Mock} */ (runBd);
     const mJson = /** @type {import('vitest').Mock} */ (runBdJson);

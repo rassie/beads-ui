@@ -261,7 +261,7 @@ a:focus {
 }
 
 #detail-panel .panel__header {
-  padding-left: 32px;
+  padding-left: 18px;
 }
 
 .muted {
@@ -771,7 +771,7 @@ input.inline-edit:focus {
 
 /* Detail content paddings */
 #detail-root {
-  padding: 18px 18px 18px 32px;
+  padding: 18px;
 }
 
 /* Epics view styles */

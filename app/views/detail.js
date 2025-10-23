@@ -46,6 +46,8 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
   let edit_desc = false;
   /** @type {boolean} */
   let edit_accept = false;
+  /** @type {boolean} */
+  let edit_assignee = false;
 
   /**
    * Show a transient toast message.
@@ -151,6 +153,71 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
   };
   const onTitleCancel = () => {
     edit_title = false;
+    doRender();
+  };
+  // Assignee inline edit handlers
+  const onAssigneeSpanClick = () => {
+    edit_assignee = true;
+    doRender();
+  };
+  /**
+   * @param {KeyboardEvent} ev
+   */
+  const onAssigneeKeydown = (ev) => {
+    if (ev.key === 'Enter') {
+      ev.preventDefault();
+      edit_assignee = true;
+      doRender();
+    } else if (ev.key === 'Escape') {
+      ev.preventDefault();
+      edit_assignee = false;
+      doRender();
+    }
+  };
+  const onAssigneeSave = async () => {
+    if (!current || pending) {
+      return;
+    }
+    /** @type {HTMLInputElement|null} */
+    const input = /** @type {any} */ (
+      mount_element.querySelector('#detail-root .prop.assignee input')
+    );
+    const prev = String(
+      (current && /** @type {any} */ (current).assignee) || ''
+    );
+    const next = input ? String(input.value || '') : '';
+    if (next === prev) {
+      edit_assignee = false;
+      doRender();
+      return;
+    }
+    pending = true;
+    if (input) {
+      input.disabled = true;
+    }
+    try {
+      /** @type {any} */
+      const updated = await sendFn('update-assignee', {
+        id: current.id,
+        assignee: next
+      });
+      if (updated && typeof updated === 'object') {
+        current = /** @type {IssueDetail} */ (updated);
+        edit_assignee = false;
+        doRender();
+      }
+    } catch {
+      // revert visually
+      /** @type {any} */ (current).assignee = prev;
+      edit_assignee = false;
+      doRender();
+      showToast('Failed to update assignee');
+    } finally {
+      pending = false;
+    }
+  };
+  const onAssigneeCancel = () => {
+    edit_assignee = false;
     doRender();
   };
   /**
@@ -567,6 +634,66 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
                 <div class="prop">
                   <div class="label">Priority</div>
                   <div class="value">${priority_select}</div>
+                </div>
+                <div class="prop assignee">
+                  <div class="label">Assignee</div>
+                  <div class="value">
+                    ${edit_assignee
+                      ? html`<input
+                            type="text"
+                            aria-label="Edit assignee"
+                            .value=${/** @type {any} */ (issue).assignee || ''}
+                            size=${Math.min(
+                              40,
+                              Math.max(
+                                12,
+                                String(
+                                  /** @type {any} */ (issue).assignee || ''
+                                ).length + 3
+                              )
+                            )}
+                            @keydown=${
+                              /** @param {KeyboardEvent} e */ (e) => {
+                                if (e.key === 'Escape') {
+                                  e.preventDefault();
+                                  onAssigneeCancel();
+                                } else if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  onAssigneeSave();
+                                }
+                              }
+                            }
+                          />
+                          <button
+                            style="margin-left:6px"
+                            @click=${onAssigneeSave}
+                          >
+                            Save
+                          </button>
+                          <button
+                            style="margin-left:6px"
+                            @click=${onAssigneeCancel}
+                          >
+                            Cancel
+                          </button>`
+                      : html`${(() => {
+                          const raw = String(
+                            /** @type {any} */ (issue).assignee || ''
+                          );
+                          const has = raw.trim().length > 0;
+                          const text = has ? raw : 'Unassigned';
+                          const cls = has ? 'editable' : 'editable muted';
+                          return html`<span
+                            class=${cls}
+                            tabindex="0"
+                            role="button"
+                            aria-label="Edit assignee"
+                            @click=${onAssigneeSpanClick}
+                            @keydown=${onAssigneeKeydown}
+                            >${text}</span
+                          >`;
+                        })()}`}
+                  </div>
                 </div>
               </div>
               ${depsSection('Dependencies', issue.dependencies || [])}
