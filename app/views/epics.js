@@ -79,20 +79,20 @@ export function createEpicsView(mount_element, data, goto_issue) {
                   : html`<table class="table">
                       <colgroup>
                         <col style="width: 100px" />
+                        <col style="width: 120px" />
                         <col />
                         <col style="width: 120px" />
-                        <col style="width: 120px" />
-                        <col style="width: 130px" />
                         <col style="width: 160px" />
+                        <col style="width: 130px" />
                       </colgroup>
                       <thead>
                         <tr>
                           <th>ID</th>
-                          <th>Title</th>
                           <th>Type</th>
-                          <th>Priority</th>
+                          <th>Title</th>
                           <th>Status</th>
                           <th>Assignee</th>
+                          <th>Priority</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -111,25 +111,8 @@ export function createEpicsView(mount_element, data, goto_issue) {
   function rowTemplate(it) {
     return html`<tr class="epic-row" @click=${makeRowClick(it.id)}>
       <td class="mono">${issueDisplayId(it.id)}</td>
-      <td>${editableText(it.id, 'title', it.title || '')}</td>
       <td>${createTypeBadge(/** @type {any} */ (it).issue_type)}</td>
-      <td>
-        ${(() => {
-          const cur = String(it.priority ?? 2);
-          return html`<select
-            class="badge-select badge--priority ${'is-p' + cur}"
-            .value=${cur}
-            @change=${makeSelectChange(it.id, 'priority')}
-          >
-            ${priority_levels.map(
-              (p, i) =>
-                html`<option value=${String(i)} ?selected=${cur === String(i)}>
-                  ${emojiForPriority(i)} ${p}
-                </option>`
-            )}
-          </select>`;
-        })()}
-      </td>
+      <td>${editableText(it.id, 'title', it.title || '')}</td>
       <td>
         ${(() => {
           const cur = String(it.status || 'open');
@@ -148,6 +131,23 @@ export function createEpicsView(mount_element, data, goto_issue) {
         })()}
       </td>
       <td>${editableText(it.id, 'assignee', it.assignee || '')}</td>
+      <td>
+        ${(() => {
+          const cur = String(it.priority ?? 2);
+          return html`<select
+            class="badge-select badge--priority ${'is-p' + cur}"
+            .value=${cur}
+            @change=${makeSelectChange(it.id, 'priority')}
+          >
+            ${priority_levels.map(
+              (p, i) =>
+                html`<option value=${String(i)} ?selected=${cur === String(i)}>
+                  ${emojiForPriority(i)} ${p}
+                </option>`
+            )}
+          </select>`;
+        })()}
+      </td>
     </tr>`;
   }
 

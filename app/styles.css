@@ -5,20 +5,52 @@
   --border: #e5e7eb;
   --panel-bg: #fafafa;
 
-  /* Issue type badge palette (light) */
+  /* Badges: base + derived via color-mix */
   --badge-radius: 999px;
-  --badge-bg-neutral: #e5e7eb;
-  --badge-fg-neutral: #374151;
-  --badge-bg-bug: #fee2e2;
-  --badge-fg-bug: #991b1b;
-  --badge-bg-feature: #d1fae5;
-  --badge-fg-feature: #065f46;
-  --badge-bg-task: #dbeafe;
-  --badge-fg-task: #1e3a8a;
-  --badge-bg-epic: #ede9fe;
-  --badge-fg-epic: #5b21b6;
-  --badge-bg-chore: #fef9c3;
-  --badge-fg-chore: #78350f;
+
+  /* Status base colors */
+  --status-open-base: #51cb4e; /* open */
+  --status-in-progress-base: #666666; /* in_progress */
+  --status-closed-base: #5f26c9; /* closed */
+
+  /* Type base colors */
+  --type-bug-base: #9f2011;
+  --type-task-base: #cd9e33;
+  --type-epic-base: #f69842;
+  --type-feature-base: #51cb43;
+  --type-chore-base: #666666;
+
+  /* Neutral badge */
+  --badge-bg-neutral: color-mix(in srgb, var(--panel-bg) 85%, #6b7280);
+  --badge-fg-neutral: color-mix(in srgb, #6b7280 85%, #000);
+
+  /* Derived Type badge colors (light) */
+  --badge-bg-bug: color-mix(in srgb, var(--panel-bg) 85%, var(--type-bug-base));
+  --badge-fg-bug: color-mix(in srgb, var(--type-bug-base) 90%, #000);
+  --badge-bg-feature: color-mix(
+    in srgb,
+    var(--panel-bg) 85%,
+    var(--type-feature-base)
+  );
+  --badge-fg-feature: color-mix(in srgb, var(--type-feature-base) 90%, #000);
+  --badge-bg-task: color-mix(
+    in srgb,
+    var(--panel-bg) 85%,
+    var(--type-task-base)
+  );
+  --badge-fg-task: color-mix(in srgb, var(--type-task-base) 90%, #000);
+  --badge-bg-epic: color-mix(
+    in srgb,
+    var(--panel-bg) 85%,
+    var(--type-epic-base)
+  );
+  --badge-fg-epic: color-mix(in srgb, var(--type-epic-base) 90%, #000);
+  --badge-bg-chore: color-mix(
+    in srgb,
+    var(--panel-bg) 85%,
+    var(--type-chore-base)
+  );
+  --badge-fg-chore: color-mix(in srgb, var(--type-chore-base) 90%, #000);
 
   /* Links */
   --link: #1d4ed8;
@@ -356,7 +388,7 @@ button:disabled {
   font-weight: 600;
   vertical-align: middle;
   user-select: none;
-  box-shadow: 0 0 0 1px color-mix(in srgb, #000 5%, transparent) inset;
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
 }
 .type-badge[title] {
   cursor: default;
@@ -403,7 +435,7 @@ button:disabled {
   font-weight: 600;
   vertical-align: middle;
   user-select: none;
-  box-shadow: 0 0 0 1px color-mix(in srgb, #000 5%, transparent) inset;
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
 }
 .badge + .badge,
 .status-badge + .status-badge,
@@ -412,68 +444,154 @@ button:disabled {
   margin-left: 4px;
 }
 
-/* Status badge palette */
+/* Status + Priority palette (light) derived from base */
 :root {
-  --badge-bg-open: #dbeafe;
-  --badge-fg-open: #1e3a8a;
-  --badge-bg-in-progress: #fef3c7;
-  --badge-fg-in-progress: #92400e;
-  --badge-bg-closed: #dcfce7;
-  --badge-fg-closed: #166534;
+  /* Status badges */
+  --badge-bg-open: color-mix(
+    in srgb,
+    var(--panel-bg) 72%,
+    var(--status-open-base)
+  );
+  --badge-fg-open: color-mix(in srgb, var(--status-open-base) 90%, #000);
+  --badge-bg-in-progress: color-mix(
+    in srgb,
+    var(--panel-bg) 85%,
+    var(--status-in-progress-base)
+  );
+  --badge-fg-in-progress: color-mix(
+    in srgb,
+    var(--status-in-progress-base) 90%,
+    #000
+  );
+  --badge-bg-closed: color-mix(
+    in srgb,
+    var(--panel-bg) 85%,
+    var(--status-closed-base)
+  );
+  --badge-fg-closed: color-mix(in srgb, var(--status-closed-base) 90%, #000);
 
-  /* Priority palette */
-  --badge-bg-p0: #fee2e2;
-  --badge-fg-p0: #991b1b;
-  --badge-bg-p1: #ffedd5;
-  --badge-fg-p1: #9a3412;
-  --badge-bg-p2: #e5e7eb;
-  --badge-fg-p2: #374151;
-  --badge-bg-p3: #dbeafe;
-  --badge-fg-p3: #1e3a8a;
-  --badge-bg-p4: #e5e7eb;
-  --badge-fg-p4: #374151;
+  /* Priority palette mapped to provided colors */
+  /* p0 -> bug, p1 -> epic, p2 -> task, p3 -> feature, p4 -> chore */
+  --badge-bg-p0: color-mix(in srgb, var(--panel-bg) 85%, var(--type-bug-base));
+  --badge-fg-p0: color-mix(in srgb, var(--type-bug-base) 90%, #000);
+  --badge-bg-p1: color-mix(in srgb, var(--panel-bg) 72%, var(--type-epic-base));
+  --badge-fg-p1: color-mix(in srgb, var(--type-epic-base) 90%, #000);
+  --badge-bg-p2: color-mix(in srgb, var(--panel-bg) 72%, var(--type-task-base));
+  --badge-fg-p2: color-mix(in srgb, var(--type-task-base) 90%, #000);
+  --badge-bg-p3: color-mix(
+    in srgb,
+    var(--panel-bg) 72%,
+    var(--type-feature-base)
+  );
+  --badge-fg-p3: color-mix(in srgb, var(--type-feature-base) 90%, #000);
+  --badge-bg-p4: color-mix(
+    in srgb,
+    var(--panel-bg) 85%,
+    var(--type-chore-base)
+  );
+  --badge-fg-p4: color-mix(in srgb, var(--type-chore-base) 90%, #000);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --badge-bg-open: #1e3a8a;
-    --badge-fg-open: #dbeafe;
-    --badge-bg-in-progress: #92400e;
-    --badge-fg-in-progress: #ffedd5;
-    --badge-bg-closed: #065f46;
-    --badge-fg-closed: #d1fae5;
+    --badge-bg-open: color-mix(
+      in srgb,
+      var(--panel-bg) 80%,
+      var(--status-open-base)
+    );
+    --badge-fg-open: color-mix(in srgb, var(--status-open-base) 75%, #fff);
+    --badge-bg-in-progress: color-mix(
+      in srgb,
+      var(--panel-bg) 80%,
+      var(--status-in-progress-base)
+    );
+    --badge-fg-in-progress: color-mix(
+      in srgb,
+      var(--status-in-progress-base) 75%,
+      #fff
+    );
+    --badge-bg-closed: color-mix(
+      in srgb,
+      var(--panel-bg) 80%,
+      var(--status-closed-base)
+    );
+    --badge-fg-closed: color-mix(in srgb, var(--status-closed-base) 75%, #fff);
 
-    --badge-bg-p0: #7f1d1d;
-    --badge-fg-p0: #fee2e2;
-    --badge-bg-p1: #7c2d12;
-    --badge-fg-p1: #ffedd5;
-    --badge-bg-p2: #374151;
-    --badge-fg-p2: #f3f4f6;
-    --badge-bg-p3: #1e3a8a;
-    --badge-fg-p3: #dbeafe;
-    --badge-bg-p4: #374151;
-    --badge-fg-p4: #f3f4f6;
+    --badge-bg-p0: color-mix(
+      in srgb,
+      var(--panel-bg) 80%,
+      var(--type-bug-base)
+    );
+    --badge-fg-p0: color-mix(in srgb, var(--type-bug-base) 75%, #fff);
+    --badge-bg-p1: color-mix(
+      in srgb,
+      var(--panel-bg) 80%,
+      var(--type-epic-base)
+    );
+    --badge-fg-p1: color-mix(in srgb, var(--type-epic-base) 75%, #fff);
+    --badge-bg-p2: color-mix(
+      in srgb,
+      var(--panel-bg) 80%,
+      var(--type-task-base)
+    );
+    --badge-fg-p2: color-mix(in srgb, var(--type-task-base) 75%, #fff);
+    --badge-bg-p3: color-mix(
+      in srgb,
+      var(--panel-bg) 80%,
+      var(--type-feature-base)
+    );
+    --badge-fg-p3: color-mix(in srgb, var(--type-feature-base) 75%, #fff);
+    --badge-bg-p4: color-mix(
+      in srgb,
+      var(--panel-bg) 80%,
+      var(--type-chore-base)
+    );
+    --badge-fg-p4: color-mix(in srgb, var(--type-chore-base) 75%, #fff);
   }
 }
 
 html[data-theme='dark'] {
-  --badge-bg-open: #1e3a8a;
-  --badge-fg-open: #dbeafe;
-  --badge-bg-in-progress: #92400e;
-  --badge-fg-in-progress: #ffedd5;
-  --badge-bg-closed: #065f46;
-  --badge-fg-closed: #d1fae5;
+  --badge-bg-open: color-mix(
+    in srgb,
+    var(--panel-bg) 80%,
+    var(--status-open-base)
+  );
+  --badge-fg-open: color-mix(in srgb, var(--status-open-base) 75%, #fff);
+  --badge-bg-in-progress: color-mix(
+    in srgb,
+    var(--panel-bg) 80%,
+    var(--status-in-progress-base)
+  );
+  --badge-fg-in-progress: color-mix(
+    in srgb,
+    var(--status-in-progress-base) 75%,
+    #fff
+  );
+  --badge-bg-closed: color-mix(
+    in srgb,
+    var(--panel-bg) 80%,
+    var(--status-closed-base)
+  );
+  --badge-fg-closed: color-mix(in srgb, var(--status-closed-base) 75%, #fff);
 
-  --badge-bg-p0: #7f1d1d;
-  --badge-fg-p0: #fee2e2;
-  --badge-bg-p1: #7c2d12;
-  --badge-fg-p1: #ffedd5;
-  --badge-bg-p2: #374151;
-  --badge-fg-p2: #f3f4f6;
-  --badge-bg-p3: #1e3a8a;
-  --badge-fg-p3: #dbeafe;
-  --badge-bg-p4: #374151;
-  --badge-fg-p4: #f3f4f6;
+  --badge-bg-p0: color-mix(in srgb, var(--panel-bg) 80%, var(--type-bug-base));
+  --badge-fg-p0: color-mix(in srgb, var(--type-bug-base) 75%, #fff);
+  --badge-bg-p1: color-mix(in srgb, var(--panel-bg) 80%, var(--type-epic-base));
+  --badge-fg-p1: color-mix(in srgb, var(--type-epic-base) 75%, #fff);
+  --badge-bg-p2: color-mix(in srgb, var(--panel-bg) 80%, var(--type-task-base));
+  --badge-fg-p2: color-mix(in srgb, var(--type-task-base) 75%, #fff);
+  --badge-bg-p3: color-mix(
+    in srgb,
+    var(--panel-bg) 80%,
+    var(--type-feature-base)
+  );
+  --badge-fg-p3: color-mix(in srgb, var(--type-feature-base) 75%, #fff);
+  --badge-bg-p4: color-mix(
+    in srgb,
+    var(--panel-bg) 80%,
+    var(--type-chore-base)
+  );
+  --badge-fg-p4: color-mix(in srgb, var(--type-chore-base) 75%, #fff);
 }
 
 .status-badge.is-open,
@@ -664,6 +782,7 @@ input.inline-edit:focus {
 .epic-header progress {
   width: 140px;
   height: 8px;
+  accent-color: var(--status-closed-base);
 }
 .table {
   width: 100%;
@@ -762,19 +881,39 @@ input.inline-edit:focus {
     --panel-bg: #0f172a;
     --border: #1f2937;
 
-    /* Dark variants tuned for contrast */
-    --badge-bg-neutral: #374151;
-    --badge-fg-neutral: #f3f4f6;
-    --badge-bg-bug: #7f1d1d;
-    --badge-fg-bug: #fee2e2;
-    --badge-bg-feature: #064e3b;
-    --badge-fg-feature: #d1fae5;
-    --badge-bg-task: #1e3a8a;
-    --badge-fg-task: #dbeafe;
-    --badge-bg-epic: #4c1d95;
-    --badge-fg-epic: #ede9fe;
-    --badge-bg-chore: #78350f;
-    --badge-fg-chore: #fef9c3;
+    /* Dark variants derived via color-mix for contrast */
+    --badge-bg-neutral: color-mix(in srgb, var(--panel-bg) 80%, #9ca3af);
+    --badge-fg-neutral: color-mix(in srgb, #9ca3af 75%, #fff);
+    --badge-bg-bug: color-mix(
+      in srgb,
+      var(--panel-bg) 80%,
+      var(--type-bug-base)
+    );
+    --badge-fg-bug: color-mix(in srgb, var(--type-bug-base) 75%, #fff);
+    --badge-bg-feature: color-mix(
+      in srgb,
+      var(--panel-bg) 80%,
+      var(--type-feature-base)
+    );
+    --badge-fg-feature: color-mix(in srgb, var(--type-feature-base) 75%, #fff);
+    --badge-bg-task: color-mix(
+      in srgb,
+      var(--panel-bg) 80%,
+      var(--type-task-base)
+    );
+    --badge-fg-task: color-mix(in srgb, var(--type-task-base) 75%, #fff);
+    --badge-bg-epic: color-mix(
+      in srgb,
+      var(--panel-bg) 80%,
+      var(--type-epic-base)
+    );
+    --badge-fg-epic: color-mix(in srgb, var(--type-epic-base) 75%, #fff);
+    --badge-bg-chore: color-mix(
+      in srgb,
+      var(--panel-bg) 80%,
+      var(--type-chore-base)
+    );
+    --badge-fg-chore: color-mix(in srgb, var(--type-chore-base) 75%, #fff);
 
     --link: #93c5fd;
     --link-hover: #bfdbfe;
@@ -797,16 +936,32 @@ html[data-theme='dark'] {
 
   --badge-bg-neutral: #374151;
   --badge-fg-neutral: #f3f4f6;
-  --badge-bg-bug: #7f1d1d;
-  --badge-fg-bug: #fee2e2;
-  --badge-bg-feature: #064e3b;
-  --badge-fg-feature: #d1fae5;
-  --badge-bg-task: #1e3a8a;
-  --badge-fg-task: #dbeafe;
-  --badge-bg-epic: #4c1d95;
-  --badge-fg-epic: #ede9fe;
-  --badge-bg-chore: #78350f;
-  --badge-fg-chore: #fef9c3;
+  --badge-bg-bug: color-mix(in srgb, var(--panel-bg) 80%, var(--type-bug-base));
+  --badge-fg-bug: color-mix(in srgb, var(--type-bug-base) 75%, #fff);
+  --badge-bg-feature: color-mix(
+    in srgb,
+    var(--panel-bg) 80%,
+    var(--type-feature-base)
+  );
+  --badge-fg-feature: color-mix(in srgb, var(--type-feature-base) 75%, #fff);
+  --badge-bg-task: color-mix(
+    in srgb,
+    var(--panel-bg) 80%,
+    var(--type-task-base)
+  );
+  --badge-fg-task: color-mix(in srgb, var(--type-task-base) 75%, #fff);
+  --badge-bg-epic: color-mix(
+    in srgb,
+    var(--panel-bg) 80%,
+    var(--type-epic-base)
+  );
+  --badge-fg-epic: color-mix(in srgb, var(--type-epic-base) 75%, #fff);
+  --badge-bg-chore: color-mix(
+    in srgb,
+    var(--panel-bg) 80%,
+    var(--type-chore-base)
+  );
+  --badge-fg-chore: color-mix(in srgb, var(--type-chore-base) 75%, #fff);
 
   --link: #93c5fd;
   --link-hover: #bfdbfe;
@@ -828,16 +983,32 @@ html[data-theme='light'] {
 
   --badge-bg-neutral: #e5e7eb;
   --badge-fg-neutral: #374151;
-  --badge-bg-bug: #fee2e2;
-  --badge-fg-bug: #991b1b;
-  --badge-bg-feature: #d1fae5;
-  --badge-fg-feature: #065f46;
-  --badge-bg-task: #dbeafe;
-  --badge-fg-task: #1e3a8a;
-  --badge-bg-epic: #ede9fe;
-  --badge-fg-epic: #5b21b6;
-  --badge-bg-chore: #fef9c3;
-  --badge-fg-chore: #78350f;
+  --badge-bg-bug: color-mix(in srgb, var(--panel-bg) 85%, var(--type-bug-base));
+  --badge-fg-bug: color-mix(in srgb, var(--type-bug-base) 90%, #000);
+  --badge-bg-feature: color-mix(
+    in srgb,
+    var(--panel-bg) 85%,
+    var(--type-feature-base)
+  );
+  --badge-fg-feature: color-mix(in srgb, var(--type-feature-base) 90%, #000);
+  --badge-bg-task: color-mix(
+    in srgb,
+    var(--panel-bg) 85%,
+    var(--type-task-base)
+  );
+  --badge-fg-task: color-mix(in srgb, var(--type-task-base) 90%, #000);
+  --badge-bg-epic: color-mix(
+    in srgb,
+    var(--panel-bg) 85%,
+    var(--type-epic-base)
+  );
+  --badge-fg-epic: color-mix(in srgb, var(--type-epic-base) 90%, #000);
+  --badge-bg-chore: color-mix(
+    in srgb,
+    var(--panel-bg) 85%,
+    var(--type-chore-base)
+  );
+  --badge-fg-chore: color-mix(in srgb, var(--type-chore-base) 90%, #000);
 
   --link: #1d4ed8;
   --link-hover: #1e40af;
