@@ -256,11 +256,6 @@ a:focus {
   gap: 10px;
   min-height: 44px;
   padding: 6px 18px;
-  backdrop-filter: saturate(140%) blur(4px);
-}
-#list-panel .panel__header {
-  /* UI-82: search row uses body background */
-  background: var(--bg);
 }
 
 #detail-panel .panel__header {
@@ -828,7 +823,7 @@ input.inline-edit:focus {
 .issues-block {
   border: 1px solid var(--border);
   border-radius: 6px;
-  margin: 10px 12px;
+  margin: 0px 12px;
   overflow: hidden;
   background: var(--bg);
 }

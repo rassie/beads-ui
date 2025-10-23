@@ -25,7 +25,7 @@ export function createEpicsView(mount_element, data, goto_issue) {
   const loading = new Set();
 
   // Shared row renderer used for children rows
-  const row_renderer = createIssueRowRenderer({
+  const renderRow = createIssueRowRenderer({
     navigate: (id) => goto_issue(id),
     onUpdate: updateInline,
     requestRender: doRender,
@@ -38,6 +38,9 @@ export function createEpicsView(mount_element, data, goto_issue) {
   }
 
   function template() {
+    if (!groups.length) {
+      return html`<div class="panel__header muted">No epics found.</div>`;
+    }
     return html`${groups.map((g) => groupTemplate(g))}`;
   }
 
@@ -102,7 +105,7 @@ export function createEpicsView(mount_element, data, goto_issue) {
                         </tr>
                       </thead>
                       <tbody>
-                        ${list.map((it) => row_renderer(it))}
+                        ${list.map((it) => renderRow(it))}
                       </tbody>
                     </table>`}
             </div>`
