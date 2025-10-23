@@ -87,6 +87,46 @@ describe('ws handlers: list/show', () => {
     expect(obj.payload.id).toBe('UI-9');
   });
 
+  test('epic-status forwards bd epic status', async () => {
+    const mocked = /** @type {import('vitest').Mock} */ (runBdJson);
+    mocked.mockResolvedValueOnce({ code: 0, stdoutJson: [] });
+    const ws = makeStubSocket();
+    const req = { id: 're', type: /** @type {any} */ ('epic-status') };
+    await handleMessage(
+      /** @type {any} */ (ws),
+      Buffer.from(JSON.stringify(req))
+    );
+    const call = mocked.mock.calls[mocked.mock.calls.length - 1];
+    expect(Array.isArray(call[0])).toBe(true);
+    expect(call[0][0]).toBe('epic');
+    expect(call[0][1]).toBe('status');
+    const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
+    expect(obj.ok).toBe(true);
+    expect(Array.isArray(obj.payload)).toBe(true);
+  });
+
+  test('list-issues supports limit passthrough', async () => {
+    const mocked = /** @type {import('vitest').Mock} */ (runBdJson);
+    mocked.mockResolvedValueOnce({ code: 0, stdoutJson: [] });
+    const ws = makeStubSocket();
+    const req = {
+      id: 'rlim',
+      type: 'list-issues',
+      payload: { filters: { status: 'closed', limit: 10 } }
+    };
+    await handleMessage(
+      /** @type {any} */ (ws),
+      Buffer.from(JSON.stringify(req))
+    );
+    const call = mocked.mock.calls[mocked.mock.calls.length - 1];
+    const args = /** @type {string[]} */ (call[0]);
+    expect(args.includes('-l')).toBe(true);
+    expect(args.includes('10')).toBe(true);
+    const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
+    expect(obj.ok).toBe(true);
+    expect(Array.isArray(obj.payload)).toBe(true);
+  });
+
   test('bd error propagates as bd_error reply', async () => {
     const mocked = /** @type {import('vitest').Mock} */ (runBdJson);
     mocked.mockResolvedValueOnce({ code: 1, stderr: 'boom' });

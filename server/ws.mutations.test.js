@@ -108,6 +108,52 @@ describe('ws mutation handlers', () => {
     expect(obj.payload.title).toBe('New');
   });
 
+  test('update-type validates and returns updated issue', async () => {
+    const mRun = /** @type {import('vitest').Mock} */ (runBd);
+    const mJson = /** @type {import('vitest').Mock} */ (runBdJson);
+    mRun.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
+    mJson.mockResolvedValueOnce({ code: 0, stdoutJson: { id: 'UI-1' } });
+    const ws = makeStubSocket();
+    const req = {
+      id: 'rut',
+      type: /** @type {any} */ ('update-type'),
+      payload: { id: 'UI-1', type: 'feature' }
+    };
+    await handleMessage(
+      /** @type {any} */ (ws),
+      Buffer.from(JSON.stringify(req))
+    );
+    const call = mRun.mock.calls[mRun.mock.calls.length - 1];
+    expect(call[0][0]).toBe('update');
+    expect(call[0].includes('--type')).toBe(true);
+    const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
+    expect(obj.ok).toBe(true);
+    expect(obj.payload.id).toBe('UI-1');
+  });
+
+  test('update-assignee validates and returns updated issue', async () => {
+    const mRun = /** @type {import('vitest').Mock} */ (runBd);
+    const mJson = /** @type {import('vitest').Mock} */ (runBdJson);
+    mRun.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
+    mJson.mockResolvedValueOnce({ code: 0, stdoutJson: { id: 'UI-2' } });
+    const ws = makeStubSocket();
+    const req = {
+      id: 'rua',
+      type: /** @type {any} */ ('update-assignee'),
+      payload: { id: 'UI-2', assignee: 'max' }
+    };
+    await handleMessage(
+      /** @type {any} */ (ws),
+      Buffer.from(JSON.stringify(req))
+    );
+    const call = mRun.mock.calls[mRun.mock.calls.length - 1];
+    expect(call[0][0]).toBe('update');
+    expect(call[0].includes('--assignee')).toBe(true);
+    const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
+    expect(obj.ok).toBe(true);
+    expect(obj.payload.id).toBe('UI-2');
+  });
+
   test('edit-text acceptance success', async () => {
     const mRun = /** @type {import('vitest').Mock} */ (runBd);
     const mJson = /** @type {import('vitest').Mock} */ (runBdJson);

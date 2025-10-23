@@ -139,8 +139,23 @@ export async function handleMessage(ws, data) {
       if (typeof filters.priority === 'number') {
         args.push('--priority', String(filters.priority));
       }
+      if (typeof filters.limit === 'number' && filters.limit > 0) {
+        args.push('-l', String(filters.limit));
+      }
     }
     const res = await runBdJson(args);
+    if (res.code !== 0) {
+      const err = makeError(req, 'bd_error', res.stderr || 'bd failed');
+      ws.send(JSON.stringify(err));
+      return;
+    }
+    ws.send(JSON.stringify(makeOk(req, res.stdoutJson)));
+    return;
+  }
+
+  // epic-status
+  if (req.type === /** @type {any} */ ('epic-status')) {
+    const res = await runBdJson(['epic', 'status', '--json']);
     if (res.code !== 0) {
       const err = makeError(req, 'bd_error', res.stderr || 'bd failed');
       ws.send(JSON.stringify(err));
@@ -168,6 +183,78 @@ export async function handleMessage(ws, data) {
       return;
     }
     ws.send(JSON.stringify(makeOk(req, res.stdoutJson)));
+    return;
+  }
+
+  // update-type
+  if (req.type === /** @type {any} */ ('update-type')) {
+    const { id, type } = /** @type {any} */ (req.payload || {});
+    const allowed = new Set(['bug', 'feature', 'task', 'epic', 'chore']);
+    if (typeof id !== 'string' || id.length === 0 || !allowed.has(type)) {
+      ws.send(
+        JSON.stringify(
+          makeError(
+            req,
+            'bad_request',
+            "payload requires { id: string, type: 'bug'|'feature'|'task'|'epic'|'chore' }"
+          )
+        )
+      );
+      return;
+    }
+    const res = await runBd(['update', id, '--type', type]);
+    if (res.code !== 0) {
+      ws.send(
+        JSON.stringify(makeError(req, 'bd_error', res.stderr || 'bd failed'))
+      );
+      return;
+    }
+    const shown = await runBdJson(['show', id, '--json']);
+    if (shown.code !== 0) {
+      ws.send(
+        JSON.stringify(makeError(req, 'bd_error', shown.stderr || 'bd failed'))
+      );
+      return;
+    }
+    ws.send(JSON.stringify(makeOk(req, shown.stdoutJson)));
+    return;
+  }
+
+  // update-assignee
+  if (req.type === /** @type {any} */ ('update-assignee')) {
+    const { id, assignee } = /** @type {any} */ (req.payload || {});
+    if (
+      typeof id !== 'string' ||
+      id.length === 0 ||
+      typeof assignee !== 'string' ||
+      assignee.length === 0
+    ) {
+      ws.send(
+        JSON.stringify(
+          makeError(
+            req,
+            'bad_request',
+            'payload requires { id: string, assignee: non-empty string }'
+          )
+        )
+      );
+      return;
+    }
+    const res = await runBd(['update', id, '--assignee', assignee]);
+    if (res.code !== 0) {
+      ws.send(
+        JSON.stringify(makeError(req, 'bd_error', res.stderr || 'bd failed'))
+      );
+      return;
+    }
+    const shown = await runBdJson(['show', id, '--json']);
+    if (shown.code !== 0) {
+      ws.send(
+        JSON.stringify(makeError(req, 'bd_error', shown.stderr || 'bd failed'))
+      );
+      return;
+    }
+    ws.send(JSON.stringify(makeOk(req, shown.stdoutJson)));
     return;
   }
 
