@@ -218,6 +218,18 @@ a:focus {
   min-height: 0; /* allow children to scroll */
 }
 
+/* Board route: fill height and let columns scroll */
+.route.board {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.route.board .panel__body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden; /* columns manage their own scroll */
+}
+
 .panel {
   min-height: 0;
   overflow: auto;
@@ -825,19 +837,24 @@ input.inline-edit:focus {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: auto;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: color-mix(in srgb, var(--panel-bg) 92%, transparent);
-  overflow: hidden;
 }
 .board-column__header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   padding: 10px 12px;
   font-weight: 700;
   border-bottom: 1px solid var(--border);
+  background: inherit;
+  backdrop-filter: saturate(140%) blur(4px);
 }
 .board-column__body {
   padding: 10px;
-  overflow: auto;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   gap: 10px;
