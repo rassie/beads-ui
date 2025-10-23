@@ -41,7 +41,7 @@ export function createHashRouter(store) {
     const id = parseHash(hash);
     // Preserve current view when navigating to a detail route so tabs remain stable
     const current = store.getState ? store.getState() : { view: 'issues' };
-    const view = id ? (current.view || 'issues') : parseView(hash);
+    const view = id ? current.view || 'issues' : parseView(hash);
     store.setState({ selected_id: id, view });
   };
 

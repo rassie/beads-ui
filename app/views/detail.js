@@ -748,7 +748,12 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
         return;
       }
       const issue = /** @type {IssueDetail} */ (result);
-      if (!issue || issue.id !== id) {
+      // Some backends may normalize ID casing (e.g., UI-1 vs ui-1).
+      // Treat IDs case-insensitively to avoid false negatives on deep links.
+      if (
+        !issue ||
+        String(issue.id || '').toLowerCase() !== String(id || '').toLowerCase()
+      ) {
         renderPlaceholder('Issue not found');
         return;
       }

@@ -186,7 +186,6 @@ a:focus {
   min-height: 0; /* allow children to scroll */
 }
 
-
 .panel {
   min-height: 0;
   overflow: auto;
@@ -549,7 +548,9 @@ button:disabled {
   padding: 8px 10px;
   background: var(--panel-bg);
   cursor: pointer;
-  transition: background 140ms ease, box-shadow 140ms ease;
+  transition:
+    background 140ms ease,
+    box-shadow 140ms ease;
 }
 .board-card:hover {
   background: color-mix(in srgb, var(--control-bg) 55%, transparent);

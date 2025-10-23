@@ -182,7 +182,17 @@ export async function handleMessage(ws, data) {
       ws.send(JSON.stringify(err));
       return;
     }
-    ws.send(JSON.stringify(makeOk(req, res.stdoutJson)));
+    // bd show can return an array when it supports multiple ids;
+    // normalize to a single object for the single-id API.
+    /** @type {any} */
+    const out = Array.isArray(res.stdoutJson)
+      ? res.stdoutJson[0]
+      : res.stdoutJson;
+    if (!out) {
+      ws.send(JSON.stringify(makeError(req, 'not_found', 'issue not found')));
+      return;
+    }
+    ws.send(JSON.stringify(makeOk(req, out)));
     return;
   }
 

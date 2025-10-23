@@ -242,8 +242,12 @@ export function createEpicsView(mount_element, data, goto_issue) {
         doRender();
         try {
           const epic = await data.getIssue(epic_id);
+          // Children for the Epics view come from dependents: issues that list
+          // the epic as a dependency. This matches how progress is tracked.
           /** @type {{ id: string }[]} */
-          const deps = Array.isArray(epic.dependents) ? epic.dependents : [];
+          const deps = Array.isArray(epic.dependents)
+            ? epic.dependents
+            : [];
           /** @type {IssueLite[]} */
           const list = [];
           for (const d of deps) {

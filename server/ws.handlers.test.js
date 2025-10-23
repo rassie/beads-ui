@@ -87,6 +87,37 @@ describe('ws handlers: list/show', () => {
     expect(obj.payload.id).toBe('UI-9');
   });
 
+  test('show-issue unwraps single-element arrays from bd', async () => {
+    const mocked = /** @type {import('vitest').Mock} */ (runBdJson);
+    mocked.mockResolvedValueOnce({
+      code: 0,
+      stdoutJson: [{ id: 'UI-9', title: 'X' }]
+    });
+    const ws = makeStubSocket();
+    const req = { id: 'r3a', type: 'show-issue', payload: { id: 'UI-9' } };
+    await handleMessage(
+      /** @type {any} */ (ws),
+      Buffer.from(JSON.stringify(req))
+    );
+    const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
+    expect(obj.ok).toBe(true);
+    expect(obj.payload && obj.payload.id).toBe('UI-9');
+  });
+
+  test('show-issue returns not_found when bd returns empty array', async () => {
+    const mocked = /** @type {import('vitest').Mock} */ (runBdJson);
+    mocked.mockResolvedValueOnce({ code: 0, stdoutJson: [] });
+    const ws = makeStubSocket();
+    const req = { id: 'r3b', type: 'show-issue', payload: { id: 'X' } };
+    await handleMessage(
+      /** @type {any} */ (ws),
+      Buffer.from(JSON.stringify(req))
+    );
+    const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
+    expect(obj.ok).toBe(false);
+    expect(obj.error && obj.error.code).toBe('not_found');
+  });
+
   test('epic-status forwards bd epic status', async () => {
     const mocked = /** @type {import('vitest').Mock} */ (runBdJson);
     mocked.mockResolvedValueOnce({ code: 0, stdoutJson: [] });

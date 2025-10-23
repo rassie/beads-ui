@@ -39,7 +39,14 @@ export function bootstrap(root_element) {
   const list_mount = document.getElementById('list-panel');
   /** @type {HTMLElement|null} */
   const detail_mount = document.getElementById('detail-panel');
-  if (list_mount && nav_mount && issues_root && epics_root && board_root && detail_mount) {
+  if (
+    list_mount &&
+    nav_mount &&
+    issues_root &&
+    epics_root &&
+    board_root &&
+    detail_mount
+  ) {
     const client = createWsClient();
     // Load persisted filters (status/search) from localStorage
     /** @type {{ status: 'all'|'open'|'in_progress'|'closed'|'ready', search: string }} */
