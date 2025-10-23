@@ -40,21 +40,39 @@ export function bootstrap(root_element) {
   const detail_mount = document.getElementById('detail-panel');
   if (list_mount && issues_root && epics_root && board_root && detail_mount) {
     const client = createWsClient();
-    // Load persisted filters (status/search) from localStorage
-    /** @type {{ status: 'all'|'open'|'in_progress'|'closed'|'ready', search: string }} */
-    let persistedFilters = { status: 'all', search: '' };
+    // Load persisted filters (status/search/type) from localStorage
+    /** @type {{ status: 'all'|'open'|'in_progress'|'closed'|'ready', search: string, type: string }} */
+    let persistedFilters = { status: 'all', search: '', type: '' };
     try {
       const raw = window.localStorage.getItem('beads-ui.filters');
       if (raw) {
         const obj = JSON.parse(raw);
         if (obj && typeof obj === 'object') {
+          const ALLOWED = ['bug', 'feature', 'task', 'epic', 'chore'];
+          /** @type {string} */
+          let parsed_type = '';
+          if (typeof obj.type === 'string' && ALLOWED.includes(obj.type)) {
+            parsed_type = obj.type;
+          } else if (Array.isArray(obj.types)) {
+            // Backwards compatibility: pick first valid from previous array format
+            /** @type {string} */
+            let first_valid = '';
+            for (const it of obj.types) {
+              if (ALLOWED.includes(String(it))) {
+                first_valid = /** @type {string} */ (it);
+                break;
+              }
+            }
+            parsed_type = first_valid;
+          }
           persistedFilters = {
             status: ['all', 'open', 'in_progress', 'closed', 'ready'].includes(
               obj.status
             )
               ? obj.status
               : 'all',
-            search: typeof obj.search === 'string' ? obj.search : ''
+            search: typeof obj.search === 'string' ? obj.search : '',
+            type: parsed_type
           };
         }
       }
@@ -111,7 +129,8 @@ export function bootstrap(root_element) {
       try {
         const data = {
           status: s.filters.status,
-          search: s.filters.search
+          search: s.filters.search,
+          type: typeof s.filters.type === 'string' ? s.filters.type : ''
         };
         window.localStorage.setItem('beads-ui.filters', JSON.stringify(data));
       } catch {

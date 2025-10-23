@@ -79,7 +79,7 @@ export function createIssueRowRenderer(options) {
       </span>`;
     }
     return html`<span
-      class="editable ${value ? '' : 'muted'}"
+      class="editable text-truncate ${value ? '' : 'muted'}"
       tabindex="0"
       role="button"
       @click=${

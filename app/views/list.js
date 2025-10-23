@@ -1,5 +1,6 @@
 /* global NodeListOf */
 import { html, render } from 'lit-html';
+import { ISSUE_TYPES, typeLabel } from '../utils/issue-type.js';
 // issueDisplayId not used directly in this file; rendered in shared row
 import { statusLabel } from '../utils/status.js';
 import { createIssueRowRenderer } from './issue-row.js';
@@ -25,6 +26,8 @@ export function createListView(mount_element, sendFn, navigate_fn, store) {
   let search_text = '';
   /** @type {Issue[]} */
   let issues_cache = [];
+  /** @type {string} */
+  let type_filter = '';
   /** @type {string | null} */
   let selected_id = store ? store.getState().selected_id : null;
   /** @type {null | (() => void)} */
@@ -76,12 +79,27 @@ export function createListView(mount_element, sendFn, navigate_fn, store) {
     doRender();
   };
 
+  /**
+   * Event: type select change.
+   * @param {Event} ev
+   */
+  const onTypeChange = (ev) => {
+    /** @type {HTMLSelectElement} */
+    const sel = /** @type {any} */ (ev.currentTarget);
+    type_filter = sel.value || '';
+    if (store) {
+      store.setState({ filters: { type: type_filter } });
+    }
+    doRender();
+  };
+
   // Initialize filters from store on first render so reload applies persisted state
   if (store) {
     const s = store.getState();
     if (s && s.filters && typeof s.filters === 'object') {
       status_filter = s.filters.status || 'all';
       search_text = s.filters.search || '';
+      type_filter = typeof s.filters.type === 'string' ? s.filters.type : '';
     }
   }
   // Initial values are reflected via bound `.value` in the template
@@ -105,6 +123,11 @@ export function createListView(mount_element, sendFn, navigate_fn, store) {
         return a.includes(needle) || b.includes(needle);
       });
     }
+    if (type_filter) {
+      filtered = filtered.filter(
+        (it) => String(it.issue_type || '') === String(type_filter)
+      );
+    }
 
     return html`
       <div class="panel__header">
@@ -115,7 +138,19 @@ export function createListView(mount_element, sendFn, navigate_fn, store) {
           <option value="in_progress">${statusLabel('in_progress')}</option>
           <option value="closed">${statusLabel('closed')}</option>
         </select>
-        ${' '}
+        <select
+          @change=${onTypeChange}
+          .value=${type_filter}
+          aria-label="Filter by type"
+        >
+          <option value="">All types</option>
+          ${ISSUE_TYPES.map(
+            (t) =>
+              html`<option value=${t} ?selected=${type_filter === t}>
+                ${typeLabel(t)}
+              </option>`
+          )}
+        </select>
         <input
           type="search"
           placeholder="Search…"
@@ -261,6 +296,8 @@ export function createListView(mount_element, sendFn, navigate_fn, store) {
       if (s.filters && typeof s.filters === 'object') {
         const next_status = s.filters.status;
         const next_search = s.filters.search || '';
+        const next_type =
+          typeof s.filters.type === 'string' ? s.filters.type : '';
         let needs_render = false;
         if (next_status !== status_filter) {
           status_filter = next_status;
@@ -270,6 +307,10 @@ export function createListView(mount_element, sendFn, navigate_fn, store) {
         }
         if (next_search !== search_text) {
           search_text = next_search;
+          needs_render = true;
+        }
+        if (next_type !== type_filter) {
+          type_filter = next_type;
           needs_render = true;
         }
         if (needs_render) {

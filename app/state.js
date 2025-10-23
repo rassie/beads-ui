@@ -7,7 +7,7 @@
  */
 
 /**
- * @typedef {{ status: StatusFilter, search: string }} Filters
+ * @typedef {{ status: StatusFilter, search: string, type: string }} Filters
  */
 
 /**
@@ -30,7 +30,11 @@ export function createStore(initial = {}) {
     view: /** @type {any} */ (initial).view ?? 'issues',
     filters: {
       status: /** @type {any} */ (initial).filters?.status ?? 'all',
-      search: /** @type {any} */ (initial).filters?.search ?? ''
+      search: /** @type {any} */ (initial).filters?.search ?? '',
+      type:
+        typeof (/** @type {any} */ (initial).filters?.type) === 'string'
+          ? /** @type {any} */ (initial).filters?.type
+          : ''
     }
   };
 
@@ -67,7 +71,8 @@ export function createStore(initial = {}) {
         next.selected_id === state.selected_id &&
         next.view === state.view &&
         next.filters.status === state.filters.status &&
-        next.filters.search === state.filters.search
+        next.filters.search === state.filters.search &&
+        next.filters.type === state.filters.type
       ) {
         return;
       }

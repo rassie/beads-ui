@@ -84,6 +84,241 @@ describe('views/list', () => {
     expect(visible[0].text.toLowerCase()).toContain('gamma');
   });
 
+  test('filters by issue type and combines with search', async () => {
+    document.body.innerHTML = '<aside id="mount" class="panel"></aside>';
+    const mount = /** @type {HTMLElement} */ (document.getElementById('mount'));
+    const issues = [
+      {
+        id: 'UI-1',
+        title: 'Alpha',
+        status: 'open',
+        priority: 1,
+        issue_type: 'bug'
+      },
+      {
+        id: 'UI-2',
+        title: 'Beta',
+        status: 'open',
+        priority: 2,
+        issue_type: 'feature'
+      },
+      {
+        id: 'UI-3',
+        title: 'Gamma',
+        status: 'open',
+        priority: 3,
+        issue_type: 'bug'
+      },
+      {
+        id: 'UI-4',
+        title: 'Delta',
+        status: 'open',
+        priority: 2,
+        issue_type: 'task'
+      }
+    ];
+    const view = createListView(mount, stubSend(issues));
+    await view.load();
+
+    // Initially shows all
+    expect(mount.querySelectorAll('tr.issue-row').length).toBe(4);
+
+    const typeSelect = /** @type {HTMLSelectElement} */ (
+      mount.querySelector('select[aria-label="Filter by type"]')
+    );
+    // Select bug
+    typeSelect.value = 'bug';
+    typeSelect.dispatchEvent(new Event('change'));
+    await Promise.resolve();
+    const bug_only = Array.from(mount.querySelectorAll('tr.issue-row')).map(
+      (el) => el.getAttribute('data-issue-id') || ''
+    );
+    expect(bug_only).toEqual(['UI-1', 'UI-3']);
+
+    // Switch to feature
+    typeSelect.value = 'feature';
+    typeSelect.dispatchEvent(new Event('change'));
+    await Promise.resolve();
+    const feature_only = Array.from(mount.querySelectorAll('tr.issue-row')).map(
+      (el) => el.getAttribute('data-issue-id') || ''
+    );
+    expect(feature_only).toEqual(['UI-2']);
+
+    // Combine with search while bug selected
+    typeSelect.value = 'bug';
+    typeSelect.dispatchEvent(new Event('change'));
+    const input = /** @type {HTMLInputElement} */ (
+      mount.querySelector('input[type="search"]')
+    );
+    input.value = 'ga';
+    input.dispatchEvent(new Event('input'));
+    await Promise.resolve();
+    const filtered = Array.from(mount.querySelectorAll('tr.issue-row')).map(
+      (el) => el.getAttribute('data-issue-id') || ''
+    );
+    expect(filtered).toEqual(['UI-3']);
+  });
+
+  test('applies type filters after Ready reload', async () => {
+    document.body.innerHTML = '<aside id="mount" class="panel"></aside>';
+    const mount = /** @type {HTMLElement} */ (document.getElementById('mount'));
+
+    const allIssues = [
+      {
+        id: 'UI-1',
+        title: 'One',
+        status: 'open',
+        priority: 1,
+        issue_type: 'task'
+      },
+      {
+        id: 'UI-2',
+        title: 'Two',
+        status: 'open',
+        priority: 2,
+        issue_type: 'feature'
+      },
+      {
+        id: 'UI-3',
+        title: 'Three',
+        status: 'open',
+        priority: 2,
+        issue_type: 'bug'
+      }
+    ];
+    const readyIssues = [
+      {
+        id: 'UI-2',
+        title: 'Two',
+        status: 'open',
+        priority: 2,
+        issue_type: 'feature'
+      },
+      {
+        id: 'UI-3',
+        title: 'Three',
+        status: 'open',
+        priority: 2,
+        issue_type: 'bug'
+      }
+    ];
+
+    /** @type {{ calls: any[] }} */
+    const spy = { calls: [] };
+    /** @type {(type: string, payload?: unknown) => Promise<any[]>} */
+    const send = async (type, payload) => {
+      spy.calls.push({ type, payload });
+      const p = /** @type {any} */ (payload);
+      if (p && p.filters && p.filters.ready === true) {
+        return readyIssues;
+      }
+      return allIssues;
+    };
+
+    const view = createListView(mount, send);
+    await view.load();
+    const statusSelect = /** @type {HTMLSelectElement} */ (
+      mount.querySelector('select')
+    );
+    statusSelect.value = 'ready';
+    statusSelect.dispatchEvent(new Event('change'));
+    await Promise.resolve();
+
+    // Apply type filter (feature)
+    const typeSelect = /** @type {HTMLSelectElement} */ (
+      mount.querySelector('select[aria-label="Filter by type"]')
+    );
+    typeSelect.value = 'feature';
+    typeSelect.dispatchEvent(new Event('change'));
+    await Promise.resolve();
+
+    const rows = Array.from(mount.querySelectorAll('tr.issue-row')).map(
+      (el) => el.getAttribute('data-issue-id') || ''
+    );
+    expect(rows).toEqual(['UI-2']);
+
+    // Ensure ready call happened
+    const has_ready = spy.calls.some(
+      (c) =>
+        c.type === 'list-issues' &&
+        c.payload &&
+        c.payload.filters &&
+        c.payload.filters.ready === true
+    );
+    expect(has_ready).toBe(true);
+  });
+
+  test('initializes type filter from store and reflects in controls', async () => {
+    document.body.innerHTML = '<aside id="mount" class="panel"></aside>';
+    const mount = /** @type {HTMLElement} */ (document.getElementById('mount'));
+
+    const issues = [
+      {
+        id: 'UI-1',
+        title: 'Alpha',
+        status: 'open',
+        priority: 1,
+        issue_type: 'bug'
+      },
+      {
+        id: 'UI-2',
+        title: 'Beta',
+        status: 'open',
+        priority: 2,
+        issue_type: 'feature'
+      },
+      {
+        id: 'UI-3',
+        title: 'Gamma closed',
+        status: 'closed',
+        priority: 3,
+        issue_type: 'bug'
+      }
+    ];
+
+    /** @type {{ state: any, subs: ((s:any)=>void)[], getState: () => any, setState: (patch:any)=>void, subscribe: (fn:(s:any)=>void)=>()=>void }} */
+    const store = {
+      state: {
+        selected_id: null,
+        filters: { status: 'all', search: '', type: 'bug' }
+      },
+      subs: [],
+      getState() {
+        return this.state;
+      },
+      setState(patch) {
+        this.state = {
+          ...this.state,
+          ...(patch || {}),
+          filters: { ...this.state.filters, ...(patch.filters || {}) }
+        };
+        for (const fn of this.subs) {
+          fn(this.state);
+        }
+      },
+      subscribe(fn) {
+        this.subs.push(fn);
+        return () => {
+          this.subs = this.subs.filter((f) => f !== fn);
+        };
+      }
+    };
+
+    const view = createListView(mount, stubSend(issues), undefined, store);
+    await view.load();
+
+    // Only bug issues visible
+    const rows = Array.from(mount.querySelectorAll('tr.issue-row')).map(
+      (el) => el.getAttribute('data-issue-id') || ''
+    );
+    expect(rows).toEqual(['UI-1', 'UI-3']);
+
+    const typeSelect = /** @type {HTMLSelectElement} */ (
+      mount.querySelector('select[aria-label="Filter by type"]')
+    );
+    expect(typeSelect.value).toBe('bug');
+  });
+
   test('ready filter via select triggers backend reload', async () => {
     document.body.innerHTML = '<aside id="mount" class="panel"></aside>';
     const mount = /** @type {HTMLElement} */ (document.getElementById('mount'));
