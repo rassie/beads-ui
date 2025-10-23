@@ -41,10 +41,10 @@ describe('views/detail', () => {
 
     await view.load('UI-29');
 
-    const headerMono = /** @type {HTMLElement|null} */ (
-      mount.querySelector('.panel__header .mono')
+    const idMono = /** @type {HTMLElement|null} */ (
+      mount.querySelector('.detail-title .detail-id')
     );
-    expect(headerMono && headerMono.textContent).toBe('#29');
+    expect(idMono && idMono.textContent).toBe('#29');
     const titleSpan = /** @type {HTMLSpanElement} */ (
       mount.querySelector('h2 .editable')
     );

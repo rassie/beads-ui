@@ -774,6 +774,40 @@ input.inline-edit:focus {
   padding: 18px;
 }
 
+/* Spacing for acceptance and notes sections in details */
+#detail-root .acceptance,
+#detail-root .notes {
+  margin-top: 32px;
+}
+/* Keep editor font sizes consistent with read mode */
+#detail-root input[type='text'],
+#detail-root textarea {
+  font-size: inherit;
+  font-family: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+/* Title input fills available width and stays inline with buttons */
+#detail-root .detail-title input[type='text'] {
+  flex: 1 1 auto;
+  padding: 0;
+  min-width: 10px;
+}
+/* Remove borders in detail view; rely on global :focus-visible outline */
+#detail-root input[type='text'],
+#detail-root textarea {
+  border: none;
+  background: transparent;
+  outline: 2px solid var(--control-border, var(--border));
+  outline-offset: 2px;
+}
+#detail-root input[type='text']:focus,
+#detail-root textarea:focus {
+  border: none;
+  box-shadow: none;
+  outline: 2px solid color-mix(in srgb, var(--link) 60%, transparent);
+}
+
 /* Epics view styles */
 .epic-group {
   border: 1px solid var(--border);
@@ -1119,7 +1153,24 @@ html[data-theme='dark'] {
 .detail-main h2 {
   font-size: 28px;
   line-height: 1.25;
-  margin: 0 0 8px;
+  margin: 0 0 32px;
+}
+/* Title line: title left (flex:1), ID right-aligned */
+.detail-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+.detail-title h2 {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+.detail-title .detail-id {
+  color: var(--muted);
 }
 .detail-toolbar {
   display: flex;

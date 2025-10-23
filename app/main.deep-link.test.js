@@ -48,10 +48,10 @@ describe('deep link on initial load (UI-44)', () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    const detailHeader = /** @type {HTMLElement} */ (
-      document.querySelector('#detail-panel .panel__header .mono')
+    const detailId = /** @type {HTMLElement} */ (
+      document.querySelector('#detail-panel .detail-title .detail-id')
     );
-    expect(detailHeader && detailHeader.textContent).toBe('#2');
+    expect(detailId && detailId.textContent).toBe('#2');
 
     const list = /** @type {HTMLElement} */ (
       document.getElementById('list-root')

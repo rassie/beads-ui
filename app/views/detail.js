@@ -22,11 +22,19 @@ import { createTypeBadge } from '../utils/type-badge.js';
  * @property {string} [title]
  * @property {string} [description]
  * @property {string} [acceptance]
+ * @property {string} [notes]
  * @property {string} [status]
  * @property {number} [priority]
  * @property {Dependency[]} [dependencies]
  * @property {Dependency[]} [dependents]
  */
+
+/**
+ * @param {string} hash
+ */
+function defaultNavigateFn(hash) {
+  window.location.hash = hash;
+}
 
 /**
  * Create the Issue Detail view.
@@ -35,7 +43,11 @@ import { createTypeBadge } from '../utils/type-badge.js';
  * @param {(hash: string) => void} [navigateFn] - Navigation function; defaults to setting location.hash.
  * @returns {{ load: (id: string) => Promise<void>, clear: () => void, destroy: () => void }} View API.
  */
-export function createDetailView(mount_element, sendFn, navigateFn) {
+export function createDetailView(
+  mount_element,
+  sendFn,
+  navigateFn = defaultNavigateFn
+) {
   /** @type {IssueDetail | null} */
   let current = null;
   /** @type {boolean} */
@@ -87,7 +99,6 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
   function renderPlaceholder(message) {
     render(
       html`
-        <div class="panel__header"><span class="mono">—</span></div>
         <div class="panel__body" id="detail-root">
           <p class="muted">${message}</p>
         </div>
@@ -131,7 +142,6 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
       input.disabled = true;
     }
     try {
-      /** @type {any} */
       const updated = await sendFn('edit-text', {
         id: current.id,
         field: 'title',
@@ -196,7 +206,6 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
       input.disabled = true;
     }
     try {
-      /** @type {any} */
       const updated = await sendFn('update-assignee', {
         id: current.id,
         assignee: next
@@ -239,7 +248,6 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
     current.status = next;
     doRender();
     try {
-      /** @type {any} */
       const updated = await sendFn('update-status', {
         id: current.id,
         status: next
@@ -335,7 +343,6 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
       ta.disabled = true;
     }
     try {
-      /** @type {any} */
       const updated = await sendFn('edit-text', {
         id: current.id,
         field: 'description',
@@ -405,7 +412,6 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
       ta.disabled = true;
     }
     try {
-      /** @type {any} */
       const updated = await sendFn('edit-text', {
         id: current.id,
         field: 'acceptance',
@@ -439,24 +445,18 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
       title === 'Dependencies' ? 'add-dependency' : 'add-dependent';
     return html`
       <div class="props-card">
-        <div
-          style="display:flex;align-items:center;justify-content:space-between;"
-        >
+        <div>
           <div class="props-card__title">${title}</div>
         </div>
         <ul>
           ${!items || items.length === 0
-            ? html`<li class="muted">(none)</li>`
+            ? null
             : items.map((dep) => {
                 const did = dep.id;
                 const href = issueHref(did);
                 return html` <li
                   style="display:grid;grid-template-columns:auto auto 1fr auto;gap:6px;align-items:center;padding:2px 0;cursor:pointer;"
-                  @click=${() => {
-                    const nav =
-                      navigateFn || ((h) => (window.location.hash = h));
-                    nav(href);
-                  }}
+                  @click=${() => navigateFn(href)}
                 >
                   <a href=${href} @click=${makeDepLinkClick(href)}
                     >${issueDisplayId(did)}</a
@@ -485,30 +485,36 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
    */
   function detailTemplate(issue) {
     const title_zone = edit_title
-      ? html`<h2 style="margin:0 0 8px">
-          <input
-            type="text"
-            aria-label="Edit title"
-            .value=${issue.title || ''}
-            size=${Math.min(80, Math.max(20, (issue.title || '').length + 5))}
-            @keydown=${onTitleInputKeydown}
-          />
-          <button style="margin-left:6px" @click=${onTitleSave}>Save</button>
-          <button style="margin-left:6px" @click=${onTitleCancel}>
-            Cancel
-          </button>
-        </h2>`
-      : html`<h2 style="margin:0 0 8px">
-          <span
-            class="editable"
-            tabindex="0"
-            role="button"
-            aria-label="Edit title"
-            @click=${onTitleSpanClick}
-            @keydown=${onTitleKeydown}
-            >${issue.title || ''}</span
-          >
-        </h2>`;
+      ? html`<div class="detail-title">
+          <h2>
+            <input
+              type="text"
+              aria-label="Edit title"
+              .value=${issue.title || ''}
+              @keydown=${onTitleInputKeydown}
+              style="width:100%;font-size:inherit;line-height:inherit;"
+            />
+            <button style="margin-left:6px" @click=${onTitleSave}>Save</button>
+            <button style="margin-left:6px" @click=${onTitleCancel}>
+              Cancel
+            </button>
+          </h2>
+          <span class="mono detail-id">${issueDisplayId(issue.id)}</span>
+        </div>`
+      : html`<div class="detail-title">
+          <h2>
+            <span
+              class="editable"
+              tabindex="0"
+              role="button"
+              aria-label="Edit title"
+              @click=${onTitleSpanClick}
+              @keydown=${onTitleKeydown}
+              >${issue.title || ''}</span
+            >
+          </h2>
+          <span class="mono detail-id">${issueDisplayId(issue.id)}</span>
+        </div>`;
 
     const status_select = html`<select
       class=${`badge-select badge--status is-${issue.status || 'open'}`}
@@ -578,12 +584,24 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
           })()}
         </div>`;
 
+    // Normalize acceptance text: prefer issue.acceptance, fallback to acceptance_criteria from bd
+    const acceptance_text = (() => {
+      /** @type {any} */
+      const any_issue = issue;
+      const raw = String(
+        issue.acceptance || any_issue.acceptance_criteria || ''
+      );
+      return raw;
+    })();
+
     const accept_block = edit_accept
       ? html`<div class="acceptance">
-          <div class="props-card__title">Acceptance</div>
+          ${acceptance_text.trim().length > 0
+            ? html`<div class="props-card__title">Acceptance</div>`
+            : ''}
           <textarea
             @keydown=${onAcceptKeydown}
-            .value=${current && current.acceptance ? current.acceptance : ''}
+            .value=${acceptance_text}
             rows="6"
             style="width:100%"
           ></textarea>
@@ -593,30 +611,36 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
           </div>
         </div>`
       : html`<div class="acceptance">
-          <div class="props-card__title">Acceptance</div>
-          <div
-            class="md editable"
-            tabindex="0"
-            role="button"
-            aria-label="Edit acceptance"
-            @click=${onAcceptEdit}
-            @keydown=${onAcceptEditableKeydown}
-          >
-            ${renderMarkdown(
-              current && current.acceptance ? current.acceptance : ''
-            )}
-          </div>
+          ${acceptance_text.trim().length > 0
+            ? html`<div class="props-card__title">Acceptance</div>
+                <div
+                  class="md editable"
+                  tabindex="0"
+                  role="button"
+                  aria-label="Edit acceptance"
+                  @click=${onAcceptEdit}
+                  @keydown=${onAcceptEditableKeydown}
+                >
+                  ${renderMarkdown(acceptance_text)}
+                </div>`
+            : ''}
         </div>`;
 
+    // Notes (read-only): show heading only if there is content
+    const notes_text = String(issue.notes || '');
+    const notes_block = html`<div class="notes">
+      ${notes_text.trim().length > 0
+        ? html`<div class="props-card__title">Notes</div>
+            <div class="md">${renderMarkdown(notes_text)}</div>`
+        : ''}
+    </div>`;
+
     return html`
-      <div class="panel__header">
-        <span class="mono">${issueDisplayId(issue.id)}</span>
-      </div>
       <div class="panel__body" id="detail-root">
         <div style="position:relative">
           <div class="detail-layout">
             <div class="detail-main">
-              ${title_zone} ${desc_block} ${accept_block}
+              ${title_zone} ${desc_block} ${notes_block} ${accept_block}
             </div>
             <div class="detail-side">
               <div class="props-card">
@@ -711,17 +735,7 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
       return;
     }
     render(detailTemplate(current), mount_element);
-    // Defensive: ensure header text is set for environments where a stale
-    // skeleton header may be queried before lit updates propagate.
-    const hdr = /** @type {HTMLElement|null} */ (
-      mount_element.querySelector('.panel__header')
-    );
-    if (hdr && (hdr.textContent || '').trim() === '') {
-      const span = document.createElement('span');
-      span.className = 'mono';
-      span.textContent = issueDisplayId(current.id);
-      hdr.replaceChildren(span);
-    }
+    // panel header removed for detail view; ID is shown inline with title
   }
 
   /**
@@ -736,8 +750,7 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
       const e = ev;
       // stop bubbling to the li row click
       e.stopPropagation();
-      const nav = navigateFn || ((h) => (window.location.hash = h));
-      nav(href);
+      navigateFn(href);
     };
   }
 
@@ -758,7 +771,6 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
       pending = true;
       try {
         if (title === 'Dependencies') {
-          /** @type {any} */
           const updated = await sendFn('dep-remove', {
             a: current.id,
             b: did,
@@ -769,7 +781,6 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
             doRender();
           }
         } else {
-          /** @type {any} */
           const updated = await sendFn('dep-remove', {
             a: did,
             b: current.id,
@@ -822,7 +833,6 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
       }
       try {
         if (title === 'Dependencies') {
-          /** @type {any} */
           const updated = await sendFn('dep-add', {
             a: current.id,
             b: target,
@@ -833,7 +843,6 @@ export function createDetailView(mount_element, sendFn, navigateFn) {
             doRender();
           }
         } else {
-          /** @type {any} */
           const updated = await sendFn('dep-add', {
             a: target,
             b: current.id,
