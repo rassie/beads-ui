@@ -108,10 +108,10 @@ a:focus {
   position: sticky;
   top: 0;
   z-index: 50;
-  padding: 12px 18px;
+  padding: 12px 18px 0 18px;
   border-bottom: 1px solid var(--border);
   display: flex;
-  align-items: center;
+  align-items: start;
   justify-content: space-between;
   background: linear-gradient(
     180deg,
@@ -126,38 +126,46 @@ a:focus {
   letter-spacing: 0.02em;
 }
 
-/* Top navigation (under header) */
-.top-nav {
-  position: sticky;
-  top: 53px; /* sit below sticky header (approx header height) */
-  z-index: 40;
-  background: var(--panel-bg);
-  border-bottom: 1px solid var(--border);
+/* Header layout: group title + tabs on the left */
+.header-left {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px 0 14px;
+  align-items: baseline;
+  gap: 12px;
 }
-.top-nav .tab {
+
+/* Header navigation tabs (sit next to title) */
+.header-nav {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+.header-nav .tab {
   display: inline-block;
-  padding: 8px 10px;
+  padding: 8px 12px 9px;
   color: var(--muted);
   text-decoration: none;
+  font-weight: 600;
   border: 1px solid transparent;
-  border-bottom: none;
-  border-top-left-radius: 6px;
-  border-top-right-radius: 6px;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
   line-height: 1.2;
 }
-.top-nav .tab:hover,
-.top-nav .tab:focus {
+.header-nav .tab:hover,
+.header-nav .tab:focus {
   color: var(--fg);
 }
-.top-nav .tab.active {
+.header-nav .tab.active {
   color: var(--fg);
-  background: color-mix(in srgb, var(--panel-bg) 92%, transparent);
+  background: var(--bg);
   border-color: var(--border);
-  box-shadow: 0 1px 0 0 var(--panel-bg) inset;
+  /* Blend into the page content below the header by covering the header border */
+  border-bottom-color: var(--bg);
+  margin-bottom: -1px; /* overlap header bottom border */
+  padding-bottom: 10px;
+  position: relative;
+  z-index: 1;
 }
 
 .header-actions {
@@ -206,20 +214,12 @@ a:focus {
 }
 
 .app-shell {
-  display: grid;
-  grid-template-rows: auto 1fr;
-  gap: 0;
+  /* Fill remaining viewport height below sticky header */
   height: calc(100% - 53px);
 }
 
-/* Ensure the nav spans the full width row */
-#top-nav {
-  grid-row: 1;
-}
-
-/* Route shells stack in the second row */
+/* Route shells */
 .route {
-  grid-row: 2;
   min-height: 0; /* allow children to scroll */
 }
 
@@ -238,7 +238,6 @@ a:focus {
 .panel {
   min-height: 0;
   overflow: auto;
-  background: var(--panel-bg);
 }
 .panel + .panel {
   border-left: 1px solid var(--border);
@@ -252,9 +251,12 @@ a:focus {
   align-items: center;
   gap: 10px;
   min-height: 44px;
-  padding: 3px 18px;
-  border-bottom: 1px solid var(--border);
+  padding: 6px 18px;
   backdrop-filter: saturate(140%) blur(4px);
+}
+#list-panel .panel__header {
+  /* UI-82: search row uses body background */
+  background: var(--bg);
 }
 .panel__body {
 }
@@ -779,6 +781,15 @@ input.inline-edit:focus {
   border-radius: 6px;
   margin: 10px 12px;
   overflow: hidden;
+}
+
+/* UI-83: Issues table container aligns with epics/cards */
+.issues-block {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin: 10px 12px;
+  overflow: hidden;
+  background: var(--bg);
 }
 .epic-header {
   display: flex;

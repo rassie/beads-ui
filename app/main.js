@@ -14,9 +14,8 @@ import { createWsClient } from './ws.js';
  * @param {HTMLElement} root_element - The container element to render into.
  */
 export function bootstrap(root_element) {
-  // Render nav + three route shells
+  // Render route shells (nav is mounted in header)
   const shell = html`
-    <div id="top-nav"></div>
     <section id="issues-root" class="route issues">
       <aside id="list-panel" class="panel"></aside>
     </section>
@@ -39,14 +38,7 @@ export function bootstrap(root_element) {
   const list_mount = document.getElementById('list-panel');
   /** @type {HTMLElement|null} */
   const detail_mount = document.getElementById('detail-panel');
-  if (
-    list_mount &&
-    nav_mount &&
-    issues_root &&
-    epics_root &&
-    board_root &&
-    detail_mount
-  ) {
+  if (list_mount && issues_root && epics_root && board_root && detail_mount) {
     const client = createWsClient();
     // Load persisted filters (status/search) from localStorage
     /** @type {{ status: 'all'|'open'|'in_progress'|'closed'|'ready', search: string }} */
@@ -98,8 +90,10 @@ export function bootstrap(root_element) {
         return [];
       }
     };
-    // Top navigation
-    createTopNav(nav_mount, store, router);
+    // Top navigation (optional mount)
+    if (nav_mount) {
+      createTopNav(nav_mount, store, router);
+    }
 
     const issues_view = createListView(
       list_mount,

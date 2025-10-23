@@ -25,7 +25,7 @@ export function createTopNav(mount_element, store, router) {
     const s = store.getState();
     const active = s.view || 'issues';
     return html`
-      <nav class="top-nav" aria-label="Primary">
+      <nav class="header-nav" aria-label="Primary">
         <a
           href="#/issues"
           class="tab ${active === 'issues' ? 'active' : ''}"

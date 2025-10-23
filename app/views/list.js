@@ -125,30 +125,34 @@ export function createListView(mount_element, send_fn, navigate_fn, store) {
       </div>
       <div class="panel__body" id="list-root">
         ${filtered.length === 0
-          ? html`<div class="muted">No issues</div>`
-          : html`<table class="table">
-              <colgroup>
-                <col style="width: 100px" />
-                <col style="width: 120px" />
-                <col />
-                <col style="width: 120px" />
-                <col style="width: 160px" />
-                <col style="width: 130px" />
-              </colgroup>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Type</th>
-                  <th>Title</th>
-                  <th>Status</th>
-                  <th>Assignee</th>
-                  <th>Priority</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${filtered.map((it) => row_renderer(it))}
-              </tbody>
-            </table>`}
+          ? html`<div class="issues-block">
+              <div class="muted" style="padding:10px 12px;">No issues</div>
+            </div>`
+          : html`<div class="issues-block">
+              <table class="table">
+                <colgroup>
+                  <col style="width: 100px" />
+                  <col style="width: 120px" />
+                  <col />
+                  <col style="width: 120px" />
+                  <col style="width: 160px" />
+                  <col style="width: 130px" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>Assignee</th>
+                    <th>Priority</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${filtered.map((it) => row_renderer(it))}
+                </tbody>
+              </table>
+            </div>`}
       </div>
     `;
   }
