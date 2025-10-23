@@ -74,9 +74,9 @@ export function createBoardView(mount_element, data, goto_issue) {
           ${it.title || '(no title)'}
         </div>
         <div class="board-card__meta">
-          <span class="mono">${issueDisplayId(it.id)}</span>
           ${createTypeBadge(/** @type {any} */ (it).issue_type)}
           ${createPriorityBadge(/** @type {any} */ (it).priority)}
+          <span class="mono">${issueDisplayId(it.id)}</span>
         </div>
       </article>
     `;
