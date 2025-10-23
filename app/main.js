@@ -19,12 +19,10 @@ export function bootstrap(root_element) {
     <div id="top-nav"></div>
     <section id="issues-root" class="route issues">
       <aside id="list-panel" class="panel"></aside>
-      <section id="detail-panel" class="panel"></section>
     </section>
-    <section id="epics-root" class="route epics" hidden>
-      <div class="placeholder">Epics view placeholder</div>
-    </section>
+    <section id="epics-root" class="route epics" hidden></section>
     <section id="board-root" class="route board" hidden></section>
+    <section id="detail-panel" class="route detail" hidden></section>
   `;
   render(shell, root_element);
 
@@ -41,7 +39,7 @@ export function bootstrap(root_element) {
   const list_mount = document.getElementById('list-panel');
   /** @type {HTMLElement|null} */
   const detail_mount = document.getElementById('detail-panel');
-  if (list_mount && nav_mount && issues_root && epics_root && board_root) {
+  if (list_mount && nav_mount && issues_root && epics_root && board_root && detail_mount) {
     const client = createWsClient();
     // Load persisted filters (status/search) from localStorage
     /** @type {{ status: 'all'|'open'|'in_progress'|'closed'|'ready', search: string }} */
@@ -120,43 +118,41 @@ export function bootstrap(root_element) {
       }
     });
     void issues_view.load();
-    if (detail_mount) {
-      const detail = createDetailView(detail_mount, transport, (hash) => {
-        const id = hash.replace('#/issue/', '');
-        if (id) {
-          router.gotoIssue(id);
-        }
-      });
+    const detail = createDetailView(detail_mount, transport, (hash) => {
+      const id = hash.replace('#/issue/', '');
+      if (id) {
+        router.gotoIssue(id);
+      }
+    });
 
-      // React to selectedId changes
-      store.subscribe((s) => {
-        const id = s.selected_id;
-        if (id) {
-          void detail.load(id);
-        } else {
-          detail.clear();
-        }
-      });
-
-      // Initial deep-link: if router set a selectedId before subscription, load it now
-      const initialId = store.getState().selected_id;
-      if (initialId) {
-        void detail.load(initialId);
+    // React to selectedId changes -> show detail page full-width
+    store.subscribe((s) => {
+      const id = s.selected_id;
+      if (id) {
+        void detail.load(id);
       } else {
         detail.clear();
       }
+    });
 
-      // Refresh views on push updates
-      client.on('issues-changed', () => {
-        void issues_view.load();
-        const id = store.getState().selected_id;
-        if (id) {
-          void detail.load(id);
-        }
-      });
+    // Initial deep-link: if router set a selectedId before subscription, load it now
+    const initialId = store.getState().selected_id;
+    if (initialId) {
+      void detail.load(initialId);
+    } else {
+      detail.clear();
     }
 
-    // Toggle route shells on view change and persist
+    // Refresh views on push updates
+    client.on('issues-changed', () => {
+      void issues_view.load();
+      const id = store.getState().selected_id;
+      if (id) {
+        void detail.load(id);
+      }
+    });
+
+    // Toggle route shells on view/detail change and persist
     const data = createDataLayer(/** @type {any} */ (transport), client.on);
     const epics_view = createEpicsView(epics_root, data, (id) =>
       router.gotoIssue(id)
@@ -166,15 +162,17 @@ export function bootstrap(root_element) {
     );
     // Preload epics when switching to view
     store.subscribe((s) => {
-      if (issues_root && epics_root && board_root) {
-        issues_root.hidden = s.view !== 'issues';
-        epics_root.hidden = s.view !== 'epics';
-        board_root.hidden = s.view !== 'board';
+      const showDetail = Boolean(s.selected_id);
+      if (issues_root && epics_root && board_root && detail_mount) {
+        issues_root.hidden = showDetail || s.view !== 'issues';
+        epics_root.hidden = showDetail || s.view !== 'epics';
+        board_root.hidden = showDetail || s.view !== 'board';
+        detail_mount.hidden = !showDetail;
       }
-      if (s.view === 'epics') {
+      if (!showDetail && s.view === 'epics') {
         void epics_view.load();
       }
-      if (s.view === 'board') {
+      if (!showDetail && s.view === 'board') {
         void board_view.load();
       }
       try {
