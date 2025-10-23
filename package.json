@@ -44,5 +44,15 @@
     "express": "^5.1.0",
     "lit-html": "^3.3.1",
     "ws": "^8.18.3"
-  }
+  },
+  "files": [
+    "app",
+    "bin",
+    "docs",
+    "server",
+    "CHANGES.md",
+    "LICENSE",
+    "README.md",
+    "!**/*.test.js"
+  ]
 }
