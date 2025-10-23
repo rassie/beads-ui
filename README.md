@@ -19,7 +19,7 @@ npm install
 npm start
 ```
 
-Open http://127.0.0.1:5173 in your browser.
+Open http://127.0.0.1:3000 in your browser.
 
 - The server binds to `127.0.0.1` (local-only) and exposes a WebSocket at `/ws`.
 - Data flow: UI ⇄ WS ⇄ server ⇄ `bd` CLI; DB changes trigger `issues-changed`

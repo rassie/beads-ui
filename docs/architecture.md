@@ -46,7 +46,7 @@ WebSocket protocol used between the browser SPA and the local Node.js server.
     helpers)
   - DB resolution/watch: `server/db.js` (resolve active DB path),
     `server/watcher.js` (emit `issues-changed`)
-  - Config: `server/config.js` (bind to `127.0.0.1`, default port 5173)
+  - Config: `server/config.js` (bind to `127.0.0.1`, default port 3000)
 
 ## Data Flow
 

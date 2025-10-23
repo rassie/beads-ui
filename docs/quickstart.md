@@ -22,12 +22,12 @@ npm install
 npm start
 ```
 
-- Server binds to `127.0.0.1:5173` by default.
-- Open http://127.0.0.1:5173 in your browser.
+- Server binds to `127.0.0.1:3000` by default.
+- Open http://127.0.0.1:3000 in your browser.
 
 Environment knobs:
 
-- `PORT` to change the listen port (default: `5173`). The server always binds to
+- `PORT` to change the listen port (default: `3000`). The server always binds to
   `127.0.0.1` for local‑only access.
 - `BD_BIN` to point at a non-default `bd` binary.
 

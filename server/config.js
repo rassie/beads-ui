@@ -13,7 +13,7 @@ export function getConfig() {
   /** @type {number} */
   let port_value = Number.parseInt(process.env.PORT || '', 10);
   if (!Number.isFinite(port_value)) {
-    port_value = 5173;
+    port_value = 3000;
   }
 
   /** @type {string} */
