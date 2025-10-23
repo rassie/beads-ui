@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "bin": {
+    "bdui": "bin/bdui.js"
+  },
   "engines": {
     "node": ">=22"
   },

@@ -71,6 +71,24 @@ commands executed by the server.
 Tests cover protocol handlers, WebSocket client/server behavior, and core UI
 flows (list and detail views, edits, and dependency management).
 
+## CLI (`bdui`) Local Link
+
+The `bdui` CLI is exposed via npm’s `bin` field for local development. To make
+it available on your PATH:
+
+```sh
+npm link
+```
+
+Then verify:
+
+```sh
+bdui --help
+```
+
+Until the daemon functionality is implemented, `start|stop|restart` are stubbed
+and have no side effects. Use `npm start` to run the server.
+
 ## Protocol
 
 The WebSocket protocol is documented in `app/protocol.md` and shared by server

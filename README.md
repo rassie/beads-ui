@@ -65,6 +65,29 @@ restores your last context.
 See `docs/quickstart.md` for details and `docs/architecture.md` for the protocol
 and component overview.
 
+## Local CLI (`bdui`)
+
+For a smoother developer workflow, the CLI entry `bdui` is exposed via the npm
+`bin` field. This allows local linking and invoking the tool from your PATH.
+
+Link locally (from the repo root):
+
+```sh
+npm link
+```
+
+Verify it’s available and prints usage:
+
+```sh
+bdui --help
+```
+
+Notes:
+
+- Requires Node.js >= 22 (enforced via `package.json`).
+- Commands `start|stop|restart` are currently stubs; daemon behavior lands in a
+  later issue. Use `npm start` for the server until then.
+
 ## Notes
 
 - The server always binds to `127.0.0.1` for safety. Configure the port via
