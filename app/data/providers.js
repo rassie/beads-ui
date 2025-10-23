@@ -2,10 +2,10 @@
  * Data layer: typed wrappers around the ws transport for bd-backed queries.
  * @param {(type: import('../protocol.js').MessageType, payload?: unknown) => Promise<unknown>} transport - Request/response function.
  * @param {(type: import('../protocol.js').MessageType, handler: (payload: unknown) => void) => void} [on_event] - Optional event subscription (used to invalidate caches on push updates).
- * @returns {{ getEpicStatus: () => Promise<unknown[]>, getReady: () => Promise<unknown[]>, getInProgress: () => Promise<unknown[]>, getClosed: (limit?: number) => Promise<unknown[]>, getIssue: (id: string) => Promise<unknown>, updateIssue: (input: { id: string, title?: string, acceptance?: string, status?: 'open'|'in_progress'|'closed', priority?: number, assignee?: string }) => Promise<unknown> }}
+ * @returns {{ getEpicStatus: () => Promise<unknown[]>, getReady: () => Promise<unknown[]>, getOpen: () => Promise<unknown[]>, getInProgress: () => Promise<unknown[]>, getClosed: (limit?: number) => Promise<unknown[]>, getIssue: (id: string) => Promise<unknown>, updateIssue: (input: { id: string, title?: string, acceptance?: string, status?: 'open'|'in_progress'|'closed', priority?: number, assignee?: string }) => Promise<unknown> }}
  */
 export function createDataLayer(transport, on_event) {
-  /** @type {{ list_ready?: unknown, list_in_progress?: unknown, list_closed_10?: unknown, epic_status?: unknown }} */
+  /** @type {{ list_ready?: unknown, list_open?: unknown, list_in_progress?: unknown, list_closed_10?: unknown, epic_status?: unknown }} */
   const cache = {};
 
   // Invalidate caches on server push updates when available
@@ -13,6 +13,7 @@ export function createDataLayer(transport, on_event) {
     try {
       on_event('issues-changed', () => {
         cache.list_ready = undefined;
+        cache.list_open = undefined;
         cache.list_in_progress = undefined;
         cache.list_closed_10 = undefined;
         cache.epic_status = undefined;
@@ -50,6 +51,23 @@ export function createDataLayer(transport, on_event) {
     const res = await transport('list-issues', { filters: { ready: true } });
     const arr = Array.isArray(res) ? res : [];
     cache.list_ready = arr;
+    return arr;
+  }
+
+  /**
+   * Open issues: `bd list -s open --json`.
+   * @returns {Promise<unknown[]>}
+   */
+  async function getOpen() {
+    if (Array.isArray(cache.list_open)) {
+      return /** @type {unknown[]} */ (cache.list_open);
+    }
+    /** @type {unknown} */
+    const res = await transport('list-issues', {
+      filters: { status: 'open' }
+    });
+    const arr = Array.isArray(res) ? res : [];
+    cache.list_open = arr;
     return arr;
   }
 
@@ -151,6 +169,7 @@ export function createDataLayer(transport, on_event) {
   return {
     getEpicStatus,
     getReady,
+    getOpen,
     getInProgress,
     getClosed,
     getIssue,

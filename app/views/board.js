@@ -8,19 +8,22 @@ import { createTypeBadge } from '../utils/type-badge.js';
  */
 
 /**
- * Create the Board view with three columns: Ready, In progress, Closed.
+ * Create the Board view with four columns: Open, Ready, In progress, Closed.
  * Data providers are expected to return raw arrays; this view applies sorting.
  *
  * Sorting rules:
+ * - Open: updated_at desc
  * - Ready: priority asc, then updated_at desc when present
  * - In progress: updated_at desc
  * - Closed: updated_at desc
  * @param {HTMLElement} mount_element
- * @param {{ getReady: () => Promise<any[]>, getInProgress: () => Promise<any[]>, getClosed: (limit?: number) => Promise<any[]> }} data
+ * @param {{ getOpen: () => Promise<any[]>, getReady: () => Promise<any[]>, getInProgress: () => Promise<any[]>, getClosed: (limit?: number) => Promise<any[]> }} data
  * @param {(id: string) => void} goto_issue - Navigate to issue detail.
  * @returns {{ load: () => Promise<void>, clear: () => void }}
  */
 export function createBoardView(mount_element, data, goto_issue) {
+  /** @type {IssueLite[]} */
+  let list_open = [];
   /** @type {IssueLite[]} */
   let list_ready = [];
   /** @type {IssueLite[]} */
@@ -32,6 +35,7 @@ export function createBoardView(mount_element, data, goto_issue) {
     return html`
       <div class="panel__header">Board</div>
       <div class="panel__body board-root">
+        ${columnTemplate('Open', 'open-col', list_open)}
         ${columnTemplate('Ready', 'ready-col', list_ready)}
         ${columnTemplate('In Progress', 'in-progress-col', list_in_progress)}
         ${columnTemplate('Closed', 'closed-col', list_closed)}
@@ -114,11 +118,18 @@ export function createBoardView(mount_element, data, goto_issue) {
   return {
     async load() {
       /** @type {IssueLite[]} */
+      let o = [];
+      /** @type {IssueLite[]} */
       let r = [];
       /** @type {IssueLite[]} */
       let p = [];
       /** @type {IssueLite[]} */
       let c = [];
+      try {
+        o = /** @type {any} */ (await data.getOpen());
+      } catch {
+        o = [];
+      }
       try {
         r = /** @type {any} */ (await data.getReady());
       } catch {
@@ -135,10 +146,19 @@ export function createBoardView(mount_element, data, goto_issue) {
         c = [];
       }
 
+      // Remove items from Open that are already in Ready by id
+      if (o.length > 0 && r.length > 0) {
+        /** @type {Set<string>} */
+        const ready_ids = new Set(r.map((it) => it.id));
+        o = o.filter((it) => !ready_ids.has(it.id));
+      }
+
+      sortByUpdatedDesc(o);
       sortReady(r);
       sortByUpdatedDesc(p);
       sortByUpdatedDesc(c);
 
+      list_open = o;
       list_ready = r;
       list_in_progress = p;
       list_closed = c;
@@ -146,6 +166,7 @@ export function createBoardView(mount_element, data, goto_issue) {
     },
     clear() {
       mount_element.replaceChildren();
+      list_open = [];
       list_ready = [];
       list_in_progress = [];
       list_closed = [];

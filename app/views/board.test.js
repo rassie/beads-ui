@@ -2,12 +2,28 @@ import { describe, expect, test } from 'vitest';
 import { createBoardView } from './board.js';
 
 describe('views/board', () => {
-  test('renders three columns with sorted cards and navigates on click', async () => {
+  test('renders four columns with sorted cards and navigates on click', async () => {
     document.body.innerHTML = '<div id="m"></div>';
     const mount = /** @type {HTMLElement} */ (document.getElementById('m'));
 
-    /** @type {{ getReady: () => Promise<any[]>, getInProgress: () => Promise<any[]>, getClosed: () => Promise<any[]> }} */
+    /** @type {{ getOpen: () => Promise<any[]>, getReady: () => Promise<any[]>, getInProgress: () => Promise<any[]>, getClosed: () => Promise<any[]> }} */
     const data = {
+      async getOpen() {
+        return [
+          {
+            id: 'O-1',
+            title: 'o1',
+            updated_at: '2025-10-23T07:00:00.000Z',
+            issue_type: 'task'
+          },
+          {
+            id: 'R-2', // also present in Ready, should be filtered from Open
+            title: 'dup-ready',
+            updated_at: '2025-10-22T07:00:00.000Z',
+            issue_type: 'task'
+          }
+        ];
+      },
       async getReady() {
         return [
           {
@@ -74,6 +90,12 @@ describe('views/board', () => {
     });
 
     await view.load();
+
+    // Open: updated_at desc; excludes items present in Ready
+    const open_ids = Array.from(
+      mount.querySelectorAll('#open-col .board-card .mono')
+    ).map((el) => el.textContent?.trim());
+    expect(open_ids).toEqual(['#1']);
 
     // Ready: priority asc, then updated_at desc for equal priority
     const ready_ids = Array.from(
