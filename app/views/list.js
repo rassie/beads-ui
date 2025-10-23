@@ -8,7 +8,7 @@ import { createIssueRowRenderer } from './issue-row.js';
 // List view implementation; requires a transport send function.
 
 /**
- * @typedef {{ id: string, title?: string, status?: string, priority?: number, issue_type?: string, assignee?: string }} Issue
+ * @typedef {{ id: string, title?: string, status?: string, priority?: number, issue_type?: string, assignee?: string, labels?: string[] }} Issue
  */
 
 /**
@@ -381,7 +381,8 @@ export function createListView(mount_element, sendFn, navigate_fn, store) {
           status: full.status,
           priority: full.priority,
           issue_type: full.issue_type,
-          assignee: full.assignee
+          assignee: full.assignee,
+          labels: Array.isArray(full.labels) ? full.labels : []
         });
       }
       doRender();

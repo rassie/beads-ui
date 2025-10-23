@@ -688,6 +688,92 @@ export async function handleMessage(ws, data) {
     return;
   }
 
+  // label-add: payload { id: string, label: string }
+  if (req.type === /** @type {any} */ ('label-add')) {
+    const { id, label } = /** @type {any} */ (req.payload || {});
+    if (
+      typeof id !== 'string' ||
+      id.length === 0 ||
+      typeof label !== 'string' ||
+      label.trim().length === 0
+    ) {
+      ws.send(
+        JSON.stringify(
+          makeError(
+            req,
+            'bad_request',
+            'payload requires { id: string, label: non-empty string }'
+          )
+        )
+      );
+      return;
+    }
+    const res = await runBd(['label', 'add', id, label.trim()]);
+    if (res.code !== 0) {
+      ws.send(
+        JSON.stringify(makeError(req, 'bd_error', res.stderr || 'bd failed'))
+      );
+      return;
+    }
+    const shown = await runBdJson(['show', id, '--json']);
+    if (shown.code !== 0) {
+      ws.send(
+        JSON.stringify(makeError(req, 'bd_error', shown.stderr || 'bd failed'))
+      );
+      return;
+    }
+    ws.send(JSON.stringify(makeOk(req, shown.stdoutJson)));
+    try {
+      notifyIssuesChanged({ hint: { ids: [id] } }, { issue: shown.stdoutJson });
+    } catch {
+      // ignore
+    }
+    return;
+  }
+
+  // label-remove: payload { id: string, label: string }
+  if (req.type === /** @type {any} */ ('label-remove')) {
+    const { id, label } = /** @type {any} */ (req.payload || {});
+    if (
+      typeof id !== 'string' ||
+      id.length === 0 ||
+      typeof label !== 'string' ||
+      label.trim().length === 0
+    ) {
+      ws.send(
+        JSON.stringify(
+          makeError(
+            req,
+            'bad_request',
+            'payload requires { id: string, label: non-empty string }'
+          )
+        )
+      );
+      return;
+    }
+    const res = await runBd(['label', 'remove', id, label.trim()]);
+    if (res.code !== 0) {
+      ws.send(
+        JSON.stringify(makeError(req, 'bd_error', res.stderr || 'bd failed'))
+      );
+      return;
+    }
+    const shown = await runBdJson(['show', id, '--json']);
+    if (shown.code !== 0) {
+      ws.send(
+        JSON.stringify(makeError(req, 'bd_error', shown.stderr || 'bd failed'))
+      );
+      return;
+    }
+    ws.send(JSON.stringify(makeOk(req, shown.stdoutJson)));
+    try {
+      notifyIssuesChanged({ hint: { ids: [id] } }, { issue: shown.stdoutJson });
+    } catch {
+      // ignore
+    }
+    return;
+  }
+
   // Unknown type
   const err = makeError(
     req,

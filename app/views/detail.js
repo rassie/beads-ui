@@ -25,6 +25,7 @@ import { createTypeBadge } from '../utils/type-badge.js';
  * @property {string} [notes]
  * @property {string} [status]
  * @property {number} [priority]
+ * @property {string[]} [labels]
  * @property {Dependency[]} [dependencies]
  * @property {Dependency[]} [dependents]
  */
@@ -60,6 +61,8 @@ export function createDetailView(
   let edit_accept = false;
   /** @type {boolean} */
   let edit_assignee = false;
+  /** @type {string} */
+  let new_label_text = '';
 
   /**
    * Show a transient toast message.
@@ -229,6 +232,73 @@ export function createDetailView(
     edit_assignee = false;
     doRender();
   };
+
+  // Labels handlers
+  /**
+   * @param {Event} ev
+   */
+  const onLabelInput = (ev) => {
+    /** @type {HTMLInputElement} */
+    const el = /** @type {any} */ (ev.currentTarget);
+    new_label_text = el.value || '';
+  };
+  /**
+   * @param {KeyboardEvent} e
+   */
+  function onLabelKeydown(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      void onAddLabel();
+    }
+  }
+  async function onAddLabel() {
+    if (!current || pending) {
+      return;
+    }
+    const text = new_label_text.trim();
+    if (!text) {
+      return;
+    }
+    pending = true;
+    try {
+      const updated = await sendFn('label-add', {
+        id: current.id,
+        label: text
+      });
+      if (updated && typeof updated === 'object') {
+        current = /** @type {IssueDetail} */ (updated);
+        new_label_text = '';
+        doRender();
+      }
+    } catch {
+      showToast('Failed to add label');
+    } finally {
+      pending = false;
+    }
+  }
+  /**
+   * @param {string} label
+   */
+  async function onRemoveLabel(label) {
+    if (!current || pending) {
+      return;
+    }
+    pending = true;
+    try {
+      const updated = await sendFn('label-remove', {
+        id: current.id,
+        label
+      });
+      if (updated && typeof updated === 'object') {
+        current = /** @type {IssueDetail} */ (updated);
+        doRender();
+      }
+    } catch {
+      showToast('Failed to remove label');
+    } finally {
+      pending = false;
+    }
+  }
   /**
    * @param {Event} ev
    */
@@ -472,7 +542,7 @@ export function createDetailView(
                 </li>`;
               })}
         </ul>
-        <div>
+        <div class="props-card__footer">
           <input type="text" placeholder="Issue ID" data-testid=${test_id} />
           <button @click=${makeDepAddClick(items, title)}>Add</button>
         </div>
@@ -635,6 +705,40 @@ export function createDetailView(
         : ''}
     </div>`;
 
+    // Labels section
+    const labels = Array.isArray(issue.labels) ? issue.labels : [];
+    const labels_block = html`<div class="prop labels">
+      <div class="label">Labels</div>
+      <div class="value">
+        <div>
+          ${labels.map(
+            (l) =>
+              html`<span class="badge" title=${l}
+                >${l}
+                <button
+                  class="icon-button"
+                  title="Remove label"
+                  aria-label=${'Remove label ' + l}
+                  @click=${() => onRemoveLabel(l)}
+                  style="margin-left:6px"
+                >
+                  ×
+                </button></span
+              >`
+          )}
+          <input
+            type="text"
+            aria-label="Add label"
+            placeholder="Add label…"
+            .value=${new_label_text}
+            @input=${onLabelInput}
+            @keydown=${onLabelKeydown}
+            size=${Math.max(12, Math.min(28, new_label_text.length + 3))}
+          />
+        </div>
+      </div>
+    </div>`;
+
     return html`
       <div class="panel__body" id="detail-root">
         <div style="position:relative">
@@ -689,12 +793,14 @@ export function createDetailView(
                             }
                           />
                           <button
+                            class="btn"
                             style="margin-left:6px"
                             @click=${onAssigneeSave}
                           >
                             Save
                           </button>
                           <button
+                            class="btn"
                             style="margin-left:6px"
                             @click=${onAssigneeCancel}
                           >
@@ -719,6 +825,7 @@ export function createDetailView(
                         })()}`}
                   </div>
                 </div>
+                ${labels_block}
               </div>
               ${depsSection('Dependencies', issue.dependencies || [])}
               ${depsSection('Dependents', issue.dependents || [])}
