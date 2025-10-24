@@ -83,7 +83,20 @@ export async function main(args) {
     return await handleStop();
   }
   if (command === 'restart') {
-    return await handleRestart();
+    /** @type {{ no_open: boolean }} */
+    const options = { no_open: true };
+    const has_open = flags.includes('open');
+    const has_no_open = flags.includes('no-open');
+    const env_no_open = String(process.env.BDUI_NO_OPEN || '') === '1';
+
+    if (has_open) {
+      options.no_open = false;
+    } else if (has_no_open) {
+      options.no_open = true;
+    } else if (env_no_open) {
+      options.no_open = true;
+    }
+    return await handleRestart(options);
   }
 
   // Unknown command path (should not happen due to parseArgs guard)

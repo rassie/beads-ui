@@ -13,7 +13,7 @@ export function printUsage(out_stream) {
     '',
     'Options:',
     '  -h, --help   Show this help message',
-    '      --open   Open the browser after start',
+    '      --open   Open the browser after start/restart',
     ''
   ];
   for (const line of lines) {

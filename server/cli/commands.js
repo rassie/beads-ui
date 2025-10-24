@@ -19,7 +19,8 @@ import { openUrl, waitForServer } from './open.js';
  * @param {{ no_open?: boolean }} [options]
  */
 export async function handleStart(options) {
-  const no_open = options?.no_open === true;
+  // Default behavior: do not open a browser unless explicitly requested.
+  const no_open = options?.no_open !== false;
   const existing_pid = readPidFile();
   if (existing_pid && isProcessRunning(existing_pid)) {
     printServerUrl();
@@ -80,12 +81,19 @@ export async function handleStop() {
  * Handle `restart` command: stop (ignore not-running) then start.
  * @returns {Promise<number>} Exit code (0 on success)
  */
-export async function handleRestart() {
+/**
+ * Handle `restart` command: stop (ignore not-running) then start.
+ * Accepts the same options as `handleStart` and passes them through,
+ * so restart only opens a browser when `no_open` is explicitly false.
+ * @param {{ no_open?: boolean }} [options]
+ * @returns {Promise<number>}
+ */
+export async function handleRestart(options) {
   const stop_code = await handleStop();
   // 0 = stopped, 2 = not running; both are acceptable to proceed
   if (stop_code !== 0 && stop_code !== 2) {
     return 1;
   }
-  const start_code = await handleStart();
+  const start_code = await handleStart(options);
   return start_code === 0 ? 0 : 1;
 }

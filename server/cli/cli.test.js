@@ -126,6 +126,30 @@ describe('main', () => {
 
     expect(code).toBe(0);
     expect(commands.handleRestart).toHaveBeenCalledTimes(1);
+    expect(commands.handleRestart).toHaveBeenCalledWith({ no_open: true });
+  });
+
+  test('propagates --open to restart handler', async () => {
+    await main(['restart', '--open']);
+
+    expect(commands.handleRestart).toHaveBeenCalledWith({ no_open: false });
+  });
+
+  test('reads BDUI_NO_OPEN=1 to disable open on restart', async () => {
+    const prev = process.env.BDUI_NO_OPEN;
+    try {
+      process.env.BDUI_NO_OPEN = '1';
+
+      await main(['restart']);
+
+      expect(commands.handleRestart).toHaveBeenCalledWith({ no_open: true });
+    } finally {
+      if (prev === undefined) {
+        delete process.env.BDUI_NO_OPEN;
+      } else {
+        process.env.BDUI_NO_OPEN = prev;
+      }
+    }
   });
 
   test('unknown command prints usage and exits 1', async () => {
