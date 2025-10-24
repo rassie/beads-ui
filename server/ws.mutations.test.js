@@ -185,6 +185,36 @@ describe('ws mutation handlers', () => {
     ]);
   });
 
+  test('edit-text notes success', async () => {
+    const mRun = /** @type {import('vitest').Mock} */ (runBd);
+    const mJson = /** @type {import('vitest').Mock} */ (runBdJson);
+    mRun.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
+    mJson.mockResolvedValueOnce({
+      code: 0,
+      stdoutJson: { id: 'UI-12', notes: 'Some note' }
+    });
+    const ws = makeStubSocket();
+    const req = {
+      id: 'r4n',
+      type: 'edit-text',
+      payload: { id: 'UI-12', field: 'notes', value: 'Some note' }
+    };
+    await handleMessage(
+      /** @type {any} */ (ws),
+      Buffer.from(JSON.stringify(req))
+    );
+    const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
+    expect(obj.ok).toBe(true);
+    expect(obj.payload.notes).toBe('Some note');
+    // Verify correct flag mapping for notes
+    expect(mRun.mock.calls[0][0]).toEqual([
+      'update',
+      'UI-12',
+      '--notes',
+      'Some note'
+    ]);
+  });
+
   test('edit-text description yields bd_error (unsupported)', async () => {
     const ws = makeStubSocket();
     const req = {

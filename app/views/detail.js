@@ -61,6 +61,8 @@ export function createDetailView(
   /** @type {boolean} */
   let edit_desc = false;
   /** @type {boolean} */
+  let edit_notes = false;
+  /** @type {boolean} */
   let edit_accept = false;
   /** @type {boolean} */
   let edit_assignee = false;
@@ -419,6 +421,73 @@ export function createDetailView(
     doRender();
   };
 
+  // Notes inline edit handlers
+  const onNotesEdit = () => {
+    edit_notes = true;
+    doRender();
+  };
+  /**
+   * @param {KeyboardEvent} ev
+   */
+  const onNotesKeydown = (ev) => {
+    if (ev.key === 'Escape') {
+      edit_notes = false;
+      doRender();
+    } else if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) {
+      const btn = /** @type {HTMLButtonElement|null} */ (
+        mount_element.querySelector(
+          '#detail-root .notes .editable-actions button'
+        )
+      );
+      if (btn) {
+        btn.click();
+      }
+    }
+  };
+  const onNotesSave = async () => {
+    if (!current || pending) {
+      return;
+    }
+    /** @type {HTMLTextAreaElement|null} */
+    const ta = /** @type {any} */ (
+      mount_element.querySelector('#detail-root .notes textarea')
+    );
+    const prev = current.notes || '';
+    const next = ta ? ta.value : '';
+    if (next === prev) {
+      edit_notes = false;
+      doRender();
+      return;
+    }
+    pending = true;
+    if (ta) {
+      ta.disabled = true;
+    }
+    try {
+      const updated = await sendFn('edit-text', {
+        id: current.id,
+        field: 'notes',
+        value: next
+      });
+      if (updated && typeof updated === 'object') {
+        current = /** @type {IssueDetail} */ (updated);
+        edit_notes = false;
+        doRender();
+      }
+    } catch {
+      current.notes = prev;
+      edit_notes = false;
+      doRender();
+      showToast('Failed to save notes', 'error');
+    } finally {
+      pending = false;
+    }
+  };
+  const onNotesCancel = () => {
+    edit_notes = false;
+    doRender();
+  };
+
   const onAcceptEdit = () => {
     edit_accept = true;
     doRender();
@@ -430,10 +499,7 @@ export function createDetailView(
     if (ev.key === 'Escape') {
       edit_accept = false;
       doRender();
-    } else if (
-      ev.key === 'Enter' &&
-      /** @type {KeyboardEvent} */ (ev).ctrlKey
-    ) {
+    } else if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) {
       const btn = /** @type {HTMLButtonElement|null} */ (
         mount_element.querySelector(
           '#detail-root .acceptance .editable-actions button'
@@ -655,29 +721,66 @@ export function createDetailView(
           </div>
         </div>`
       : html`<div class="acceptance">
-          ${acceptance_text.trim().length > 0
-            ? html`<div class="props-card__title">Acceptance</div>
-                <div
-                  class="md editable"
-                  tabindex="0"
-                  role="button"
-                  aria-label="Edit acceptance"
-                  @click=${onAcceptEdit}
-                  @keydown=${onAcceptEditableKeydown}
-                >
-                  ${renderMarkdown(acceptance_text)}
-                </div>`
-            : ''}
+          ${(() => {
+            const text = acceptance_text;
+            const has = text.trim().length > 0;
+            return html`${has
+                ? html`<div class="props-card__title">Acceptance</div>`
+                : ''}
+              <div
+                class="md editable"
+                tabindex="0"
+                role="button"
+                aria-label="Edit acceptance"
+                @click=${onAcceptEdit}
+                @keydown=${onAcceptEditableKeydown}
+              >
+                ${has
+                  ? renderMarkdown(text)
+                  : html`<div class="muted">Add acceptance…</div>`}
+              </div>`;
+          })()}
         </div>`;
 
-    // Notes (read-only): show heading only if there is content
+    // Notes: editable in-place similar to Description
     const notes_text = String(issue.notes || '');
-    const notes_block = html`<div class="notes">
-      ${notes_text.trim().length > 0
-        ? html`<div class="props-card__title">Notes</div>
-            <div class="md">${renderMarkdown(notes_text)}</div>`
-        : ''}
-    </div>`;
+    const notes_block = edit_notes
+      ? html`<div class="notes">
+          ${notes_text.trim().length > 0
+            ? html`<div class="props-card__title">Notes</div>`
+            : ''}
+          <textarea
+            @keydown=${onNotesKeydown}
+            .value=${notes_text}
+            rows="6"
+            style="width:100%"
+          ></textarea>
+          <div class="editable-actions">
+            <button @click=${onNotesSave}>Save</button>
+            <button @click=${onNotesCancel}>Cancel</button>
+          </div>
+        </div>`
+      : html`<div class="notes">
+          ${(() => {
+            const text = notes_text;
+            const has = text.trim().length > 0;
+            return html`${has
+                ? html`<div class="props-card__title">Notes</div>`
+                : ''}
+              <div
+                class="md editable"
+                tabindex="0"
+                role="button"
+                aria-label="Edit notes"
+                @click=${onNotesEdit}
+                @keydown=${onNotesEditableKeydown}
+              >
+                ${has
+                  ? renderMarkdown(text)
+                  : html`<div class="muted">Add notes…</div>`}
+              </div>`;
+          })()}
+        </div>`;
 
     // Labels section
     const labels = Array.isArray(issue.labels) ? issue.labels : [];
@@ -953,6 +1056,15 @@ export function createDetailView(
   function onAcceptEditableKeydown(ev) {
     if (ev.key === 'Enter') {
       onAcceptEdit();
+    }
+  }
+
+  /**
+   * @param {KeyboardEvent} ev
+   */
+  function onNotesEditableKeydown(ev) {
+    if (ev.key === 'Enter') {
+      onNotesEdit();
     }
   }
 

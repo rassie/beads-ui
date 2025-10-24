@@ -5,7 +5,7 @@
  * Data layer: typed wrappers around the ws transport for bd-backed queries.
  * @param {(type: MessageType, payload?: unknown) => Promise<unknown>} transport - Request/response function.
  * @param {(type: MessageType, handler: (payload: unknown) => void) => void} [onEvent] - Optional event subscription (used to invalidate caches on push updates).
- * @returns {{ getEpicStatus: () => Promise<unknown[]>, getReady: () => Promise<unknown[]>, getOpen: () => Promise<unknown[]>, getInProgress: () => Promise<unknown[]>, getClosed: (limit?: number) => Promise<unknown[]>, getIssue: (id: string) => Promise<unknown>, updateIssue: (input: { id: string, title?: string, acceptance?: string, status?: 'open'|'in_progress'|'closed', priority?: number, assignee?: string }) => Promise<unknown> }}
+ * @returns {{ getEpicStatus: () => Promise<unknown[]>, getReady: () => Promise<unknown[]>, getOpen: () => Promise<unknown[]>, getInProgress: () => Promise<unknown[]>, getClosed: (limit?: number) => Promise<unknown[]>, getIssue: (id: string) => Promise<unknown>, updateIssue: (input: { id: string, title?: string, acceptance?: string, notes?: string, status?: 'open'|'in_progress'|'closed', priority?: number, assignee?: string }) => Promise<unknown> }}
  */
 export function createDataLayer(transport, onEvent) {
   /** @type {{ list_ready?: unknown, list_open?: unknown, list_in_progress?: unknown, list_closed_10?: unknown, epic_status?: unknown }} */
@@ -120,9 +120,9 @@ export function createDataLayer(transport, onEvent) {
 
   /**
    * Update issue fields by dispatching specific mutations.
-   * Supported fields: title, acceptance, status, priority, assignee.
+   * Supported fields: title, acceptance, notes, status, priority, assignee.
    * Returns the updated issue on success.
-   * @param {{ id: string, title?: string, acceptance?: string, status?: 'open'|'in_progress'|'closed', priority?: number, assignee?: string }} input
+   * @param {{ id: string, title?: string, acceptance?: string, notes?: string, status?: 'open'|'in_progress'|'closed', priority?: number, assignee?: string }} input
    * @returns {Promise<unknown>}
    */
   async function updateIssue(input) {
@@ -141,6 +141,13 @@ export function createDataLayer(transport, onEvent) {
         id,
         field: 'acceptance',
         value: input.acceptance
+      });
+    }
+    if (typeof input.notes === 'string') {
+      last = await transport('edit-text', {
+        id,
+        field: 'notes',
+        value: input.notes
       });
     }
     if (typeof input.status === 'string') {

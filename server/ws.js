@@ -498,7 +498,8 @@ export async function handleMessage(ws, data) {
       id.length === 0 ||
       (field !== 'title' &&
         field !== 'description' &&
-        field !== 'acceptance') ||
+        field !== 'acceptance' &&
+        field !== 'notes') ||
       typeof value !== 'string'
     ) {
       ws.send(
@@ -506,7 +507,7 @@ export async function handleMessage(ws, data) {
           makeError(
             req,
             'bad_request',
-            "payload requires { id: string, field: 'title'|'description'|'acceptance', value: string }"
+            "payload requires { id: string, field: 'title'|'description'|'acceptance'|'notes', value: string }"
           )
         )
       );
@@ -528,7 +529,13 @@ export async function handleMessage(ws, data) {
     // Map UI fields to bd CLI flags
     // title       → --title
     // acceptance  → --acceptance-criteria
-    const flag = field === 'title' ? '--title' : '--acceptance-criteria';
+    // notes       → --notes
+    const flag =
+      field === 'title'
+        ? '--title'
+        : field === 'acceptance'
+          ? '--acceptance-criteria'
+          : '--notes';
     const res = await runBd(['update', id, flag, value]);
     if (res.code !== 0) {
       ws.send(
