@@ -16,7 +16,7 @@ import { createTypeBadge } from '../utils/type-badge.js';
  */
 
 /**
- * Create the Board view with four columns: Open, Ready, In progress, Closed.
+ * Create the Board view with Open + Blocked stacked, then Ready, In progress, Closed.
  * Data providers are expected to return raw arrays; this view applies sorting.
  *
  * Sorting rules:
@@ -25,7 +25,7 @@ import { createTypeBadge } from '../utils/type-badge.js';
  * - In progress: updated_at desc
  * - Closed: closed_at desc (fallback to updated_at)
  * @param {HTMLElement} mount_element
- * @param {{ getOpen: () => Promise<any[]>, getReady: () => Promise<any[]>, getInProgress: () => Promise<any[]>, getClosed: (limit?: number) => Promise<any[]> }} data
+ * @param {{ getOpen: () => Promise<any[]>, getReady: () => Promise<any[]>, getBlocked?: () => Promise<any[]>, getInProgress: () => Promise<any[]>, getClosed: (limit?: number) => Promise<any[]> }} data
  * @param {(id: string) => void} gotoIssue - Navigate to issue detail.
  * @param {{ getState: () => any, setState: (patch: any) => void, subscribe?: (fn: (s:any)=>void)=>()=>void }} [store]
  * @returns {{ load: () => Promise<void>, clear: () => void }}
@@ -35,6 +35,8 @@ export function createBoardView(mount_element, data, gotoIssue, store) {
   let list_open = [];
   /** @type {IssueLite[]} */
   let list_ready = [];
+  /** @type {IssueLite[]} */
+  let list_blocked = [];
   /** @type {IssueLite[]} */
   let list_in_progress = [];
   /** @type {IssueLite[]} */
@@ -65,7 +67,10 @@ export function createBoardView(mount_element, data, gotoIssue, store) {
   function template() {
     return html`
       <div class="panel__body board-root">
-        ${columnTemplate('Open', 'open-col', list_open)}
+        <div class="board-stack-2">
+          ${columnTemplate('Open', 'open-col', list_open)}
+          ${columnTemplate('Blocked', 'blocked-col', list_blocked)}
+        </div>
         ${columnTemplate('Ready', 'ready-col', list_ready)}
         ${columnTemplate('In Progress', 'in-progress-col', list_in_progress)}
         ${columnTemplate('Closed', 'closed-col', list_closed)}
@@ -427,6 +432,8 @@ export function createBoardView(mount_element, data, gotoIssue, store) {
       /** @type {IssueLite[]} */
       let r = [];
       /** @type {IssueLite[]} */
+      let b = [];
+      /** @type {IssueLite[]} */
       let p = [];
       /** @type {IssueLite[]} */
       let c = [];
@@ -439,6 +446,13 @@ export function createBoardView(mount_element, data, gotoIssue, store) {
         r = /** @type {any} */ (await data.getReady());
       } catch {
         r = [];
+      }
+      try {
+        // getBlocked is optional for backward compatibility in tests
+        const fn = /** @type {any} */ (data).getBlocked;
+        b = typeof fn === 'function' ? /** @type {any} */ (await fn()) : [];
+      } catch {
+        b = [];
       }
       try {
         p = /** @type {any} */ (await data.getInProgress());
@@ -458,6 +472,13 @@ export function createBoardView(mount_element, data, gotoIssue, store) {
         o = o.filter((it) => !ready_ids.has(it.id));
       }
 
+      // Remove items from Open that are blocked (UI-121)
+      if (o.length > 0 && b.length > 0) {
+        /** @type {Set<string>} */
+        const blocked_ids = new Set(b.map((it) => it.id));
+        o = o.filter((it) => !blocked_ids.has(it.id));
+      }
+
       // Remove items from Ready that are already In Progress by id
       if (r.length > 0 && p.length > 0) {
         /** @type {Set<string>} */
@@ -468,11 +489,13 @@ export function createBoardView(mount_element, data, gotoIssue, store) {
       // UI-119: Open sorted like Ready (priority asc, then updated desc)
       sortReady(o);
       sortReady(r);
+      sortReady(b);
       sortByUpdatedDesc(p);
       // Closed handled separately to use closed_at and filtering
 
       list_open = o;
       list_ready = r;
+      list_blocked = b;
       list_in_progress = p;
       list_closed_raw = c;
       applyClosedFilter();
@@ -482,6 +505,7 @@ export function createBoardView(mount_element, data, gotoIssue, store) {
       mount_element.replaceChildren();
       list_open = [];
       list_ready = [];
+      list_blocked = [];
       list_in_progress = [];
       list_closed = [];
     }

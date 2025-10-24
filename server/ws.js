@@ -10,7 +10,7 @@ import { isRequest, makeError, makeOk } from './protocol.js';
 /**
  * @typedef {{
  *   subscribed: boolean,
- *   list_filters?: { status?: 'open'|'in_progress'|'closed', ready?: boolean, limit?: number },
+ *   list_filters?: { status?: 'open'|'in_progress'|'closed', ready?: boolean, blocked?: boolean, limit?: number },
  *   show_id?: string | null
  * }} ConnectionSubs
  */
@@ -74,8 +74,8 @@ export function notifyIssuesChanged(payload, options = {}) {
         continue;
       }
       if (s.list_filters) {
-        // Ready lists are conservatively invalidated on any change
-        if (s.list_filters.ready === true) {
+        // Ready/Blocked lists are conservatively invalidated on any change
+        if (s.list_filters.ready === true || s.list_filters.blocked === true) {
           recipients.add(ws);
           continue;
         }
@@ -261,6 +261,25 @@ export async function handleMessage(ws, data) {
       try {
         const s = getSubs(ws);
         s.list_filters = { ready: true };
+      } catch {
+        // ignore tracking errors
+      }
+      ws.send(JSON.stringify(makeOk(req, res.stdoutJson)));
+      return;
+    }
+
+    // When "blocked" is requested, use the dedicated bd subcommand
+    if (filters && typeof filters === 'object' && filters.blocked === true) {
+      const res = await runBdJson(['blocked', '--json']);
+      if (res.code !== 0) {
+        const err = makeError(req, 'bd_error', res.stderr || 'bd failed');
+        ws.send(JSON.stringify(err));
+        return;
+      }
+      // Remember subscription scope for this connection
+      try {
+        const s = getSubs(ws);
+        s.list_filters = { blocked: true };
       } catch {
         // ignore tracking errors
       }

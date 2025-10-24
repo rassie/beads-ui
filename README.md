@@ -21,15 +21,12 @@
 - ⚡ **Live updates** – Monitors the beads database for changes
 - 🔎 **Issues view** – Filter and search issues, edit inline
 - ⛰️ **Epics view** – Show progress per epic, expand rows, edit inline
-- 🏂 **Board view** – Open / Ready / In progress / Closed columns
+- 🏂 **Board view** – Open / Blocked / Ready / In progress / Closed columns
 
 ## Setup
 
 ```sh
 npm i -g beads-ui
-# Starts the UI server without opening a browser
-bdui start
-# To open your default browser after start, pass --open
 bdui start --open
 ```
 

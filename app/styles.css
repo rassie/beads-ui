@@ -158,6 +158,7 @@ a:focus {
 .header-nav .tab:hover,
 .header-nav .tab:focus {
   color: var(--fg);
+  outline-offset: 0px;
 }
 .header-nav .tab.active {
   color: var(--fg);
@@ -905,6 +906,15 @@ input.inline-edit:focus {
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
   padding: 12px;
+}
+
+/* UI-121: stack two board columns vertically in a single grid cell */
+.board-stack-2 {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 16px;
+  min-width: 380px;
+  min-height: 0;
 }
 .board-column {
   display: flex;
