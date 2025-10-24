@@ -167,7 +167,12 @@ export function createListView(mount_element, sendFn, navigate_fn, store) {
               <div class="muted" style="padding:10px 12px;">No issues</div>
             </div>`
           : html`<div class="issues-block">
-              <table class="table">
+              <table
+                class="table"
+                role="grid"
+                aria-rowcount=${String(filtered.length)}
+                aria-colcount="6"
+              >
                 <colgroup>
                   <col style="width: 100px" />
                   <col style="width: 120px" />
@@ -177,16 +182,16 @@ export function createListView(mount_element, sendFn, navigate_fn, store) {
                   <col style="width: 130px" />
                 </colgroup>
                 <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Type</th>
-                    <th>Title</th>
-                    <th>Status</th>
-                    <th>Assignee</th>
-                    <th>Priority</th>
+                  <tr role="row">
+                    <th role="columnheader">ID</th>
+                    <th role="columnheader">Type</th>
+                    <th role="columnheader">Title</th>
+                    <th role="columnheader">Status</th>
+                    <th role="columnheader">Assignee</th>
+                    <th role="columnheader">Priority</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody role="rowgroup">
                   ${filtered.map((it) => row_renderer(it))}
                 </tbody>
               </table>
@@ -254,6 +259,70 @@ export function createListView(mount_element, sendFn, navigate_fn, store) {
   // Keyboard navigation
   mount_element.tabIndex = 0;
   mount_element.addEventListener('keydown', (ev) => {
+    // Grid cell Up/Down navigation when focus is inside the table and not within
+    // an editable control (input/textarea/select). Preserves column position.
+    if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+      /** @type {any} */
+      const tgt = /** @type {any} */ (ev.target);
+      /** @type {HTMLTableElement|null} */
+      const table =
+        tgt && typeof tgt.closest === 'function'
+          ? /** @type {any} */ (tgt.closest('#list-root table.table'))
+          : null;
+      if (table) {
+        // Do not intercept when inside native editable controls
+        const in_editable = Boolean(
+          tgt &&
+            typeof tgt.closest === 'function' &&
+            (tgt.closest('input') ||
+              tgt.closest('textarea') ||
+              tgt.closest('select'))
+        );
+        if (!in_editable) {
+          /** @type {HTMLTableCellElement|null} */
+          const cell =
+            tgt && typeof tgt.closest === 'function'
+              ? /** @type {any} */ (tgt.closest('td'))
+              : null;
+          if (cell && cell.parentElement) {
+            /** @type {HTMLTableRowElement} */
+            const row = /** @type {any} */ (cell.parentElement);
+            /** @type {HTMLTableSectionElement|null} */
+            const tbody = /** @type {any} */ (row.parentElement);
+            if (tbody && tbody.querySelectorAll) {
+              const rows = Array.from(tbody.querySelectorAll('tr'));
+              const row_idx = Math.max(0, rows.indexOf(row));
+              const col_idx = /** @type {any} */ (cell).cellIndex || 0;
+              const next_idx =
+                ev.key === 'ArrowDown'
+                  ? Math.min(row_idx + 1, rows.length - 1)
+                  : Math.max(row_idx - 1, 0);
+              const next_row = /** @type {HTMLTableRowElement} */ (
+                rows[next_idx]
+              );
+              /** @type {HTMLTableCellElement|null} */
+              const next_cell = /** @type {any} */ (
+                next_row && next_row.cells ? next_row.cells[col_idx] : null
+              );
+              if (next_cell) {
+                /** @type {HTMLElement|null} */
+                const focusable = /** @type {any} */ (
+                  next_cell.querySelector(
+                    'button:not([disabled]), [tabindex]:not([tabindex="-1"]), a[href], select:not([disabled]), input:not([disabled]):not([type="hidden"]), textarea:not([disabled])'
+                  )
+                );
+                if (focusable && typeof focusable.focus === 'function') {
+                  ev.preventDefault();
+                  focusable.focus();
+                  return;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
     /** @type {HTMLTableSectionElement|null} */
     const tbody = /** @type {any} */ (
       mount_element.querySelector('#list-root tbody')

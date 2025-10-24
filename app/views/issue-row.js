@@ -92,9 +92,9 @@ export function createIssueRowRenderer(options) {
       }
       @keydown=${
         /** @param {KeyboardEvent} e */ (e) => {
-          e.stopPropagation();
           if (e.key === 'Enter') {
             e.preventDefault();
+            e.stopPropagation();
             editing.add(k);
             request_render();
           }
@@ -143,14 +143,15 @@ export function createIssueRowRenderer(options) {
     const cur_prio = String(it.priority ?? 2);
     const is_selected = get_selected_id() === it.id;
     return html`<tr
+      role="row"
       class="${row_class} ${is_selected ? 'selected' : ''}"
       data-issue-id=${it.id}
       @click=${makeRowClick(it.id)}
     >
-      <td class="mono">${createIssueIdRenderer(it.id)}</td>
-      <td>${createTypeBadge(it.issue_type)}</td>
-      <td>${editableText(it.id, 'title', it.title || '')}</td>
-      <td>
+      <td role="gridcell" class="mono">${createIssueIdRenderer(it.id)}</td>
+      <td role="gridcell">${createTypeBadge(it.issue_type)}</td>
+      <td role="gridcell">${editableText(it.id, 'title', it.title || '')}</td>
+      <td role="gridcell">
         <select
           class="badge-select badge--status is-${cur_status}"
           .value=${cur_status}
@@ -164,10 +165,10 @@ export function createIssueRowRenderer(options) {
           )}
         </select>
       </td>
-      <td>
+      <td role="gridcell">
         ${editableText(it.id, 'assignee', it.assignee || '', 'Unassigned')}
       </td>
-      <td>
+      <td role="gridcell">
         <select
           class="badge-select badge--priority ${'is-p' + cur_prio}"
           .value=${cur_prio}

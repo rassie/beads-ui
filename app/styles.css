@@ -1172,7 +1172,7 @@ html[data-theme='dark'] {
 }
 .detail-side {
   position: sticky;
-  top: 70px;
+  top: 18px;
 }
 .detail-main h2 {
   font-size: 28px;
