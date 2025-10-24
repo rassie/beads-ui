@@ -134,7 +134,9 @@ describe('views/detail edits', () => {
     btn.click();
     await Promise.resolve();
     // Toast appears
-    const toast = /** @type {HTMLElement} */ (mount.querySelector('.toast'));
+    const toast = /** @type {HTMLElement} */ (
+      document.body.querySelector('.toast')
+    );
     expect(toast).not.toBeNull();
     expect((toast.textContent || '').toLowerCase()).toContain(
       'failed to save description'

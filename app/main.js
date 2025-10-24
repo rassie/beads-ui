@@ -2,6 +2,7 @@ import { html, render } from 'lit-html';
 import { createDataLayer } from './data/providers.js';
 import { createHashRouter, parseHash } from './router.js';
 import { createStore } from './state.js';
+import { showToast } from './utils/toast.js';
 import { createBoardView } from './views/board.js';
 import { createDetailView } from './views/detail.js';
 import { createEpicsView } from './views/epics.js';
@@ -42,6 +43,22 @@ export function bootstrap(root_element) {
   const detail_mount = document.getElementById('detail-panel');
   if (list_mount && issues_root && epics_root && board_root && detail_mount) {
     const client = createWsClient();
+    // Show toasts for WebSocket connectivity changes
+    /** @type {boolean} */
+    let had_disconnect = false;
+    if (typeof (/** @type {any} */ (client).onConnection) === 'function') {
+      /** @type {(s: 'connecting'|'open'|'closed'|'reconnecting') => void} */
+      const onConn = (s) => {
+        if (s === 'reconnecting' || s === 'closed') {
+          had_disconnect = true;
+          showToast('Connection lost. Reconnecting…', 'error', 4000);
+        } else if (s === 'open' && had_disconnect) {
+          had_disconnect = false;
+          showToast('Reconnected', 'success', 2200);
+        }
+      };
+      /** @type {any} */ (client).onConnection(onConn);
+    }
     // Load persisted filters (status/search/type) from localStorage
     /** @type {{ status: 'all'|'open'|'in_progress'|'closed'|'ready', search: string, type: string }} */
     let persistedFilters = { status: 'all', search: '', type: '' };
@@ -51,13 +68,11 @@ export function bootstrap(root_element) {
         const obj = JSON.parse(raw);
         if (obj && typeof obj === 'object') {
           const ALLOWED = ['bug', 'feature', 'task', 'epic', 'chore'];
-          /** @type {string} */
           let parsed_type = '';
           if (typeof obj.type === 'string' && ALLOWED.includes(obj.type)) {
             parsed_type = obj.type;
           } else if (Array.isArray(obj.types)) {
             // Backwards compatibility: pick first valid from previous array format
-            /** @type {string} */
             let first_valid = '';
             for (const it of obj.types) {
               if (ALLOWED.includes(String(it))) {
@@ -185,12 +200,12 @@ export function bootstrap(root_element) {
     });
 
     // If router already set a selected id (deep-link), open dialog now
-    const initialId = store.getState().selected_id;
-    if (initialId) {
+    const initial_id = store.getState().selected_id;
+    if (initial_id) {
       detail_mount.hidden = false;
-      dialog.open(initialId);
+      dialog.open(initial_id);
       if (detail) {
-        void detail.load(initialId);
+        void detail.load(initial_id);
       }
     }
 
@@ -219,15 +234,15 @@ export function bootstrap(root_element) {
     // Refresh views on push updates (target minimally and avoid flicker)
     client.on('issues-changed', (payload) => {
       const s = store.getState();
-      const hintIds =
+      const hint_ids =
         payload && payload.hint && Array.isArray(payload.hint.ids)
           ? /** @type {string[]} */ (payload.hint.ids)
           : null;
 
-      const showingDetail = Boolean(s.selected_id);
+      const showing_detail = Boolean(s.selected_id);
 
       // If a top-level view is visible (and not detail), refresh that view
-      if (!showingDetail) {
+      if (!showing_detail) {
         if (s.view === 'issues') {
           void issues_view.load();
         } else if (s.view === 'epics') {
@@ -238,8 +253,8 @@ export function bootstrap(root_element) {
       }
 
       // If a detail is visible, re-fetch it when relevant or when hints are absent
-      if (showingDetail && s.selected_id) {
-        if (!hintIds || hintIds.includes(s.selected_id)) {
+      if (showing_detail && s.selected_id) {
+        if (!hint_ids || hint_ids.includes(s.selected_id)) {
           if (detail) {
             void detail.load(s.selected_id);
           }

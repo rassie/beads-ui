@@ -73,12 +73,28 @@ export function createWsClient(options = {}) {
   const queue = [];
   /** @type {Map<string, Set<(payload: any) => void>>} */
   const handlers = new Map();
+  /** @type {Set<(s: ConnectionState) => void>} */
+  const connection_handlers = new Set();
+
+  /**
+   * @param {ConnectionState} s
+   */
+  function notifyConnection(s) {
+    for (const fn of Array.from(connection_handlers)) {
+      try {
+        fn(s);
+      } catch {
+        // ignore listener errors
+      }
+    }
+  }
 
   function scheduleReconnect() {
     if (!should_reconnect || reconnect_timer) {
       return;
     }
     state = 'reconnecting';
+    notifyConnection(state);
     const base = Math.min(
       backoff.maxMs || 0,
       (backoff.initialMs || 0) * Math.pow(backoff.factor || 1, attempts)
@@ -105,6 +121,7 @@ export function createWsClient(options = {}) {
 
   function onOpen() {
     state = 'open';
+    notifyConnection(state);
     attempts = 0;
     // subscribe first
     sendRaw(makeRequest('subscribe-updates', {}));
@@ -160,6 +177,7 @@ export function createWsClient(options = {}) {
 
   function onClose() {
     state = 'closed';
+    notifyConnection(state);
     // fail all pending
     for (const [id, p] of pending.entries()) {
       p.reject(new Error('ws disconnected'));
@@ -177,6 +195,7 @@ export function createWsClient(options = {}) {
     try {
       ws = /** @type {any} */ (new WebSocket(url));
       state = 'connecting';
+      notifyConnection(state);
       const s = /** @type {any} */ (ws);
       s.addEventListener('open', onOpen);
       s.addEventListener('message', onMessage);
@@ -229,6 +248,17 @@ export function createWsClient(options = {}) {
       set?.add(handler);
       return () => {
         set?.delete(handler);
+      };
+    },
+    /**
+     * Subscribe to connection state changes.
+     * @param {(state: ConnectionState) => void} handler
+     * @returns {() => void}
+     */
+    onConnection(handler) {
+      connection_handlers.add(handler);
+      return () => {
+        connection_handlers.delete(handler);
       };
     },
     /** Close and stop reconnecting. */

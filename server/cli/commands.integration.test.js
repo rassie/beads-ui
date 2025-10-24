@@ -38,6 +38,7 @@ beforeAll(() => {
   process.env.PORT = '0';
   // Ensure default start path would not attempt to open the browser if called via CLI
   process.env.BDUI_NO_OPEN = '1';
+  vi.spyOn(console, 'log').mockImplementation(() => {});
 });
 
 afterEach(async () => {
@@ -80,6 +81,7 @@ afterAll(() => {
   } catch {
     // ignore
   }
+  vi.mocked(console.log).mockRestore();
 });
 
 describe('commands integration', () => {

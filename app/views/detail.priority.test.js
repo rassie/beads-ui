@@ -75,7 +75,7 @@ describe('views/detail priority edit', () => {
 
     await Promise.resolve();
 
-    const toast = mount.querySelector('.toast');
+    const toast = document.body.querySelector('.toast');
     expect(toast).toBeTruthy();
     // Should restore previous value
     const prio2 = /** @type {HTMLSelectElement} */ (

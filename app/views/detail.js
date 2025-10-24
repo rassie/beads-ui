@@ -7,6 +7,7 @@ import { renderMarkdown } from '../utils/markdown.js';
 import { emojiForPriority } from '../utils/priority-badge.js';
 import { priority_levels } from '../utils/priority.js';
 import { statusLabel } from '../utils/status.js';
+import { showToast } from '../utils/toast.js';
 import { createTypeBadge } from '../utils/type-badge.js';
 
 /**
@@ -65,33 +66,6 @@ export function createDetailView(
   let edit_assignee = false;
   /** @type {string} */
   let new_label_text = '';
-
-  /**
-   * Show a transient toast message.
-   * @param {string} text
-   */
-  function showToast(text) {
-    /** @type {HTMLDivElement} */
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = text;
-    toast.style.position = 'absolute';
-    toast.style.right = '12px';
-    toast.style.bottom = '12px';
-    toast.style.background = 'rgba(0,0,0,0.8)';
-    toast.style.color = '#fff';
-    toast.style.padding = '8px 10px';
-    toast.style.borderRadius = '4px';
-    toast.style.fontSize = '12px';
-    mount_element.appendChild(toast);
-    setTimeout(() => {
-      try {
-        toast.remove();
-      } catch {
-        /* ignore */
-      }
-    }, 2800);
-  }
 
   /** @param {string} id */
   function issueHref(id) {
@@ -167,7 +141,7 @@ export function createDetailView(
       current.title = prev;
       edit_title = false;
       doRender();
-      showToast('Failed to save title');
+      showToast('Failed to save title', 'error');
     } finally {
       pending = false;
     }
@@ -231,7 +205,7 @@ export function createDetailView(
       /** @type {any} */ (current).assignee = prev;
       edit_assignee = false;
       doRender();
-      showToast('Failed to update assignee');
+      showToast('Failed to update assignee', 'error');
     } finally {
       pending = false;
     }
@@ -279,7 +253,7 @@ export function createDetailView(
         doRender();
       }
     } catch {
-      showToast('Failed to add label');
+      showToast('Failed to add label', 'error');
     } finally {
       pending = false;
     }
@@ -302,7 +276,7 @@ export function createDetailView(
         doRender();
       }
     } catch {
-      showToast('Failed to remove label');
+      showToast('Failed to remove label', 'error');
     } finally {
       pending = false;
     }
@@ -337,7 +311,7 @@ export function createDetailView(
     } catch {
       current.status = prev;
       doRender();
-      showToast('Failed to update status');
+      showToast('Failed to update status', 'error');
     } finally {
       pending = false;
     }
@@ -372,7 +346,7 @@ export function createDetailView(
     } catch {
       current.priority = prev;
       doRender();
-      showToast('Failed to update priority');
+      showToast('Failed to update priority', 'error');
     } finally {
       pending = false;
     }
@@ -435,7 +409,7 @@ export function createDetailView(
       current.description = prev;
       edit_desc = false;
       doRender();
-      showToast('Failed to save description');
+      showToast('Failed to save description', 'error');
     } finally {
       pending = false;
     }
@@ -504,7 +478,7 @@ export function createDetailView(
       current.acceptance = prev;
       edit_accept = false;
       doRender();
-      showToast('Failed to save acceptance');
+      showToast('Failed to save acceptance', 'error');
     } finally {
       pending = false;
     }
@@ -945,7 +919,7 @@ export function createDetailView(
           }
         }
       } catch {
-        showToast('Failed to add dependency');
+        showToast('Failed to add dependency', 'error');
       } finally {
         pending = false;
       }
