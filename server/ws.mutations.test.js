@@ -241,6 +241,31 @@ describe('ws mutation handlers', () => {
     expect(obj.payload.description).toBe('New desc');
   });
 
+  test('edit-text design success and flag mapping', async () => {
+    const mRun = /** @type {import('vitest').Mock} */ (runBd);
+    const mJson = /** @type {import('vitest').Mock} */ (runBdJson);
+    mRun.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
+    mJson.mockResolvedValueOnce({
+      code: 0,
+      stdoutJson: { id: 'UI-8', design: 'New design' }
+    });
+    const ws = makeStubSocket();
+    const req = {
+      id: 'r4d',
+      type: 'edit-text',
+      payload: { id: 'UI-8', field: 'design', value: 'New design' }
+    };
+    await handleMessage(
+      /** @type {any} */ (ws),
+      Buffer.from(JSON.stringify(req))
+    );
+    const call = mRun.mock.calls[mRun.mock.calls.length - 1][0];
+    expect(call).toEqual(['update', 'UI-8', '--design', 'New design']);
+    const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
+    expect(obj.ok).toBe(true);
+    expect(obj.payload.design).toBe('New design');
+  });
+
   test('dep-add returns updated issue (view_id)', async () => {
     const mRun = /** @type {import('vitest').Mock} */ (runBd);
     const mJson = /** @type {import('vitest').Mock} */ (runBdJson);

@@ -30,7 +30,7 @@ describe('views/detail acceptance + notes', () => {
     await view.load('UI-71');
 
     const accTitle = mount.querySelector('.acceptance .props-card__title');
-    expect(accTitle && accTitle.textContent).toBe('Acceptance');
+    expect(accTitle && accTitle.textContent).toBe('Acceptance Criteria');
     const accMd = mount.querySelector('.acceptance .md');
     expect(accMd && (accMd.textContent || '').toLowerCase()).toContain(
       'step a'

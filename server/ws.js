@@ -499,7 +499,8 @@ export async function handleMessage(ws, data) {
       (field !== 'title' &&
         field !== 'description' &&
         field !== 'acceptance' &&
-        field !== 'notes') ||
+        field !== 'notes' &&
+        field !== 'design') ||
       typeof value !== 'string'
     ) {
       ws.send(
@@ -507,7 +508,7 @@ export async function handleMessage(ws, data) {
           makeError(
             req,
             'bad_request',
-            "payload requires { id: string, field: 'title'|'description'|'acceptance'|'notes', value: string }"
+            "payload requires { id: string, field: 'title'|'description'|'acceptance'|'notes'|'design', value: string }"
           )
         )
       );
@@ -518,6 +519,7 @@ export async function handleMessage(ws, data) {
     // description → --description
     // acceptance  → --acceptance-criteria
     // notes       → --notes
+    // design      → --design
     const flag =
       field === 'title'
         ? '--title'
@@ -525,7 +527,9 @@ export async function handleMessage(ws, data) {
           ? '--description'
           : field === 'acceptance'
             ? '--acceptance-criteria'
-            : '--notes';
+            : field === 'notes'
+              ? '--notes'
+              : '--design';
     const res = await runBd(['update', id, flag, value]);
     if (res.code !== 0) {
       ws.send(

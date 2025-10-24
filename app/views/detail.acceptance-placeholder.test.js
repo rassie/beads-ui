@@ -37,7 +37,7 @@ describe('views/detail acceptance placeholder', () => {
     expect(mount.querySelector('.acceptance .props-card__title')).toBeNull();
     // Placeholder is visible
     const ph = mount.querySelector('.acceptance .muted');
-    expect(ph && (ph.textContent || '')).toContain('Add acceptance');
+    expect(ph && (ph.textContent || '')).toContain('Add acceptance criteria');
 
     // Click to enter edit mode
     const editable = /** @type {HTMLDivElement} */ (

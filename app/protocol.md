@@ -23,7 +23,7 @@ ReplyEnvelope shape with `ok: true` and a generated `id`.
 - `update-status` payload:
   `{ id: string, status: 'open'|'in_progress'|'closed' }`
 - `edit-text` payload:
-  `{ id: string, field: 'title'|'description'|'acceptance'|'notes', value: string }`
+  `{ id: string, field: 'title'|'description'|'acceptance'|'notes'|'design', value: string }`
 - `update-priority` payload: `{ id: string, priority: 0|1|2|3|4 }`
 - `create-issue` payload:
   `{ title: string, type?: 'bug'|'feature'|'task'|'epic'|'chore', priority?: 0|1|2|3|4, description?: string }`
@@ -44,7 +44,7 @@ ReplyEnvelope shape with `ok: true` and a generated `id`.
 - `show-issue` → `bd show <id> --json`
 - `update-status` → `bd update <id> --status <status>`
 - `edit-text` → `bd update <id> --title <t>` or `--description <d>` or
-  `--acceptance-criteria <a>` or `--notes <n>`
+  `--acceptance-criteria <a>` or `--notes <n>` or `--design <z>`
 - `update-priority` → `bd update <id> --priority <n>`
 - `create-issue` → `bd create "title" -t <type> -p <prio> -d "desc"`
 - `list-ready` → `bd ready --json`

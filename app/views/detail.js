@@ -24,6 +24,7 @@ import { createTypeBadge } from '../utils/type-badge.js';
  * @property {string} id
  * @property {string} [title]
  * @property {string} [description]
+ * @property {string} [design]
  * @property {string} [acceptance]
  * @property {string} [notes]
  * @property {string} [status]
@@ -60,6 +61,8 @@ export function createDetailView(
   let edit_title = false;
   /** @type {boolean} */
   let edit_desc = false;
+  /** @type {boolean} */
+  let edit_design = false;
   /** @type {boolean} */
   let edit_notes = false;
   /** @type {boolean} */
@@ -421,6 +424,83 @@ export function createDetailView(
     doRender();
   };
 
+  // Design inline edit handlers (same UX as Description)
+  const onDesignEdit = () => {
+    edit_design = true;
+    doRender();
+    try {
+      const ta = /** @type {HTMLTextAreaElement|null} */ (
+        mount_element.querySelector('#detail-root .design textarea')
+      );
+      if (ta) {
+        ta.focus();
+      }
+    } catch {
+      // ignore focus errors
+    }
+  };
+  /**
+   * @param {KeyboardEvent} ev
+   */
+  const onDesignKeydown = (ev) => {
+    if (ev.key === 'Escape') {
+      edit_design = false;
+      doRender();
+    } else if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) {
+      const btn = /** @type {HTMLButtonElement|null} */ (
+        mount_element.querySelector(
+          '#detail-root .design .editable-actions button'
+        )
+      );
+      if (btn) {
+        btn.click();
+      }
+    }
+  };
+  const onDesignSave = async () => {
+    if (!current || pending) {
+      return;
+    }
+    /** @type {HTMLTextAreaElement|null} */
+    const ta = /** @type {any} */ (
+      mount_element.querySelector('#detail-root .design textarea')
+    );
+    const prev = current.design || '';
+    const next = ta ? ta.value : '';
+    if (next === prev) {
+      edit_design = false;
+      doRender();
+      return;
+    }
+    pending = true;
+    if (ta) {
+      ta.disabled = true;
+    }
+    try {
+      const updated = await sendFn('edit-text', {
+        id: current.id,
+        field: 'design',
+        value: next
+      });
+      if (updated && typeof updated === 'object') {
+        current = /** @type {IssueDetail} */ (updated);
+        edit_design = false;
+        doRender();
+      }
+    } catch {
+      current.design = prev;
+      edit_design = false;
+      doRender();
+      showToast('Failed to save design', 'error');
+    } finally {
+      pending = false;
+    }
+  };
+  const onDesignCancel = () => {
+    edit_design = false;
+    doRender();
+  };
+
   // Notes inline edit handlers
   const onNotesEdit = () => {
     edit_notes = true;
@@ -707,7 +787,7 @@ export function createDetailView(
     const accept_block = edit_accept
       ? html`<div class="acceptance">
           ${acceptance_text.trim().length > 0
-            ? html`<div class="props-card__title">Acceptance</div>`
+            ? html`<div class="props-card__title">Acceptance Criteria</div>`
             : ''}
           <textarea
             @keydown=${onAcceptKeydown}
@@ -725,19 +805,19 @@ export function createDetailView(
             const text = acceptance_text;
             const has = text.trim().length > 0;
             return html`${has
-                ? html`<div class="props-card__title">Acceptance</div>`
+                ? html`<div class="props-card__title">Acceptance Criteria</div>`
                 : ''}
               <div
                 class="md editable"
                 tabindex="0"
                 role="button"
-                aria-label="Edit acceptance"
+                aria-label="Edit acceptance criteria"
                 @click=${onAcceptEdit}
                 @keydown=${onAcceptEditableKeydown}
               >
                 ${has
                   ? renderMarkdown(text)
-                  : html`<div class="muted">Add acceptance…</div>`}
+                  : html`<div class="muted">Add acceptance criteria…</div>`}
               </div>`;
           })()}
         </div>`;
@@ -816,12 +896,53 @@ export function createDetailView(
       </div>
     </div>`;
 
+    // Design section block
+    const design_text = String(issue.design || '');
+    const design_block = edit_design
+      ? html`<div class="design">
+          ${design_text.trim().length > 0
+            ? html`<div class="props-card__title">Design</div>`
+            : ''}
+          <textarea
+            @keydown=${onDesignKeydown}
+            .value=${design_text}
+            rows="6"
+            style="width:100%"
+          ></textarea>
+          <div class="editable-actions">
+            <button @click=${onDesignSave}>Save</button>
+            <button @click=${onDesignCancel}>Cancel</button>
+          </div>
+        </div>`
+      : html`<div class="design">
+          ${(() => {
+            const text = design_text;
+            const has = text.trim().length > 0;
+            return html`${has
+                ? html`<div class="props-card__title">Design</div>`
+                : ''}
+              <div
+                class="md editable"
+                tabindex="0"
+                role="button"
+                aria-label="Edit design"
+                @click=${onDesignEdit}
+                @keydown=${onDesignEditableKeydown}
+              >
+                ${has
+                  ? renderMarkdown(text)
+                  : html`<div class="muted">Add design…</div>`}
+              </div>`;
+          })()}
+        </div>`;
+
     return html`
       <div class="panel__body" id="detail-root">
         <div style="position:relative">
           <div class="detail-layout">
             <div class="detail-main">
-              ${title_zone} ${desc_block} ${notes_block} ${accept_block}
+              ${title_zone} ${desc_block} ${design_block} ${notes_block}
+              ${accept_block}
             </div>
             <div class="detail-side">
               <div class="props-card">
@@ -1065,6 +1186,15 @@ export function createDetailView(
   function onNotesEditableKeydown(ev) {
     if (ev.key === 'Enter') {
       onNotesEdit();
+    }
+  }
+
+  /**
+   * @param {KeyboardEvent} ev
+   */
+  function onDesignEditableKeydown(ev) {
+    if (ev.key === 'Enter') {
+      onDesignEdit();
     }
   }
 

@@ -792,6 +792,7 @@ input.inline-edit:focus {
 
 /* Spacing for acceptance and notes sections in details */
 #detail-root .acceptance,
+#detail-root .design,
 #detail-root .notes {
   margin-top: 32px;
 }
