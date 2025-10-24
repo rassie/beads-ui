@@ -232,12 +232,28 @@ export function bootstrap(root_element) {
     });
 
     // Refresh views on push updates (target minimally and avoid flicker)
+    // UI-114: Coalesce near-simultaneous events. When an ID-scoped update
+    // arrives, suppress a trailing watcher-only full refresh for a short
+    // window to avoid duplicate work and flicker.
+    /** @type {number} */
+    let suppress_full_until = 0;
     client.on('issues-changed', (payload) => {
       const s = store.getState();
       const hint_ids =
         payload && payload.hint && Array.isArray(payload.hint.ids)
           ? /** @type {string[]} */ (payload.hint.ids)
           : null;
+
+      const now = Date.now();
+      if (!hint_ids || hint_ids.length === 0) {
+        if (now <= suppress_full_until) {
+          // Drop redundant full refresh that follows a targeted update.
+          return;
+        }
+      } else {
+        // Prefer ID-scoped updates for a brief window.
+        suppress_full_until = now + 500;
+      }
 
       const showing_detail = Boolean(s.selected_id);
 
