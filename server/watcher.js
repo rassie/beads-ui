@@ -31,7 +31,7 @@ export function watchDb(root_dir, onChange, options = {}) {
     timer = setTimeout(() => {
       onChange({ ts: Date.now() });
     }, debounce_ms);
-    timer.unref?.();
+    timer.unref();
   };
 
   /**
@@ -92,11 +92,11 @@ export function watchDb(root_dir, onChange, options = {}) {
     rebind(opts = {}) {
       const next_root = opts.root_dir ? String(opts.root_dir) : root_dir;
       const next_explicit = opts.explicit_db ?? options.explicit_db;
-      const nextResolved = resolveDbPath({
+      const next_resolved = resolveDbPath({
         cwd: next_root,
         explicit_db: next_explicit
       });
-      const next_path = nextResolved.path;
+      const next_path = next_resolved.path;
       if (next_path !== current_path) {
         // swap watcher
         watcher?.close();

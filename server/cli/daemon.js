@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getConfig } from '../config.js';
+import { resolveDbPath } from '../db.js';
 
 /**
  * Resolve the runtime directory used for PID and log files.
@@ -233,7 +234,11 @@ function sleep(ms) {
  * Print the server URL derived from current config.
  */
 export function printServerUrl() {
-  const cfg = getConfig();
-  const url = 'http://' + cfg.host + ':' + String(cfg.port);
+  const { url, root_dir } = getConfig();
   console.log(url);
+
+  const resolved_db = resolveDbPath({ cwd: root_dir });
+  console.log(
+    `db: ${resolved_db.path} (${resolved_db.source}${resolved_db.exists ? '' : ', missing'})`
+  );
 }

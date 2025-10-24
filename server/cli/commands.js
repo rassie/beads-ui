@@ -36,8 +36,7 @@ export async function handleStart(options) {
     printServerUrl();
     // Auto-open the browser once for a fresh daemon start
     if (!no_open) {
-      const cfg = getConfig();
-      const url = 'http://' + cfg.host + ':' + String(cfg.port);
+      const { url } = getConfig();
       // Wait briefly for the server to accept connections (single retry window)
       await waitForServer(url, 600);
       // Best-effort open; ignore result

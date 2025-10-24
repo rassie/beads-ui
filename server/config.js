@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 
 /**
  * Resolve runtime configuration for the server.
- * @returns {{ host: string, port: number, env: string, app_dir: string, root_dir: string }}
+ * @returns {{ host: string, port: number, env: string, app_dir: string, root_dir: string, url: string }}
  */
 export function getConfig() {
   const this_file = fileURLToPath(new URL(import.meta.url));
@@ -24,6 +24,7 @@ export function getConfig() {
     port: port_value,
     env: process.env.NODE_ENV ? String(process.env.NODE_ENV) : 'development',
     app_dir: path.resolve(root_dir, 'app'),
-    root_dir
+    root_dir,
+    url: `http://${host_value}:${port_value}`
   };
 }

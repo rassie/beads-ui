@@ -53,19 +53,15 @@ export function notifyIssuesChanged(payload, options = {}) {
   /** @type {Set<WebSocket>} */
   const recipients = new Set();
 
-  /** @type {any} */
   const issue = options.issue;
-  /** @type {string[]} */
-  const hint_ids = Array.isArray(payload?.hint?.ids)
-    ? /** @type {string[]} */ (payload.hint.ids)
-    : [];
+  const hint_ids = payload.hint?.ids ?? [];
 
   if (issue && typeof issue === 'object' && issue.id) {
     for (const ws of wss.clients) {
       if (ws.readyState !== ws.OPEN) {
         continue;
       }
-      const s = getSubs(/** @type {any} */ (ws));
+      const s = getSubs(ws);
       if (!s.subscribed) {
         continue;
       }
@@ -94,7 +90,7 @@ export function notifyIssuesChanged(payload, options = {}) {
       if (ws.readyState !== ws.OPEN) {
         continue;
       }
-      const s = getSubs(/** @type {any} */ (ws));
+      const s = getSubs(ws);
       if (!s.subscribed) {
         continue;
       }
