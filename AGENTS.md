@@ -49,6 +49,8 @@ If no issue is specified, run `bd ready` and claim an unblocked issue.
 4. Land the change; run tests/lint; update any referenced docs.
 5. Close the issue with `bd close <id>`.
 
+Never update `CHANGES.md`.
+
 ## Coding Standards
 
 - Use ECMAScript modules.
