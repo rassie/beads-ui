@@ -147,7 +147,7 @@ Error reply
 - Update status: `bd update <id> --status <open|in_progress|closed>`
 - Update priority: `bd update <id> --priority <0..4>`
 - Edit title: `bd update <id> --title <text>`
-- Edit description: not supported (immutable after create)
+- Edit description: `bd update <id> --description <text>`
 - Edit acceptance: `bd update <id> --acceptance-criteria <text>`
 - Link dependency: `bd dep add <a> <b>` (a depends on b)
 - Unlink dependency: `bd dep remove <a> <b>`

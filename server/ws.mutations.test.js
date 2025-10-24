@@ -215,7 +215,14 @@ describe('ws mutation handlers', () => {
     ]);
   });
 
-  test('edit-text description yields bd_error (unsupported)', async () => {
+  test('edit-text description success and flag mapping', async () => {
+    const mRun = /** @type {import('vitest').Mock} */ (runBd);
+    const mJson = /** @type {import('vitest').Mock} */ (runBdJson);
+    mRun.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
+    mJson.mockResolvedValueOnce({
+      code: 0,
+      stdoutJson: { id: 'UI-7', description: 'New desc' }
+    });
     const ws = makeStubSocket();
     const req = {
       id: 'r4b',
@@ -226,9 +233,12 @@ describe('ws mutation handlers', () => {
       /** @type {any} */ (ws),
       Buffer.from(JSON.stringify(req))
     );
+    // Verify bd call flag mapping
+    const call = mRun.mock.calls[mRun.mock.calls.length - 1][0];
+    expect(call).toEqual(['update', 'UI-7', '--description', 'New desc']);
     const obj = JSON.parse(ws.sent[ws.sent.length - 1]);
-    expect(obj.ok).toBe(false);
-    expect(obj.error.code).toBe('bd_error');
+    expect(obj.ok).toBe(true);
+    expect(obj.payload.description).toBe('New desc');
   });
 
   test('dep-add returns updated issue (view_id)', async () => {

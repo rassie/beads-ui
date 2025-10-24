@@ -513,29 +513,19 @@ export async function handleMessage(ws, data) {
       );
       return;
     }
-    // Description updates are currently not supported by bd
-    if (field === 'description') {
-      ws.send(
-        JSON.stringify(
-          makeError(
-            req,
-            'bd_error',
-            'editing description is not supported by bd'
-          )
-        )
-      );
-      return;
-    }
     // Map UI fields to bd CLI flags
     // title       → --title
+    // description → --description
     // acceptance  → --acceptance-criteria
     // notes       → --notes
     const flag =
       field === 'title'
         ? '--title'
-        : field === 'acceptance'
-          ? '--acceptance-criteria'
-          : '--notes';
+        : field === 'description'
+          ? '--description'
+          : field === 'acceptance'
+            ? '--acceptance-criteria'
+            : '--notes';
     const res = await runBd(['update', id, flag, value]);
     if (res.code !== 0) {
       ws.send(
