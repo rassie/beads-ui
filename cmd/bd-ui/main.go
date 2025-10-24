@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"flag"
@@ -12,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -21,6 +23,10 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/maphew/beads-ui/assets/bd-ui"
 	"github.com/steveyegge/beads"
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/renderer/html"
 )
 
 var embedFS = bdui.FS
@@ -37,18 +43,48 @@ var (
 	tmplIssuesTbody *template.Template
 )
 
+// Markdown renderer configured with GitHub-like features
+var md = goldmark.New(
+	goldmark.WithExtensions(
+		extension.GFM,        // GitHub Flavored Markdown
+		extension.Typographer, // Smart quotes, dashes, etc.
+	),
+	goldmark.WithParserOptions(
+		parser.WithAutoHeadingID(), // Auto-generate heading IDs
+	),
+	goldmark.WithRendererOptions(
+		html.WithUnsafe(), // Allow raw HTML in markdown
+	),
+)
+
+// markdownToHTML converts markdown text to HTML
+func markdownToHTML(markdown string) template.HTML {
+	if markdown == "" {
+		return ""
+	}
+	var buf bytes.Buffer
+	if err := md.Convert([]byte(markdown), &buf); err != nil {
+		log.Printf("Error converting markdown: %v", err)
+		return template.HTML("<p>Error rendering markdown</p>")
+	}
+	return template.HTML(buf.String())
+}
+
 func init() {
 	tmplFS = embedFS
 	// Templates will be parsed after flag parsing
 }
 
 func parseTemplates() {
-	tmplIndex = template.Must(template.ParseFS(tmplFS, "templates/index.html"))
-	tmplDetail = template.Must(template.ParseFS(tmplFS, "templates/detail.html"))
-	tmplGraph = template.Must(template.ParseFS(tmplFS, "templates/graph.html"))
-	tmplReady = template.Must(template.ParseFS(tmplFS, "templates/ready.html"))
-	tmplBlocked = template.Must(template.ParseFS(tmplFS, "templates/blocked.html"))
-	tmplIssuesTbody = template.Must(template.ParseFS(tmplFS, "templates/issues_tbody.html"))
+	funcMap := template.FuncMap{
+		"markdown": markdownToHTML,
+	}
+	tmplIndex = template.Must(template.New("index.html").Funcs(funcMap).ParseFS(tmplFS, "templates/index.html"))
+	tmplDetail = template.Must(template.New("detail.html").Funcs(funcMap).ParseFS(tmplFS, "templates/detail.html"))
+	tmplGraph = template.Must(template.New("graph.html").Funcs(funcMap).ParseFS(tmplFS, "templates/graph.html"))
+	tmplReady = template.Must(template.New("ready.html").Funcs(funcMap).ParseFS(tmplFS, "templates/ready.html"))
+	tmplBlocked = template.Must(template.New("blocked.html").Funcs(funcMap).ParseFS(tmplFS, "templates/blocked.html"))
+	tmplIssuesTbody = template.Must(template.New("issues_tbody.html").Funcs(funcMap).ParseFS(tmplFS, "templates/issues_tbody.html"))
 }
 
 var store beads.Storage
@@ -281,6 +317,9 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Apply default sorting (by updated time, descending)
+	sortIssues(issues, "updated", "desc")
+
 	// Limit to first 100 issues
 	if len(issues) > 100 {
 		issues = issues[:100]
@@ -453,6 +492,65 @@ func handleBlocked(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// extractIDNumber extracts the numeric part from an issue ID like "bd-123" -> 123
+func extractIDNumber(id string) int {
+	// Find the last dash and extract everything after it
+	lastDash := strings.LastIndex(id, "-")
+	if lastDash == -1 || lastDash == len(id)-1 {
+		return 0
+	}
+	numStr := id[lastDash+1:]
+	num, err := strconv.Atoi(numStr)
+	if err != nil {
+		return 0
+	}
+	return num
+}
+
+// sortIssues sorts a slice of issues based on the given field and order
+func sortIssues(issues []*beads.Issue, sortBy, order string) {
+	if sortBy == "" {
+		sortBy = "updated" // default sort
+	}
+
+	less := func(i, j int) bool {
+		var result bool
+		switch sortBy {
+		case "id":
+			// Extract numeric parts and compare numerically
+			numI := extractIDNumber(issues[i].ID)
+			numJ := extractIDNumber(issues[j].ID)
+			if numI != numJ {
+				result = numI < numJ
+			} else {
+				// If numbers are equal, fall back to string comparison
+				result = issues[i].ID < issues[j].ID
+			}
+		case "title":
+			result = strings.ToLower(issues[i].Title) < strings.ToLower(issues[j].Title)
+		case "status":
+			result = issues[i].Status < issues[j].Status
+		case "priority":
+			result = issues[i].Priority < issues[j].Priority
+		case "type":
+			result = issues[i].IssueType < issues[j].IssueType
+		case "created":
+			result = issues[i].CreatedAt.Before(issues[j].CreatedAt)
+		case "updated":
+			result = issues[i].UpdatedAt.Before(issues[j].UpdatedAt)
+		default:
+			result = issues[i].UpdatedAt.Before(issues[j].UpdatedAt)
+		}
+
+		if order == "asc" {
+			return result
+		}
+		return !result
+	}
+
+	sort.Slice(issues, less)
+}
+
 func handleAPIIssues(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -461,17 +559,19 @@ func handleAPIIssues(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	searchQuery := ""
+	// Get search query
+	searchQuery := r.URL.Query().Get("search")
 
 	// Create a filter with default limit of 1000
 	filter := beads.IssueFilter{}
 
-	// We'll handle filtering manually since we can't set the limit directly
+	// Status filter
 	if status := r.URL.Query().Get("status"); status != "" {
 		s := beads.Status(status)
 		filter.Status = &s
 	}
 
+	// Priority filter
 	if priority := r.URL.Query().Get("priority"); priority != "" {
 		p, err := strconv.Atoi(priority)
 		if err != nil {
@@ -481,11 +581,25 @@ func handleAPIIssues(w http.ResponseWriter, r *http.Request) {
 		filter.Priority = &p
 	}
 
+	// Type filter
+	if issueType := r.URL.Query().Get("type"); issueType != "" {
+		t := beads.IssueType(issueType)
+		filter.IssueType = &t
+	}
+
 	issues, err := store.SearchIssues(ctx, searchQuery, filter)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// Apply sorting
+	sortBy := r.URL.Query().Get("sort")
+	sortOrder := r.URL.Query().Get("order") // "asc" or "desc"
+	if sortOrder == "" {
+		sortOrder = "desc"
+	}
+	sortIssues(issues, sortBy, sortOrder)
 
 	// Apply limit manually
 	if len(issues) > 1000 {

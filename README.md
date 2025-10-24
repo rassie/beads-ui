@@ -15,8 +15,17 @@ https://github.com/steveyegge/beads/pull/77
 
 ## Features
 
-- **Issue list** with real-time filtering (search, status, priority)
-- **Issue detail** pages with dependencies and activity
+- **Issue list** with comprehensive filtering and search
+  - Real-time search across issue titles and IDs
+  - Filter by status (open, in_progress, closed)
+  - Filter by priority (P0-P4)
+  - Filter by type (bug, feature, task, epic, chore)
+  - Sortable columns (ID, title, status, priority, type, updated, created)
+  - Filter state persists across page refreshes (localStorage)
+- **Issue detail** pages with markdown rendering
+  - Description, design, acceptance criteria, and notes rendered as GitHub-flavored markdown
+  - Full dependency and blocker information
+  - Activity timeline with markdown-formatted comments
 - **Dependency graphs** visualized with Graphviz
 - **Ready work view** (unblocked issues)
 - **Blocked issues view** with blocker details

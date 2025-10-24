@@ -3,69 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Issue {{.Issue.ID}} - Beads UI</title>
+    <title>{{.Issue.ID}} - {{.Issue.Title}}</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <header>
-        <h1>Issue {{.Issue.ID}}</h1>
-        <a href="/">← Back to Issues</a>
+        <h1><a href="/">🔗 beads</a></h1>
     </header>
 
-    <main>
-        <div class="issue-detail">
-            <h2>{{.Issue.Title}}</h2>
-            <p><strong>Status:</strong> {{.Issue.Status}}</p>
-            <p><strong>Priority:</strong> {{.Issue.Priority}}</p>
-            <p><strong>Type:</strong> {{.Issue.IssueType}}</p>
-            <p><strong>Created:</strong> {{.Issue.CreatedAt}}</p>
-            <p><strong>Updated:</strong> {{.Issue.UpdatedAt}}</p>
-            {{if .Issue.Description}}
-            <p><strong>Description:</strong> {{.Issue.Description}}</p>
-            {{end}}
+    <main class="detail">
+        <div class="issue-header">
+            <h2>{{.Issue.ID}}: {{.Issue.Title}}</h2>
+            <div class="issue-meta">
+                <span class="badge status-{{.Issue.Status}}">{{.Issue.Status}}</span>
+                <span class="badge priority-{{.Issue.Priority}}">P{{.Issue.Priority}}</span>
+                <span class="badge type-{{.Issue.IssueType}}">{{.Issue.IssueType}}</span>
+                {{if .HasDeps}}<a href="/graph/{{.Issue.ID}}" class="graph-link">📊 View Graph</a>{{end}}
+            </div>
         </div>
 
-        {{if .HasDeps}}
-        <section class="dependencies">
-            <h3>Dependencies</h3>
-            <ul>
-                {{range .Deps}}
-                <li><a href="/issue/{{.ID}}">{{.ID}}: {{.Title}}</a></li>
-                {{end}}
-            </ul>
+        <div class="issue-body">
+            {{if .Issue.Description}}
+            <section class="section">
+                <h3>Description</h3>
+                <div class="markdown-content">{{markdown .Issue.Description}}</div>
+            </section>
+            {{end}}
 
-            <h3>Blocked By</h3>
-            <ul>
-                {{range .Dependents}}
-                <li><a href="/issue/{{.ID}}">{{.ID}}: {{.Title}}</a></li>
-                {{end}}
-            </ul>
-        </section>
-        {{end}}
+            {{if .Issue.Design}}
+            <section class="section">
+                <h3>Design</h3>
+                <div class="markdown-content">{{markdown .Issue.Design}}</div>
+            </section>
+            {{end}}
 
-        <section class="labels">
-            <h3>Labels</h3>
-            <div>
-                {{range .Labels}}
-                <span class="label">{{.}}</span>
-                {{end}}
-            </div>
-        </section>
+            {{if .Issue.AcceptanceCriteria}}
+            <section class="section">
+                <h3>Acceptance Criteria</h3>
+                <div class="markdown-content">{{markdown .Issue.AcceptanceCriteria}}</div>
+            </section>
+            {{end}}
 
-        <section class="events">
-            <h3>Recent Events</h3>
-            <ul>
-                {{range .Events}}
-                <li>{{.Timestamp}}: {{.EventType}} - {{.Description}}</li>
-                {{end}}
-            </ul>
-        </section>
+            {{if .Issue.Notes}}
+            <section class="section">
+                <h3>Notes</h3>
+                <div class="markdown-content">{{markdown .Issue.Notes}}</div>
+            </section>
+            {{end}}
 
-        <div class="actions">
-            <a href="/graph/{{.Issue.ID}}">View Dependency Graph</a>
+            {{if .Labels}}
+            <section class="section">
+                <h3>Labels</h3>
+                <div class="labels">
+                    {{range .Labels}}
+                    <span class="badge label">{{.}}</span>
+                    {{end}}
+                </div>
+            </section>
+            {{end}}
+
+            {{if .Deps}}
+            <section class="section">
+                <h3>Depends On ({{len .Deps}})</h3>
+                <ul class="dep-list">
+                    {{range .Deps}}
+                    <li><a href="/issue/{{.ID}}">{{.ID}}</a> - {{.Title}} <span class="badge status-{{.Status}}">{{.Status}}</span></li>
+                    {{end}}
+                </ul>
+            </section>
+            {{end}}
+
+            {{if .Dependents}}
+            <section class="section">
+                <h3>Blocked By This ({{len .Dependents}})</h3>
+                <ul class="dep-list">
+                    {{range .Dependents}}
+                    <li><a href="/issue/{{.ID}}">{{.ID}}</a> - {{.Title}} <span class="badge status-{{.Status}}">{{.Status}}</span></li>
+                    {{end}}
+                </ul>
+            </section>
+            {{end}}
+
+            {{if .Events}}
+            <section class="section">
+                <h3>Activity</h3>
+                <div class="events">
+                    {{range .Events}}
+                    <div class="event">
+                        <span class="event-actor">{{.Actor}}</span>
+                        <span class="event-type">{{.EventType}}</span>
+                        {{if .Comment}}<div class="event-comment markdown-content">{{markdown .Comment}}</div>{{end}}
+                        <span class="timestamp">{{.CreatedAt.Format "2006-01-02 15:04:05"}}</span>
+                    </div>
+                    {{end}}
+                </div>
+            </section>
+            {{end}}
+
+            <section class="section metadata">
+                <div><strong>Created:</strong> {{.Issue.CreatedAt.Format "2006-01-02 15:04:05"}}</div>
+                <div><strong>Updated:</strong> {{.Issue.UpdatedAt.Format "2006-01-02 15:04:05"}}</div>
+                {{if .Issue.Assignee}}<div><strong>Assignee:</strong> {{.Issue.Assignee}}</div>{{end}}
+            </section>
         </div>
     </main>
-
-    <script src="/static/app.js"></script>
 </body>
 </html>
