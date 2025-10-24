@@ -1,6 +1,8 @@
 // Issue Detail view implementation (lit-html based)
 import { html, render } from 'lit-html';
+import { parseView } from '../router.js';
 import { issueDisplayId } from '../utils/issue-id.js';
+import { issueHashFor } from '../utils/issue-url.js';
 import { renderMarkdown } from '../utils/markdown.js';
 import { emojiForPriority } from '../utils/priority-badge.js';
 import { priority_levels } from '../utils/priority.js';
@@ -93,7 +95,13 @@ export function createDetailView(
 
   /** @param {string} id */
   function issueHref(id) {
-    return `#/issue/${id}`;
+    try {
+      /** @type {'issues'|'epics'|'board'} */
+      const view = parseView(window.location.hash || '');
+      return issueHashFor(view, id);
+    } catch {
+      return issueHashFor('issues', id);
+    }
   }
 
   /**
@@ -569,7 +577,6 @@ export function createDetailView(
               Cancel
             </button>
           </h2>
-          <span class="mono detail-id">${issueDisplayId(issue.id)}</span>
         </div>`
       : html`<div class="detail-title">
           <h2>
@@ -583,7 +590,6 @@ export function createDetailView(
               >${issue.title || ''}</span
             >
           </h2>
-          <span class="mono detail-id">${issueDisplayId(issue.id)}</span>
         </div>`;
 
     const status_select = html`<select
@@ -729,7 +735,7 @@ export function createDetailView(
           <input
             type="text"
             aria-label="Add label"
-            placeholder="Add label…"
+            placeholder="Add label"
             .value=${new_label_text}
             @input=${onLabelInput}
             @keydown=${onLabelKeydown}

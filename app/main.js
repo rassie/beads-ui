@@ -1,10 +1,11 @@
 import { html, render } from 'lit-html';
 import { createDataLayer } from './data/providers.js';
-import { createHashRouter } from './router.js';
+import { createHashRouter, parseHash } from './router.js';
 import { createStore } from './state.js';
 import { createBoardView } from './views/board.js';
 import { createDetailView } from './views/detail.js';
 import { createEpicsView } from './views/epics.js';
+import { createIssueDialog } from './views/issue-dialog.js';
 import { createListView } from './views/list.js';
 import { createTopNav } from './views/nav.js';
 import { createWsClient } from './ws.js';
@@ -117,7 +118,7 @@ export function bootstrap(root_element) {
       list_mount,
       transport,
       (hash) => {
-        const id = hash.replace('#/issue/', '');
+        const id = parseHash(hash);
         if (id) {
           router.gotoIssue(id);
         }
@@ -138,30 +139,62 @@ export function bootstrap(root_element) {
       }
     });
     void issues_view.load();
-    const detail = createDetailView(detail_mount, transport, (hash) => {
-      const id = hash.replace('#/issue/', '');
+
+    // Dialog for issue details (UI-104)
+    const dialog = createIssueDialog(detail_mount, store, () => {
+      // Close: clear selection and return to current view
+      const s = store.getState();
+      store.setState({ selected_id: null });
+      try {
+        /** @type {'issues'|'epics'|'board'} */
+        const v = s.view || 'issues';
+        router.gotoView(v);
+      } catch {
+        // ignore
+      }
+    });
+
+    /** @type {ReturnType<typeof createDetailView> | null} */
+    let detail = null;
+    // Mount details into the dialog body only
+    detail = createDetailView(dialog.getMount(), transport, (hash) => {
+      const id = parseHash(hash);
       if (id) {
         router.gotoIssue(id);
       }
     });
 
-    // React to selectedId changes -> show detail page full-width
+    // If router already set a selected id (deep-link), open dialog now
+    const initialId = store.getState().selected_id;
+    if (initialId) {
+      detail_mount.hidden = false;
+      dialog.open(initialId);
+      if (detail) {
+        void detail.load(initialId);
+      }
+    }
+
+    // Open/close dialog based on selected_id (always dialog; no page variant)
     store.subscribe((s) => {
       const id = s.selected_id;
       if (id) {
-        void detail.load(id);
+        detail_mount.hidden = false;
+        dialog.open(id);
+        if (detail) {
+          void detail.load(id);
+        }
       } else {
-        detail.clear();
+        try {
+          dialog.close();
+        } catch {
+          // ignore
+        }
+        if (detail) {
+          detail.clear();
+        }
+        detail_mount.hidden = true;
       }
     });
-
-    // Initial deep-link: if router set a selectedId before subscription, load it now
-    const initialId = store.getState().selected_id;
-    if (initialId) {
-      void detail.load(initialId);
-    } else {
-      detail.clear();
-    }
 
     // Refresh views on push updates (target minimally and avoid flicker)
     client.on('issues-changed', (payload) => {
@@ -187,7 +220,9 @@ export function bootstrap(root_element) {
       // If a detail is visible, re-fetch it when relevant or when hints are absent
       if (showingDetail && s.selected_id) {
         if (!hintIds || hintIds.includes(s.selected_id)) {
-          void detail.load(s.selected_id);
+          if (detail) {
+            void detail.load(s.selected_id);
+          }
         }
       }
     });
@@ -205,17 +240,17 @@ export function bootstrap(root_element) {
      * @param {{ selected_id: string | null, view: 'issues'|'epics'|'board', filters: any }} s
      */
     const onRouteChange = (s) => {
-      const showDetail = Boolean(s.selected_id);
       if (issues_root && epics_root && board_root && detail_mount) {
-        issues_root.hidden = showDetail || s.view !== 'issues';
-        epics_root.hidden = showDetail || s.view !== 'epics';
-        board_root.hidden = showDetail || s.view !== 'board';
-        detail_mount.hidden = !showDetail;
+        // Underlying route visibility is controlled only by selected view
+        issues_root.hidden = s.view !== 'issues';
+        epics_root.hidden = s.view !== 'epics';
+        board_root.hidden = s.view !== 'board';
+        // detail_mount visibility handled in subscription above
       }
-      if (!showDetail && s.view === 'epics') {
+      if (!s.selected_id && s.view === 'epics') {
         void epics_view.load();
       }
-      if (!showDetail && s.view === 'board') {
+      if (!s.selected_id && s.view === 'board') {
         void board_view.load();
       }
       try {

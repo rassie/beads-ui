@@ -54,7 +54,7 @@ describe('detail deps UI (UI-47)', () => {
 
     const row = /** @type {HTMLLIElement} */ (mount.querySelector('ul li'));
     row.click();
-    expect(navs[navs.length - 1]).toBe('#/issue/UI-9');
+    expect(navs[navs.length - 1]).toBe('#/issues?issue=UI-9');
   });
 
   test('add input is placed at the bottom of the section', async () => {

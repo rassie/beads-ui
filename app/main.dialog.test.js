@@ -1,9 +1,20 @@
 import { describe, expect, test, vi } from 'vitest';
-// Import after mocking
 import { bootstrap } from './main.js';
 
-// Mock WS client before importing the app
-const calls = [];
+// Provide a minimal dialog polyfill for jsdom environments
+if (typeof HTMLDialogElement !== 'undefined') {
+  const proto = /** @type {any} */ (HTMLDialogElement.prototype);
+  if (typeof proto.showModal !== 'function') {
+    proto.showModal = function showModal() {
+      this.setAttribute('open', '');
+    };
+    proto.close = function close() {
+      this.removeAttribute('open');
+    };
+  }
+}
+
+// Mock WS client
 const issues = [
   { id: 'UI-1', title: 'One', status: 'open', priority: 1 },
   { id: 'UI-2', title: 'Two', status: 'open', priority: 2 }
@@ -15,7 +26,6 @@ vi.mock('./ws.js', () => ({
      * @param {any} payload
      */
     async send(type, payload) {
-      calls.push({ type, payload });
       if (type === 'list-issues') {
         return issues;
       }
@@ -36,21 +46,24 @@ vi.mock('./ws.js', () => ({
   })
 }));
 
-describe('deep link on initial load (UI-44)', () => {
-  test('loads dialog and highlights list item when hash includes issue id', async () => {
-    window.location.hash = '#/issue/UI-2';
+describe('UI-104 dialog opens on navigation', () => {
+  test('hash navigation opens modal dialog and keeps list visible', async () => {
+    // Start on issues
+    window.location.hash = '#/issues';
     document.body.innerHTML = '<main id="app"></main>';
     const root = /** @type {HTMLElement} */ (document.getElementById('app'));
 
     bootstrap(root);
 
-    // Allow async loads to complete
-    await Promise.resolve();
-    await Promise.resolve();
     await Promise.resolve();
     await Promise.resolve();
 
-    // Dialog should be open and show raw id in header
+    // Navigate to an issue
+    window.location.hash = '#/issue/UI-1';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    await Promise.resolve();
+    await Promise.resolve();
+
     const dlg = /** @type {HTMLDialogElement} */ (
       document.getElementById('issue-dialog')
     );
@@ -58,14 +71,22 @@ describe('deep link on initial load (UI-44)', () => {
     const title = /** @type {HTMLElement} */ (
       document.getElementById('issue-dialog-title')
     );
-    expect(title && title.textContent).toBe('UI-2');
+    expect(title.textContent).toBe('UI-1');
 
-    const list = /** @type {HTMLElement} */ (
-      document.getElementById('list-root')
+    // Underlying list remains visible
+    const issuesRoot = /** @type {HTMLElement} */ (
+      document.getElementById('issues-root')
     );
-    const selected = /** @type {HTMLElement|null} */ (
-      list.querySelector('tr.issue-row.selected')
+    expect(issuesRoot.hidden).toBe(false);
+
+    // Close via button
+    const btn = /** @type {HTMLButtonElement} */ (
+      dlg.querySelector('.issue-dialog__close')
     );
-    expect(selected && selected.getAttribute('data-issue-id')).toBe('UI-2');
+    btn.click();
+    await Promise.resolve();
+
+    expect(dlg.hasAttribute('open')).toBe(false);
+    expect(window.location.hash).toBe('#/issues');
   });
 });

@@ -1248,6 +1248,45 @@ html[data-theme='dark'] {
   gap: 8px;
 }
 
+/* --- Issue Details Dialog (UI-104) --- */
+#issue-dialog {
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--fg);
+  width: min(96vw, 1200px);
+  max-height: 96vh;
+  margin: 2vh auto;
+  overflow: hidden;
+}
+#issue-dialog::backdrop {
+  background: color-mix(in srgb, #000 45%, transparent);
+  backdrop-filter: blur(1px);
+}
+.issue-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.issue-dialog__title {
+  font-weight: 700;
+}
+.issue-dialog__close {
+  border-radius: 4px;
+  padding: 4px 8px;
+  min-width: 28px;
+  line-height: 1.2;
+}
+.issue-dialog__body {
+  min-height: 200px;
+  max-height: calc(96vh - 44px);
+  overflow: auto;
+}
+
 .prop.labels {
   align-items: start;
 }

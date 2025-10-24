@@ -41,10 +41,7 @@ describe('views/detail', () => {
 
     await view.load('UI-29');
 
-    const idMono = /** @type {HTMLElement|null} */ (
-      mount.querySelector('.detail-title .detail-id')
-    );
-    expect(idMono && idMono.textContent).toBe('#29');
+    // ID is no longer rendered within detail view; the dialog title shows it
     const titleSpan = /** @type {HTMLSpanElement} */ (
       mount.querySelector('h2 .editable')
     );
@@ -65,8 +62,12 @@ describe('views/detail', () => {
     );
     const hrefs = Array.from(links)
       .map((a) => a.getAttribute('href') || '')
-      .filter((h) => h.startsWith('#/issue/'));
-    expect(hrefs).toEqual(['#/issue/UI-25', '#/issue/UI-27', '#/issue/UI-34']);
+      .filter((h) => h.startsWith('#/issues?issue='));
+    expect(hrefs).toEqual([
+      '#/issues?issue=UI-25',
+      '#/issues?issue=UI-27',
+      '#/issues?issue=UI-34'
+    ]);
 
     // No textarea in read mode
     const descInput0 = /** @type {HTMLTextAreaElement|null} */ (
@@ -76,13 +77,13 @@ describe('views/detail', () => {
 
     // Simulate clicking the first internal link, ensure navigate_fn is used
     const firstInternal = Array.from(links).find((a) =>
-      (a.getAttribute('href') || '').startsWith('#/issue/')
+      (a.getAttribute('href') || '').startsWith('#/issues?issue=')
     );
     if (!firstInternal) {
       throw new Error('No internal link found');
     }
     firstInternal.click();
-    expect(navigations[navigations.length - 1]).toBe('#/issue/UI-25');
+    expect(navigations[navigations.length - 1]).toBe('#/issues?issue=UI-25');
   });
 
   test('renders type in Properties sidebar', async () => {

@@ -1,6 +1,7 @@
 /* global NodeListOf */
 import { html, render } from 'lit-html';
 import { ISSUE_TYPES, typeLabel } from '../utils/issue-type.js';
+import { issueHashFor } from '../utils/issue-url.js';
 // issueDisplayId not used directly in this file; rendered in shared row
 import { statusLabel } from '../utils/status.js';
 import { createIssueRowRenderer } from './issue-row.js';
@@ -36,7 +37,9 @@ export function createListView(mount_element, sendFn, navigate_fn, store) {
   const row_renderer = createIssueRowRenderer({
     navigate: (id) => {
       const nav = navigate_fn || ((h) => (window.location.hash = h));
-      nav(`#/issue/${id}`);
+      /** @type {'issues'|'epics'|'board'} */
+      const view = store ? store.getState().view : 'issues';
+      nav(issueHashFor(view, id));
     },
     onUpdate: updateInline,
     requestRender: doRender,
@@ -299,7 +302,9 @@ export function createListView(mount_element, sendFn, navigate_fn, store) {
       const id = current ? current.getAttribute('data-issue-id') : '';
       if (id) {
         const nav = navigate_fn || ((h) => (window.location.hash = h));
-        nav(`#/issue/${id}`);
+        /** @type {'issues'|'epics'|'board'} */
+        const view = store ? store.getState().view : 'issues';
+        nav(issueHashFor(view, id));
       }
     }
   });

@@ -4,6 +4,7 @@ import { createStore } from './state.js';
 
 describe('router', () => {
   test('parseHash extracts id', () => {
+    expect(parseHash('#/issues?issue=UI-5')).toBe('UI-5');
     expect(parseHash('#/issue/UI-5')).toBe('UI-5');
     expect(parseHash('#/anything')).toBeNull();
   });
@@ -20,7 +21,7 @@ describe('router', () => {
     expect(store.getState().selected_id).toBe('UI-10');
 
     router.gotoIssue('UI-11');
-    expect(window.location.hash).toBe('#/issue/UI-11');
+    expect(window.location.hash).toBe('#/issues?issue=UI-11');
     router.stop();
   });
 

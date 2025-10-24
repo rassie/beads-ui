@@ -42,7 +42,7 @@ describe('views/list', () => {
 
     const first = /** @type {HTMLElement} */ (rows[0]);
     first.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    expect(window.location.hash).toBe('#/issue/UI-1');
+    expect(window.location.hash).toBe('#/issues?issue=UI-1');
   });
 
   test('filters by status and search', async () => {
