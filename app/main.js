@@ -8,6 +8,7 @@ import { createEpicsView } from './views/epics.js';
 import { createIssueDialog } from './views/issue-dialog.js';
 import { createListView } from './views/list.js';
 import { createTopNav } from './views/nav.js';
+import { createNewIssueDialog } from './views/new-issue-dialog.js';
 import { createWsClient } from './ws.js';
 
 /**
@@ -112,6 +113,25 @@ export function bootstrap(root_element) {
     // Top navigation (optional mount)
     if (nav_mount) {
       createTopNav(nav_mount, store, router);
+    }
+
+    // Global New Issue dialog (UI-106) mounted at root so it is always visible
+    const new_issue_dialog = createNewIssueDialog(
+      root_element,
+      (type, payload) => client.send(/** @type {any} */ (type), payload),
+      router,
+      store
+    );
+    // Header button
+    try {
+      const btn_new = /** @type {HTMLButtonElement|null} */ (
+        document.getElementById('new-issue-btn')
+      );
+      if (btn_new) {
+        btn_new.addEventListener('click', () => new_issue_dialog.open());
+      }
+    } catch {
+      // ignore missing header
     }
 
     const issues_view = createListView(
@@ -262,6 +282,30 @@ export function bootstrap(root_element) {
     store.subscribe(onRouteChange);
     // Ensure initial state is reflected (fixes reload on #/epics)
     onRouteChange(store.getState());
+
+    // Keyboard shortcuts: Ctrl/Cmd+N opens new issue; Ctrl/Cmd+Enter submits inside dialog
+    window.addEventListener('keydown', (ev) => {
+      const is_modifier = ev.ctrlKey || ev.metaKey;
+      const key = String(ev.key || '').toLowerCase();
+      /** @type {HTMLElement} */
+      const target = /** @type {any} */ (ev.target);
+      const tag =
+        target && target.tagName ? String(target.tagName).toLowerCase() : '';
+      const is_editable =
+        tag === 'input' ||
+        tag === 'textarea' ||
+        tag === 'select' ||
+        (target &&
+          typeof target.isContentEditable === 'boolean' &&
+          target.isContentEditable);
+      if (is_modifier && key === 'n') {
+        // Do not hijack when typing in inputs; common UX
+        if (!is_editable) {
+          ev.preventDefault();
+          new_issue_dialog.open();
+        }
+      }
+    });
   }
 }
 
