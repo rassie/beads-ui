@@ -50,10 +50,19 @@ export function createBoardView(mount_element, data, goto_issue) {
   function columnTemplate(title, id, items) {
     return html`
       <section class="board-column" id=${id}>
-        <header class="board-column__header" role="heading" aria-level="2">
+        <header
+          class="board-column__header"
+          id=${id + '-header'}
+          role="heading"
+          aria-level="2"
+        >
           ${title}
         </header>
-        <div class="board-column__body">
+        <div
+          class="board-column__body"
+          role="list"
+          aria-labelledby=${id + '-header'}
+        >
           ${items.map((it) => cardTemplate(it))}
         </div>
       </section>
@@ -68,6 +77,8 @@ export function createBoardView(mount_element, data, goto_issue) {
       <article
         class="board-card"
         data-issue-id=${it.id}
+        role="listitem"
+        tabindex="-1"
         @click=${() => goto_issue(it.id)}
       >
         <div class="board-card__title text-truncate">
@@ -84,6 +95,174 @@ export function createBoardView(mount_element, data, goto_issue) {
 
   function doRender() {
     render(template(), mount_element);
+    postRenderEnhance();
+  }
+
+  /**
+   * Enhance rendered board with a11y and keyboard navigation.
+   * - Roving tabindex per column (first card tabbable)
+   * - ArrowUp/ArrowDown within column
+   * - ArrowLeft/ArrowRight to adjacent non-empty column (focus top card)
+   * - Enter/Space to open details for focused card
+   */
+  function postRenderEnhance() {
+    try {
+      /** @type {HTMLElement[]} */
+      const columns = Array.from(
+        mount_element.querySelectorAll('.board-column')
+      );
+      for (const col of columns) {
+        /** @type {HTMLElement|null} */
+        const body = /** @type {any} */ (
+          col.querySelector('.board-column__body')
+        );
+        if (!body) {
+          continue;
+        }
+        /** @type {HTMLElement[]} */
+        const cards = Array.from(body.querySelectorAll('.board-card'));
+        // Assign aria-label using column header for screen readers
+        const header = /** @type {HTMLElement|null} */ (
+          col.querySelector('.board-column__header')
+        );
+        const col_name = header ? header.textContent?.trim() || '' : '';
+        for (const card of cards) {
+          const title_el = /** @type {HTMLElement|null} */ (
+            card.querySelector('.board-card__title')
+          );
+          const t = title_el ? title_el.textContent?.trim() || '' : '';
+          card.setAttribute(
+            'aria-label',
+            `Issue ${t || '(no title)'} — Column ${col_name}`
+          );
+          // Default roving setup
+          card.tabIndex = -1;
+        }
+        if (cards.length > 0) {
+          cards[0].tabIndex = 0;
+        }
+      }
+    } catch {
+      // non-fatal
+    }
+  }
+
+  // Delegate keyboard handling from mount_element
+  mount_element.addEventListener('keydown', (ev) => {
+    /** @type {HTMLElement} */
+    const target = /** @type {any} */ (ev.target);
+    if (!target || !(target instanceof HTMLElement)) {
+      return;
+    }
+    // Do not intercept keys inside editable controls
+    const tag = String(target.tagName || '').toLowerCase();
+    if (
+      tag === 'input' ||
+      tag === 'textarea' ||
+      tag === 'select' ||
+      /** @type {any} */ (target).isContentEditable === true
+    ) {
+      return;
+    }
+    const card = target.closest('.board-card');
+    if (!card) {
+      return;
+    }
+    const key = String(ev.key || '');
+    if (key === 'Enter' || key === ' ') {
+      ev.preventDefault();
+      const id = /** @type {HTMLElement} */ (card).getAttribute(
+        'data-issue-id'
+      );
+      if (id) {
+        goto_issue(id);
+      }
+      return;
+    }
+    if (
+      key !== 'ArrowUp' &&
+      key !== 'ArrowDown' &&
+      key !== 'ArrowLeft' &&
+      key !== 'ArrowRight'
+    ) {
+      return;
+    }
+    ev.preventDefault();
+    // Column context
+    const col = /** @type {HTMLElement|null} */ (card.closest('.board-column'));
+    if (!col) {
+      return;
+    }
+    const body = /** @type {HTMLElement|null} */ (
+      col.querySelector('.board-column__body')
+    );
+    if (!body) {
+      return;
+    }
+    /** @type {HTMLElement[]} */
+    const cards = Array.from(body.querySelectorAll('.board-card'));
+    const idx = cards.indexOf(/** @type {HTMLElement} */ (card));
+    if (idx === -1) {
+      return;
+    }
+    if (key === 'ArrowDown' && idx < cards.length - 1) {
+      moveFocus(cards[idx], cards[idx + 1]);
+      return;
+    }
+    if (key === 'ArrowUp' && idx > 0) {
+      moveFocus(cards[idx], cards[idx - 1]);
+      return;
+    }
+    if (key === 'ArrowRight' || key === 'ArrowLeft') {
+      // Find adjacent column with at least one card
+      /** @type {HTMLElement[]} */
+      const cols = Array.from(mount_element.querySelectorAll('.board-column'));
+      const col_idx = cols.indexOf(col);
+      if (col_idx === -1) {
+        return;
+      }
+      const dir = key === 'ArrowRight' ? 1 : -1;
+      let next_idx = col_idx + dir;
+      /** @type {HTMLElement|null} */
+      let target_col = null;
+      while (next_idx >= 0 && next_idx < cols.length) {
+        const candidate = cols[next_idx];
+        const c_body = /** @type {HTMLElement|null} */ (
+          candidate.querySelector('.board-column__body')
+        );
+        const c_cards = c_body
+          ? Array.from(c_body.querySelectorAll('.board-card'))
+          : [];
+        if (c_cards.length > 0) {
+          target_col = candidate;
+          break;
+        }
+        next_idx += dir;
+      }
+      if (target_col) {
+        const first = /** @type {HTMLElement|null} */ (
+          target_col.querySelector('.board-column__body .board-card')
+        );
+        if (first) {
+          moveFocus(/** @type {HTMLElement} */ (card), first);
+        }
+      }
+      return;
+    }
+  });
+
+  /**
+   * @param {HTMLElement} from
+   * @param {HTMLElement} to
+   */
+  function moveFocus(from, to) {
+    try {
+      from.tabIndex = -1;
+      to.tabIndex = 0;
+      to.focus();
+    } catch {
+      // ignore focus errors
+    }
   }
 
   /**

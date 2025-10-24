@@ -74,6 +74,9 @@ export function createIssueDialog(mount_element, store, onClose) {
   // Close button
   btn_close.addEventListener('click', () => requestClose());
 
+  /** @type {HTMLElement | null} */
+  let last_focus = null;
+
   function requestClose() {
     try {
       if (typeof dialog.close === 'function') {
@@ -89,12 +92,25 @@ export function createIssueDialog(mount_element, store, onClose) {
     } catch {
       // ignore consumer errors
     }
+    // Restore focus to the element that had focus before opening
+    restoreFocus();
   }
 
   /**
    * @param {string} id
    */
   function open(id) {
+    // Capture currently focused element to restore after closing
+    try {
+      const ae = /** @type {any} */ (document.activeElement);
+      if (ae && ae instanceof HTMLElement) {
+        last_focus = ae;
+      } else {
+        last_focus = null;
+      }
+    } catch {
+      last_focus = null;
+    }
     setTitle(id);
     try {
       if (
@@ -128,6 +144,19 @@ export function createIssueDialog(mount_element, store, onClose) {
       }
     } catch {
       dialog.removeAttribute('open');
+    }
+    restoreFocus();
+  }
+
+  function restoreFocus() {
+    try {
+      if (last_focus && document.contains(last_focus)) {
+        last_focus.focus();
+      }
+    } catch {
+      // ignore focus errors
+    } finally {
+      last_focus = null;
     }
   }
 

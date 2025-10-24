@@ -956,6 +956,10 @@ input.inline-edit:focus {
     0 2px 8px color-mix(in srgb, #000 16%, transparent),
     0 4px 16px color-mix(in srgb, #000 12%, transparent);
 }
+.board-card:focus {
+  outline: 2px solid color-mix(in srgb, var(--link) 50%, transparent);
+  outline-offset: 0px;
+}
 .board-card__title {
   font-weight: 600;
   margin-bottom: 4px;
