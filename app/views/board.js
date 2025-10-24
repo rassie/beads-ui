@@ -4,7 +4,15 @@ import { createPriorityBadge } from '../utils/priority-badge.js';
 import { createTypeBadge } from '../utils/type-badge.js';
 
 /**
- * @typedef {{ id: string, title?: string, status?: 'open'|'in_progress'|'closed', priority?: number, issue_type?: string, updated_at?: string }} IssueLite
+ * @typedef {{
+ *   id: string,
+ *   title?: string,
+ *   status?: 'open'|'in_progress'|'closed',
+ *   priority?: number,
+ *   issue_type?: string,
+ *   updated_at?: string,
+ *   closed_at?: string
+ * }} IssueLite
  */
 
 /**
@@ -12,16 +20,17 @@ import { createTypeBadge } from '../utils/type-badge.js';
  * Data providers are expected to return raw arrays; this view applies sorting.
  *
  * Sorting rules:
- * - Open: updated_at desc
+ * - Open: priority asc, then updated_at desc when present
  * - Ready: priority asc, then updated_at desc when present
  * - In progress: updated_at desc
- * - Closed: updated_at desc
+ * - Closed: closed_at desc (fallback to updated_at)
  * @param {HTMLElement} mount_element
  * @param {{ getOpen: () => Promise<any[]>, getReady: () => Promise<any[]>, getInProgress: () => Promise<any[]>, getClosed: (limit?: number) => Promise<any[]> }} data
- * @param {(id: string) => void} goto_issue - Navigate to issue detail.
+ * @param {(id: string) => void} gotoIssue - Navigate to issue detail.
+ * @param {{ getState: () => any, setState: (patch: any) => void, subscribe?: (fn: (s:any)=>void)=>()=>void }} [store]
  * @returns {{ load: () => Promise<void>, clear: () => void }}
  */
-export function createBoardView(mount_element, data, goto_issue) {
+export function createBoardView(mount_element, data, gotoIssue, store) {
   /** @type {IssueLite[]} */
   let list_open = [];
   /** @type {IssueLite[]} */
@@ -30,6 +39,28 @@ export function createBoardView(mount_element, data, goto_issue) {
   let list_in_progress = [];
   /** @type {IssueLite[]} */
   let list_closed = [];
+  /** @type {IssueLite[]} */
+  let list_closed_raw = [];
+
+  /**
+   * Closed column filter mode.
+   * 'today' → items with closed_at since local day start
+   * '3' → last 3 days; '7' → last 7 days
+   * @type {'today'|'3'|'7'}
+   */
+  let closed_filter_mode = 'today';
+  if (store) {
+    try {
+      const s = store.getState();
+      const cf =
+        s && s.board ? String(s.board.closed_filter || 'today') : 'today';
+      if (cf === 'today' || cf === '3' || cf === '7') {
+        closed_filter_mode = /** @type {any} */ (cf);
+      }
+    } catch {
+      // ignore store init errors
+    }
+  }
 
   function template() {
     return html`
@@ -56,7 +87,30 @@ export function createBoardView(mount_element, data, goto_issue) {
           role="heading"
           aria-level="2"
         >
-          ${title}
+          <span>${title}</span>
+          ${id === 'closed-col'
+            ? html`<label class="board-closed-filter">
+                <span class="visually-hidden">Filter closed issues</span>
+                <select
+                  id="closed-filter"
+                  aria-label="Filter closed issues"
+                  @change=${onClosedFilterChange}
+                >
+                  <option
+                    value="today"
+                    ?selected=${closed_filter_mode === 'today'}
+                  >
+                    Today
+                  </option>
+                  <option value="3" ?selected=${closed_filter_mode === '3'}>
+                    Last 3 days
+                  </option>
+                  <option value="7" ?selected=${closed_filter_mode === '7'}>
+                    Last 7 days
+                  </option>
+                </select>
+              </label>`
+            : ''}
         </header>
         <div
           class="board-column__body"
@@ -79,7 +133,7 @@ export function createBoardView(mount_element, data, goto_issue) {
         data-issue-id=${it.id}
         role="listitem"
         tabindex="-1"
-        @click=${() => goto_issue(it.id)}
+        @click=${() => gotoIssue(it.id)}
       >
         <div class="board-card__title text-truncate">
           ${it.title || '(no title)'}
@@ -175,7 +229,7 @@ export function createBoardView(mount_element, data, goto_issue) {
         'data-issue-id'
       );
       if (id) {
-        goto_issue(id);
+        gotoIssue(id);
       }
       return;
     }
@@ -295,6 +349,77 @@ export function createBoardView(mount_element, data, goto_issue) {
     });
   }
 
+  /**
+   * Sort by closed_at desc with updated_at fallback.
+   * @param {IssueLite[]} arr
+   */
+  function sortByClosedDesc(arr) {
+    arr.sort((a, b) => {
+      const ca = a.closed_at || a.updated_at || '';
+      const cb = b.closed_at || b.updated_at || '';
+      return ca < cb ? 1 : ca > cb ? -1 : 0;
+    });
+  }
+
+  /**
+   * Recompute closed list from raw using the current filter and sort.
+   */
+  function applyClosedFilter() {
+    /** @type {IssueLite[]} */
+    let items = Array.isArray(list_closed_raw) ? [...list_closed_raw] : [];
+    const now = new Date();
+    /** @type {number} */
+    let since_ts = 0;
+    if (closed_filter_mode === 'today') {
+      const start = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        0,
+        0,
+        0,
+        0
+      );
+      since_ts = start.getTime();
+    } else if (closed_filter_mode === '3') {
+      since_ts = now.getTime() - 3 * 24 * 60 * 60 * 1000;
+    } else if (closed_filter_mode === '7') {
+      since_ts = now.getTime() - 7 * 24 * 60 * 60 * 1000;
+    }
+    items = items.filter((it) => {
+      const s = it.closed_at || '';
+      if (!s || isNaN(Date.parse(s))) {
+        return false;
+      }
+      const t = Date.parse(s);
+      return t >= since_ts;
+    });
+    sortByClosedDesc(items);
+    list_closed = items;
+  }
+
+  /**
+   * @param {Event} ev
+   */
+  function onClosedFilterChange(ev) {
+    try {
+      const el = /** @type {HTMLSelectElement} */ (ev.target);
+      const v = String(el.value || 'today');
+      closed_filter_mode = v === '3' || v === '7' ? v : 'today';
+      if (store) {
+        try {
+          store.setState({ board: { closed_filter: closed_filter_mode } });
+        } catch {
+          // ignore store errors
+        }
+      }
+      applyClosedFilter();
+      doRender();
+    } catch {
+      // ignore
+    }
+  }
+
   return {
     async load() {
       /** @type {IssueLite[]} */
@@ -340,15 +465,17 @@ export function createBoardView(mount_element, data, goto_issue) {
         r = r.filter((it) => !in_progress_ids.has(it.id));
       }
 
-      sortByUpdatedDesc(o);
+      // UI-119: Open sorted like Ready (priority asc, then updated desc)
+      sortReady(o);
       sortReady(r);
       sortByUpdatedDesc(p);
-      sortByUpdatedDesc(c);
+      // Closed handled separately to use closed_at and filtering
 
       list_open = o;
       list_ready = r;
       list_in_progress = p;
-      list_closed = c;
+      list_closed_raw = c;
+      applyClosedFilter();
       doRender();
     },
     clear() {

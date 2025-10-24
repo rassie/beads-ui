@@ -111,7 +111,29 @@ export function bootstrap(root_element) {
     } catch {
       // ignore
     }
-    const store = createStore({ filters: persistedFilters, view: last_view });
+    // Load board preferences
+    /** @type {{ closed_filter: 'today'|'3'|'7' }} */
+    let persistedBoard = { closed_filter: 'today' };
+    try {
+      const raw_board = window.localStorage.getItem('beads-ui.board');
+      if (raw_board) {
+        const obj = JSON.parse(raw_board);
+        if (obj && typeof obj === 'object') {
+          const cf = String(obj.closed_filter || 'today');
+          if (cf === 'today' || cf === '3' || cf === '7') {
+            persistedBoard.closed_filter = /** @type {any} */ (cf);
+          }
+        }
+      }
+    } catch {
+      // ignore parse errors
+    }
+
+    const store = createStore({
+      filters: persistedFilters,
+      view: last_view,
+      board: persistedBoard
+    });
     const router = createHashRouter(store);
     router.start();
     /**
@@ -169,6 +191,17 @@ export function bootstrap(root_element) {
           type: typeof s.filters.type === 'string' ? s.filters.type : ''
         };
         window.localStorage.setItem('beads-ui.filters', JSON.stringify(data));
+      } catch {
+        // ignore
+      }
+    });
+    // Persist board preferences
+    store.subscribe((s) => {
+      try {
+        window.localStorage.setItem(
+          'beads-ui.board',
+          JSON.stringify({ closed_filter: s.board.closed_filter })
+        );
       } catch {
         // ignore
       }
@@ -283,8 +316,11 @@ export function bootstrap(root_element) {
     const epics_view = createEpicsView(epics_root, data, (id) =>
       router.gotoIssue(id)
     );
-    const board_view = createBoardView(board_root, data, (id) =>
-      router.gotoIssue(id)
+    const board_view = createBoardView(
+      board_root,
+      data,
+      (id) => router.gotoIssue(id),
+      store
     );
     // Preload epics when switching to view
     /**

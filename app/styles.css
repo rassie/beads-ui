@@ -916,6 +916,10 @@ input.inline-edit:focus {
   background: color-mix(in srgb, var(--panel-bg) 92%, transparent);
 }
 .board-column__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   position: sticky;
   top: 0;
   z-index: 1;
@@ -924,6 +928,16 @@ input.inline-edit:focus {
   border-bottom: 1px solid var(--border);
   background: inherit;
   backdrop-filter: saturate(140%) blur(4px);
+}
+/* Small, unobtrusive select for closed filter */
+.board-closed-filter {
+  margin: -8px 0;
+}
+.board-closed-filter select {
+  font-size: 13px;
+  border-radius: 999px;
+  border-color: var(--border);
+  padding: 2px 18px 2px 12px;
 }
 .board-column__body {
   padding: 10px;
@@ -977,6 +991,16 @@ input.inline-edit:focus {
   .board-root {
     grid-template-columns: 1fr;
   }
+}
+
+/* a11y helper */
+.visually-hidden {
+  position: absolute !important;
+  height: 1px;
+  width: 1px;
+  overflow: hidden;
+  clip: rect(1px, 1px, 1px, 1px);
+  white-space: nowrap;
 }
 
 @media (prefers-color-scheme: dark) {

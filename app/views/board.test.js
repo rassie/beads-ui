@@ -71,12 +71,14 @@ describe('views/board', () => {
             id: 'C-2',
             title: 'c2',
             updated_at: '2025-10-20T09:00:00.000Z',
+            closed_at: '2025-10-24T09:10:00.000Z',
             issue_type: 'task'
           },
           {
             id: 'C-1',
             title: 'c1',
             updated_at: '2025-10-21T09:00:00.000Z',
+            closed_at: '2025-10-24T08:10:00.000Z',
             issue_type: 'bug'
           }
         ];
@@ -109,11 +111,11 @@ describe('views/board', () => {
     ).map((el) => el.textContent?.trim());
     expect(prog_ids).toEqual(['#1', '#2']);
 
-    // Closed: updated_at desc
+    // Closed: closed_at desc
     const closed_ids = Array.from(
       mount.querySelectorAll('#closed-col .board-card .mono')
     ).map((el) => el.textContent?.trim());
-    expect(closed_ids).toEqual(['#1', '#2']);
+    expect(closed_ids).toEqual(['#2', '#1']);
 
     // Click navigates
     const first_ready = /** @type {HTMLElement|null} */ (

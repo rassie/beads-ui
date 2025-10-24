@@ -15,7 +15,15 @@
  */
 
 /**
- * @typedef {{ selected_id: string | null, view: ViewName, filters: Filters }} AppState
+ * @typedef {'today'|'3'|'7'} ClosedFilter
+ */
+
+/**
+ * @typedef {{ closed_filter: ClosedFilter }} BoardState
+ */
+
+/**
+ * @typedef {{ selected_id: string | null, view: ViewName, filters: Filters, board: BoardState }} AppState
  */
 
 /**
@@ -26,15 +34,21 @@
 export function createStore(initial = {}) {
   /** @type {AppState} */
   let state = {
-    selected_id: /** @type {any} */ (initial).selected_id ?? null,
-    view: /** @type {any} */ (initial).view ?? 'issues',
+    selected_id: initial.selected_id ?? null,
+    view: initial.view ?? 'issues',
     filters: {
-      status: /** @type {any} */ (initial).filters?.status ?? 'all',
-      search: /** @type {any} */ (initial).filters?.search ?? '',
+      status: initial.filters?.status ?? 'all',
+      search: initial.filters?.search ?? '',
       type:
-        typeof (/** @type {any} */ (initial).filters?.type) === 'string'
-          ? /** @type {any} */ (initial).filters?.type
-          : ''
+        typeof initial.filters?.type === 'string' ? initial.filters?.type : ''
+    },
+    board: {
+      closed_filter:
+        initial.board?.closed_filter === '3' ||
+        initial.board?.closed_filter === '7' ||
+        initial.board?.closed_filter === 'today'
+          ? initial.board?.closed_filter
+          : 'today'
     }
   };
 
@@ -57,14 +71,15 @@ export function createStore(initial = {}) {
     },
     /**
      * Update state. Nested filters can be partial.
-     * @param {{ selected_id?: string | null, filters?: Partial<Filters> }} patch
+     * @param {{ selected_id?: string | null, filters?: Partial<Filters>, board?: Partial<BoardState> }} patch
      */
     setState(patch) {
       /** @type {AppState} */
       const next = {
         ...state,
         ...patch,
-        filters: { ...state.filters, ...(patch.filters || {}) }
+        filters: { ...state.filters, ...(patch.filters || {}) },
+        board: { ...state.board, ...(patch.board || {}) }
       };
       // Avoid emitting if nothing changed (shallow compare)
       if (
@@ -72,7 +87,8 @@ export function createStore(initial = {}) {
         next.view === state.view &&
         next.filters.status === state.filters.status &&
         next.filters.search === state.filters.search &&
-        next.filters.type === state.filters.type
+        next.filters.type === state.filters.type &&
+        next.board.closed_filter === state.board.closed_filter
       ) {
         return;
       }
