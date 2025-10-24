@@ -60,14 +60,14 @@ function makeTransportRecorder() {
 }
 
 describe('data/providers', () => {
-  test('getClosed requests list-issues with status and limit=10 by default', async () => {
+  test('getClosed requests list-issues with status=closed and no limit', async () => {
     const rec = makeTransportRecorder();
     const data = createDataLayer((t, p) => rec.send(t, p));
     await data.getClosed();
     const last = rec.calls[rec.calls.length - 1];
     expect(last.type).toBe('list-issues');
     expect(last.payload.filters.status).toBe('closed');
-    expect(last.payload.filters.limit).toBe(10);
+    expect('limit' in last.payload.filters).toBe(false);
   });
 
   test('getInProgress requests list-issues with status=in_progress', async () => {

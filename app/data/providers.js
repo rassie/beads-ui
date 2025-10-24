@@ -106,21 +106,21 @@ export function createDataLayer(transport, onEvent) {
   }
 
   /**
-   * Closed issues: `bd list -s closed -l 10 --json`.
-   * @param {number} [limit] - Optional limit (defaults to 10).
+   * Closed issues: `bd list --status closed --json`.
+   * Note: Do not send a `limit` for closed. The board applies a timeframe
+   * filter (today/3/7 days) client-side and needs the full closed set.
    * @returns {Promise<unknown[]>}
    */
-  async function getClosed(limit = 10) {
-    if (limit === 10 && Array.isArray(cache.list_closed_10)) {
+  async function getClosed() {
+    if (Array.isArray(cache.list_closed_10)) {
+      // Reuse existing cache slot for closed list to avoid widening cache API
       return cache.list_closed_10;
     }
     const res = await transport('list-issues', {
-      filters: { status: 'closed', limit }
+      filters: { status: 'closed' }
     });
     const arr = Array.isArray(res) ? res : [];
-    if (limit === 10) {
-      cache.list_closed_10 = arr;
-    }
+    cache.list_closed_10 = arr;
     return arr;
   }
 
