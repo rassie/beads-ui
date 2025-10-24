@@ -1,4 +1,3 @@
-/* global NodeListOf */
 import { describe, expect, test } from 'vitest';
 import { createDetailView } from './detail.js';
 
@@ -57,12 +56,10 @@ describe('views/detail', () => {
     const code = md.querySelector('code');
     expect(code && code.textContent).toBe('code');
 
-    const links = /** @type {NodeListOf<HTMLAnchorElement>} */ (
-      mount.querySelectorAll('a')
-    );
+    const links = mount.querySelectorAll('li');
     const hrefs = Array.from(links)
-      .map((a) => a.getAttribute('href') || '')
-      .filter((h) => h.startsWith('#/issues?issue='));
+      .map((a) => a.dataset.href)
+      .filter(Boolean);
     expect(hrefs).toEqual([
       '#/issues?issue=UI-25',
       '#/issues?issue=UI-27',
@@ -76,13 +73,7 @@ describe('views/detail', () => {
     expect(descInput0).toBeNull();
 
     // Simulate clicking the first internal link, ensure navigate_fn is used
-    const firstInternal = Array.from(links).find((a) =>
-      (a.getAttribute('href') || '').startsWith('#/issues?issue=')
-    );
-    if (!firstInternal) {
-      throw new Error('No internal link found');
-    }
-    firstInternal.click();
+    links[0].click();
     expect(navigations[navigations.length - 1]).toBe('#/issues?issue=UI-25');
   });
 

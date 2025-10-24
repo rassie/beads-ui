@@ -1,5 +1,5 @@
 import { html, render } from 'lit-html';
-import { issueDisplayId } from '../utils/issue-id.js';
+import { createIssueIdRenderer } from '../utils/issue-id-renderer.js';
 import { createIssueRowRenderer } from './issue-row.js';
 
 /**
@@ -62,7 +62,7 @@ export function createEpicsView(mount_element, data, goto_issue) {
           tabindex="0"
           aria-expanded=${is_open}
         >
-          <span class="mono">${issueDisplayId(id)}</span>
+          ${createIssueIdRenderer(id, { class_name: 'mono' })}
           <span class="text-truncate" style="margin-left:8px"
             >${epic.title || '(no title)'}</span
           >

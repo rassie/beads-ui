@@ -28,9 +28,7 @@ describe('detail deps UI (UI-47)', () => {
     await view.load('UI-100');
 
     const text = mount.textContent || '';
-    expect(text).toContain('#1');
     expect(text).toContain('Alpha');
-    expect(text).toContain('#3');
     expect(text).toContain('Gamma');
     const badges = mount.querySelectorAll('ul .type-badge');
     expect(badges.length).toBeGreaterThanOrEqual(2);

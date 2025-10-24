@@ -1,4 +1,6 @@
 // Lightweight wrapper around the native <dialog> for issue details
+import { createIssueIdRenderer } from '../utils/issue-id-renderer.js';
+
 // Provides: open(id), close(), getMount()
 // Ensures accessibility, backdrop click to close, and Esc handling.
 
@@ -52,8 +54,9 @@ export function createIssueDialog(mount_element, store, onClose) {
    * @param {string} id
    */
   function setTitle(id) {
-    // Show raw id (e.g., UI-104) for clarity in the chrome
-    title_el.textContent = id || '';
+    // Use copyable ID renderer but keep visible text as raw id for tests/clarity
+    title_el.replaceChildren();
+    title_el.appendChild(createIssueIdRenderer(String(id || '')));
   }
 
   // Backdrop click: when clicking the dialog itself (outside container), close

@@ -1,5 +1,5 @@
 import { html } from 'lit-html';
-import { issueDisplayId } from '../utils/issue-id.js';
+import { createIssueIdRenderer } from '../utils/issue-id-renderer.js';
 import { emojiForPriority } from '../utils/priority-badge.js';
 import { priority_levels } from '../utils/priority.js';
 import { statusLabel } from '../utils/status.js';
@@ -147,7 +147,7 @@ export function createIssueRowRenderer(options) {
       data-issue-id=${it.id}
       @click=${makeRowClick(it.id)}
     >
-      <td class="mono">${issueDisplayId(it.id)}</td>
+      <td class="mono">${createIssueIdRenderer(it.id)}</td>
       <td>${createTypeBadge(it.issue_type)}</td>
       <td>${editableText(it.id, 'title', it.title || '')}</td>
       <td>

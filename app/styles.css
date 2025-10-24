@@ -282,7 +282,7 @@ a:focus {
   outline-offset: var(--outline-offset);
 }
 .editable:focus-within {
-  outline: 2px solid #93c5fd;
+  outline: 2px solid color-mix(in srgb, var(--link) 60%, transparent);
   outline-offset: var(--outline-offset);
   cursor: text;
 }
@@ -384,6 +384,19 @@ button {
     color 140ms ease,
     border-color 140ms ease,
     transform 60ms ease;
+}
+/* Inline issue ID renderer: looks like plain text */
+button.id-copy {
+  background: transparent;
+  color: inherit;
+  border: none;
+  padding: 0;
+  margin: 0;
+  line-height: inherit;
+  font: inherit;
+}
+button.id-copy:hover {
+  text-decoration: underline;
 }
 button:hover {
   filter: brightness(1.02);
@@ -687,7 +700,7 @@ input.inline-edit {
   outline-offset: var(--outline-offset);
 }
 input.inline-edit:focus {
-  outline: 2px solid #93c5fd;
+  outline: 2px solid color-mix(in srgb, var(--link) 50%, transparent);
   outline-offset: var(--outline-offset);
   box-shadow: none;
 }
@@ -739,7 +752,7 @@ input.inline-edit:focus {
 /* Keyboard focus ring helper */
 :focus-visible {
   outline: 2px solid color-mix(in srgb, var(--link) 60%, transparent);
-  outline-offset: var(--outline-offset);
+  outline-offset: 2px;
 }
 
 /* Subtle scrollbars (WebKit/Blink) */
@@ -791,10 +804,17 @@ input.inline-edit:focus {
   line-height: inherit;
 }
 /* Title input fills available width and stays inline with buttons */
-#detail-root .detail-title input[type='text'] {
-  flex: 1 1 auto;
+#detail-root .detail-title h2 {
+  display: flex;
+  align-items: center;
+}
+#detail-root .detail-title h2 input[type='text'] {
+  flex: 1;
   padding: 0;
   min-width: 10px;
+  font-size: inherit;
+  line-height: inherit;
+  margin-right: 8px;
 }
 /* Remove borders in detail view; rely on global :focus-visible outline */
 #detail-root input[type='text'],
@@ -1219,6 +1239,14 @@ html[data-theme='dark'] {
   list-style: none;
   padding: 0;
   margin: 0 0 8px;
+}
+.props-card ul li {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  gap: 6px;
+  align-items: center;
+  padding: 2px 0;
+  cursor: pointer;
 }
 .props-card__title {
   font-weight: 700;

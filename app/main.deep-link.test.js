@@ -20,7 +20,7 @@ vi.mock('./ws.js', () => ({
         return issues;
       }
       if (type === 'show-issue') {
-        const id = /** @type {any} */ (payload).id;
+        const id = payload.id;
         const it = issues.find((i) => i.id === id);
         return it || null;
       }
@@ -58,7 +58,7 @@ describe('deep link on initial load (UI-44)', () => {
     const title = /** @type {HTMLElement} */ (
       document.getElementById('issue-dialog-title')
     );
-    expect(title && title.textContent).toBe('UI-2');
+    expect(title && title.textContent).toBe('#2');
 
     const list = /** @type {HTMLElement} */ (
       document.getElementById('list-root')

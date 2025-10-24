@@ -532,13 +532,10 @@ export function createDetailView(
             : items.map((dep) => {
                 const did = dep.id;
                 const href = issueHref(did);
-                return html` <li
-                  style="display:grid;grid-template-columns:auto auto 1fr auto;gap:6px;align-items:center;padding:2px 0;cursor:pointer;"
+                return html`<li
+                  data-href=${href}
                   @click=${() => navigateFn(href)}
                 >
-                  <a href=${href} @click=${makeDepLinkClick(href)}
-                    >${issueDisplayId(did)}</a
-                  >
                   ${createTypeBadge(dep.issue_type || '')}
                   <span class="text-truncate">${dep.title || ''}</span>
                   <button
@@ -570,12 +567,9 @@ export function createDetailView(
               aria-label="Edit title"
               .value=${issue.title || ''}
               @keydown=${onTitleInputKeydown}
-              style="width:100%;font-size:inherit;line-height:inherit;"
             />
-            <button style="margin-left:6px" @click=${onTitleSave}>Save</button>
-            <button style="margin-left:6px" @click=${onTitleCancel}>
-              Cancel
-            </button>
+            <button @click=${onTitleSave}>Save</button>
+            <button @click=${onTitleCancel}>Cancel</button>
           </h2>
         </div>`
       : html`<div class="detail-title">
@@ -849,22 +843,6 @@ export function createDetailView(
     }
     render(detailTemplate(current), mount_element);
     // panel header removed for detail view; ID is shown inline with title
-  }
-
-  /**
-   * Create an anchor click handler for dependency links.
-   * @param {string} href
-   * @returns {(ev: Event) => void}
-   */
-  function makeDepLinkClick(href) {
-    return (ev) => {
-      ev.preventDefault();
-      /** @type {Event} */
-      const e = ev;
-      // stop bubbling to the li row click
-      e.stopPropagation();
-      navigateFn(href);
-    };
   }
 
   /**
