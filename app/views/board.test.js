@@ -66,19 +66,22 @@ describe('views/board', () => {
         ];
       },
       async getClosed() {
+        const now = Date.now();
         return [
           {
             id: 'C-2',
             title: 'c2',
             updated_at: '2025-10-20T09:00:00.000Z',
-            closed_at: '2025-10-24T09:10:00.000Z',
+            // Closed just now → appears first for default 'today' filter
+            closed_at: new Date(now).toISOString(),
             issue_type: 'task'
           },
           {
             id: 'C-1',
             title: 'c1',
             updated_at: '2025-10-21T09:00:00.000Z',
-            closed_at: '2025-10-24T08:10:00.000Z',
+            // Closed one hour ago today → second
+            closed_at: new Date(now - 60 * 60 * 1000).toISOString(),
             issue_type: 'bug'
           }
         ];
