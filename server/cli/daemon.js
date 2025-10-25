@@ -234,10 +234,11 @@ function sleep(ms) {
  * Print the server URL derived from current config.
  */
 export function printServerUrl() {
-  const { url, root_dir } = getConfig();
+  const { url } = getConfig();
   console.log(url);
 
-  const resolved_db = resolveDbPath({ cwd: root_dir });
+  // Resolve from the caller's working directory by default
+  const resolved_db = resolveDbPath();
   console.log(
     `db: ${resolved_db.path} (${resolved_db.source}${resolved_db.exists ? '' : ', missing'})`
   );

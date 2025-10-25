@@ -10,7 +10,7 @@ const argv = process.argv.slice(2);
 try {
   const code = await main(argv);
   if (Number.isFinite(code)) {
-    process.exitCode = /** @type {number} */ (code);
+    process.exitCode = code;
   }
 } catch (err) {
   console.error(String(/** @type {any} */ (err)?.message || err));
