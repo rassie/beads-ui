@@ -16,17 +16,17 @@
 ## Features
 
 - ✨ **Zero setup** – just run `bdui start`
-- 🎨 **Beautiful design** – Responsive and dark mode support
-- ⌨️ **Keyboard navigation** – Navigate and edit without touching the mouse
-- ⚡ **Live updates** – Monitors the beads database for changes
+- 📺 **Live updates** – Monitors the beads database for changes
 - 🔎 **Issues view** – Filter and search issues, edit inline
 - ⛰️ **Epics view** – Show progress per epic, expand rows, edit inline
 - 🏂 **Board view** – Open / Blocked / Ready / In progress / Closed columns
+- ⌨️ **Keyboard navigation** – Navigate and edit without touching the mouse
 
 ## Setup
 
 ```sh
-npm i -g beads-ui
+npm i beads-ui -g
+# In the project directory with a beads database:
 bdui start --open
 ```
 

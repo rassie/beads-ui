@@ -7,7 +7,7 @@ export function printUsage(out_stream) {
     'Usage: bdui <command> [options]',
     '',
     'Commands:',
-    '  start       Start the UI server (daemonized in later steps)',
+    '  start       Start the UI server',
     '  stop        Stop the UI server',
     '  restart     Restart the UI server',
     '',
