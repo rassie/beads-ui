@@ -1,5 +1,10 @@
 # Changes
 
+## 0.3.0
+
+- 🍏 Rewrite data-exchange layer to push-only updates via WebSocket.
+- 🐛 Heaps of bug fixes.
+
 ## 0.2.0
 
 - 🍏 Add "Blocked" column to board

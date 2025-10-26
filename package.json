@@ -1,6 +1,6 @@
 {
   "name": "beads-ui",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Local‑first UI for Beads — a fast issue tracker for your coding agent.",
   "homepage": "https://github.com/mantoni/beads-ui",
   "type": "module",
