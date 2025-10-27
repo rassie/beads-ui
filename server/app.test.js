@@ -6,6 +6,7 @@ import { getConfig } from './config.js';
 
 /**
  * Narrow to function type for basic checks.
+ *
  * @param {unknown} value
  * @returns {value is Function}
  */

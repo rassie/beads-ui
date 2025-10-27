@@ -5,6 +5,7 @@ import { issueDisplayId } from './issue-id.js';
  * Looks like the current inline ID (monospace `#123`) but acts as a button
  * that copies the full, prefixed ID (e.g., `UI-123`) when activated.
  * Shows transient "Copied" feedback and then restores the ID.
+ *
  * @param {string} id - Full issue id including the prefix (e.g., "UI-123").
  * @param {{ class_name?: string, duration_ms?: number }} [opts]
  * @returns {HTMLButtonElement}
@@ -25,7 +26,7 @@ export function createIssueIdRenderer(id, opts) {
   const label = issueDisplayId(id);
   btn.textContent = label;
 
-  /** Copy handler with feedback */
+  /** Copy handler with feedback. */
   async function doCopy() {
     // Prevent accidental row navigation and parent handlers
     // (click/key handlers call this inside an event context)

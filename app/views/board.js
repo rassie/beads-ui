@@ -23,8 +23,9 @@ import { createTypeBadge } from '../utils/type-badge.js';
  * Push-only: derives items from per-subscription stores.
  *
  * Sorting rules:
- * - Ready/Blocked/In progress: priority asc, then created_at asc
- * - Closed: closed_at desc
+ * - Ready/Blocked/In progress: priority asc, then created_at asc.
+ * - Closed: closed_at desc.
+ *
  * @param {HTMLElement} mount_element
  * @param {unknown} _data - Unused (legacy param retained for call-compat)
  * @param {(id: string) => void} gotoIssue - Navigate to issue detail.
@@ -58,6 +59,7 @@ export function createBoardView(
    * Closed column filter mode.
    * 'today' → items with closed_at since local day start
    * '3' → last 3 days; '7' → last 7 days
+   *
    * @type {'today'|'3'|'7'}
    */
   let closed_filter_mode = 'today';
@@ -165,10 +167,10 @@ export function createBoardView(
 
   /**
    * Enhance rendered board with a11y and keyboard navigation.
-   * - Roving tabindex per column (first card tabbable)
-   * - ArrowUp/ArrowDown within column
-   * - ArrowLeft/ArrowRight to adjacent non-empty column (focus top card)
-   * - Enter/Space to open details for focused card
+   * - Roving tabindex per column (first card tabbable).
+   * - ArrowUp/ArrowDown within column.
+   * - ArrowLeft/ArrowRight to adjacent non-empty column (focus top card).
+   * - Enter/Space to open details for focused card.
    */
   function postRenderEnhance() {
     try {

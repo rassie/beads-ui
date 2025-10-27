@@ -1,5 +1,6 @@
 /**
  * Create a colored badge for a status value.
+ *
  * @param {string | null | undefined} status - 'open' | 'in_progress' | 'closed'
  * @returns {HTMLSpanElement}
  */

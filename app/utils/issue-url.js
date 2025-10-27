@@ -1,5 +1,6 @@
 /**
  * Build a canonical issue hash that retains the view.
+ *
  * @param {'issues'|'epics'|'board'} view
  * @param {string} id
  */

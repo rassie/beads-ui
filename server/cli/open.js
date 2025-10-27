@@ -3,6 +3,7 @@ import http from 'node:http';
 
 /**
  * Compute a platform-specific command to open a URL in the default browser.
+ *
  * @param {string} url
  * @param {string} platform
  * @returns {{ cmd: string, args: string[] }}
@@ -21,6 +22,7 @@ export function computeOpenCommand(url, platform) {
 
 /**
  * Open the given URL in the default browser. Best-effort; resolves true on spawn success.
+ *
  * @param {string} url
  * @returns {Promise<boolean>}
  */
@@ -41,6 +43,7 @@ export async function openUrl(url) {
 /**
  * Wait until the server at the URL accepts a connection, with a brief retry.
  * Does not throw; returns when either a connection was accepted or timeout elapsed.
+ *
  * @param {string} url
  * @param {number} total_timeout_ms
  * @returns {Promise<void>}

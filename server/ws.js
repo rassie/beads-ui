@@ -40,6 +40,7 @@ let MUTATION_GATE = null;
  * suppressed during the window.
  *
  * Fire-and-forget; callers should not await this.
+ *
  * @param {number} [timeout_ms]
  */
 function triggerMutationRefreshOnce(timeout_ms = 500) {
@@ -95,6 +96,7 @@ function triggerMutationRefreshOnce(timeout_ms = 500) {
 
 /**
  * Collect unique active list subscription specs across all connected clients.
+ *
  * @returns {Array<{ type: string, params?: Record<string,string|number|boolean> }>}
  */
 function collectActiveListSpecs() {
@@ -181,6 +183,7 @@ let CURRENT_WSS = null;
 
 /**
  * Get or initialize the subscription state for a socket.
+ *
  * @param {WebSocket} ws
  * @returns {any}
  */
@@ -199,6 +202,7 @@ function ensureSubs(ws) {
 
 /**
  * Get next monotonically increasing revision for a subscription key on this connection.
+ *
  * @param {WebSocket} ws
  * @param {string} key
  */
@@ -306,6 +310,7 @@ function emitSubscriptionDelete(ws, client_id, key, issue_id) {
 /**
  * Refresh a subscription spec: fetch via adapter, apply to registry and emit
  * per-subscription full-issue envelopes to subscribers. Serialized per key.
+ *
  * @param {{ type: string, params?: Record<string, string|number|boolean> }} spec
  */
 async function refreshAndPublish(spec) {
@@ -362,6 +367,7 @@ async function refreshAndPublish(spec) {
 
 /**
  * Apply pre-diff filtering for closed-issues lists based on spec.params.since (epoch ms).
+ *
  * @param {{ type: string, params?: Record<string, string|number|boolean> }} spec
  * @param {Array<{ id: string, updated_at: number, closed_at: number | null } & Record<string, unknown>>} items
  */
@@ -387,6 +393,7 @@ function applyClosedIssuesFilter(spec, items) {
 
 /**
  * Attach a WebSocket server to an existing HTTP server.
+ *
  * @param {Server} http_server
  * @param {{ path?: string, heartbeat_ms?: number, refresh_debounce_ms?: number }} [options]
  * @returns {{ wss: WebSocketServer, broadcast: (type: MessageType, payload?: unknown) => void, scheduleListRefresh: () => void }}
@@ -451,6 +458,7 @@ export function attachWsServer(http_server, options = {}) {
 
   /**
    * Broadcast a server-initiated event to all open clients.
+   *
    * @param {MessageType} type
    * @param {unknown} [payload]
    */
@@ -478,6 +486,7 @@ export function attachWsServer(http_server, options = {}) {
 
 /**
  * Handle an incoming message frame and respond to the same socket.
+ *
  * @param {WebSocket} ws
  * @param {RawData} data
  */

@@ -3,6 +3,7 @@ import { resolveDbPath } from './db.js';
 
 /**
  * Resolve the bd executable path.
+ *
  * @returns {string}
  */
 export function getBdBin() {
@@ -16,6 +17,7 @@ export function getBdBin() {
 /**
  * Run the `bd` CLI with provided arguments.
  * Shell is not used to avoid injection; args must be pre-split.
+ *
  * @param {string[]} args - Arguments to pass (e.g., ["list", "--json"]).
  * @param {{ cwd?: string, env?: Record<string, string | undefined>, timeout_ms?: number }} [options]
  * @returns {Promise<{ code: number, stdout: string, stderr: string }>}
@@ -88,6 +90,7 @@ export function runBd(args, options = {}) {
 
 /**
  * Run `bd` and parse JSON from stdout if exit code is 0.
+ *
  * @param {string[]} args - Must include flags that cause JSON to be printed (e.g., `--json`).
  * @param {{ cwd?: string, env?: Record<string, string | undefined>, timeout_ms?: number }} [options]
  * @returns {Promise<{ code: number, stdoutJson?: unknown, stderr?: string }>}
@@ -109,6 +112,7 @@ export async function runBdJson(args, options = {}) {
 
 /**
  * Add a resolved "--db <path>" pair to args when none present.
+ *
  * @param {string[]} args
  * @param {string} cwd
  * @param {Record<string, string | undefined>} env

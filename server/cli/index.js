@@ -3,6 +3,7 @@ import { printUsage } from './usage.js';
 
 /**
  * Parse argv into a command token and flags.
+ *
  * @param {string[]} args
  * @returns {{ command: string | null, flags: string[] }}
  */
@@ -41,6 +42,7 @@ export function parseArgs(args) {
 /**
  * CLI main entry. Returns an exit code and prints usage on `--help` or errors.
  * No side effects beyond invoking stub handlers.
+ *
  * @param {string[]} args
  * @returns {Promise<number>}
  */

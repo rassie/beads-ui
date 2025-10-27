@@ -6,6 +6,7 @@
 
 /**
  * Known subscription types supported by the server.
+ *
  * @type {Set<string>}
  */
 const SUBSCRIPTION_TYPES = new Set([
@@ -20,6 +21,7 @@ const SUBSCRIPTION_TYPES = new Set([
 
 /**
  * Validate a subscribe-list payload and normalize to a SubscriptionSpec.
+ *
  * @param {unknown} payload
  * @returns {{ ok: true, id: string, spec: { type: string, params?: Record<string, string|number|boolean> } } | { ok: false, code: 'bad_request', message: string }}
  */

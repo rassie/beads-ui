@@ -1,5 +1,6 @@
 /**
  * Print CLI usage to a stream-like target.
+ *
  * @param {{ write: (chunk: string) => any }} out_stream
  */
 export function printUsage(out_stream) {

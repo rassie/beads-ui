@@ -17,10 +17,10 @@ describe('utils/markdown', () => {
 
     render(html`<div>${renderMarkdown('# Title\n\n### Sub')}</div>`, host);
 
-    const h1 = /** @type {HTMLHeadingElement} */ (host.querySelector('h1'));
-    const h3 = /** @type {HTMLHeadingElement} */ (host.querySelector('h3'));
-    expect(h1.textContent).toBe('Title');
-    expect(h3.textContent).toBe('Sub');
+    const h1 = host.querySelector('h1');
+    const h3 = host.querySelector('h3');
+    expect(h1?.textContent).toBe('Title');
+    expect(h3?.textContent).toBe('Sub');
   });
 
   test('renders paragraphs with and without blank lines', () => {

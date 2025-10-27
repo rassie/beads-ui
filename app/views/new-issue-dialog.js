@@ -3,6 +3,7 @@ import { priority_levels } from '../utils/priority.js';
 
 /**
  * Create and manage the New Issue dialog (native <dialog>).
+ *
  * @param {HTMLElement} mount_element - Container to attach dialog (e.g., main#app)
  * @param {(type: import('../protocol.js').MessageType, payload?: unknown) => Promise<unknown>} sendFn - Transport function
  * @param {{ gotoIssue: (id: string) => void }} router - Router for opening details after create
@@ -184,6 +185,7 @@ export function createNewIssueDialog(mount_element, sendFn, router, store) {
 
   /**
    * Extract numeric suffix from an id like "UI-123"; return -1 when absent.
+   *
    * @param {string} id
    */
   function idNumeric(id) {
@@ -193,6 +195,7 @@ export function createNewIssueDialog(mount_element, sendFn, router, store) {
 
   /**
    * Submit handler: validate, create, then open the created issue details.
+   *
    * @returns {Promise<void>}
    */
   async function createNow() {

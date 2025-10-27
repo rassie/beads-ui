@@ -8,6 +8,7 @@ import { issueHashFor } from './utils/issue-url.js';
  * Parse an application hash and extract the selected issue id.
  * Supports canonical form "#/(issues|epics|board)?issue=<id>" and legacy
  * "#/issue/<id>" which we will rewrite to the canonical form.
+ *
  * @param {string} hash
  * @returns {string | null}
  */
@@ -31,6 +32,7 @@ export function parseHash(hash) {
 
 /**
  * Parse the current view from hash.
+ *
  * @param {string} hash
  * @returns {'issues'|'epics'|'board'}
  */
@@ -95,6 +97,7 @@ export function createHashRouter(store) {
     },
     /**
      * Navigate to a top-level view.
+     *
      * @param {'issues'|'epics'|'board'} view
      */
     /**

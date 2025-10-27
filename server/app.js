@@ -6,6 +6,7 @@ import path from 'node:path';
 
 /**
  * Create and configure the Express application.
+ *
  * @param {{ host: string, port: number, env: string, app_dir: string, root_dir: string }} config - Server configuration.
  * @returns {Express} Configured Express app instance.
  */
@@ -28,6 +29,7 @@ export function createApp(config) {
   /**
    * On-demand bundle for the browser using esbuild.
    * Note: esbuild is loaded lazily so tests don't require it to be installed.
+   *
    * @param {Request} _req
    * @param {Response} res
    */

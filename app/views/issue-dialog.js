@@ -10,6 +10,7 @@ import { createIssueIdRenderer } from '../utils/issue-id-renderer.js';
 
 /**
  * Create and manage the Issue Details dialog.
+ *
  * @param {HTMLElement} mount_element - Container to attach the <dialog> to (e.g., #detail-panel)
  * @param {Store} store - Read-only access to app state
  * @param {() => void} onClose - Called when dialog requests close (backdrop/esc/button)

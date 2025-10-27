@@ -10,9 +10,6 @@ import { subKeyOf } from './subscriptions-store.js';
  * push envelopes (snapshot/upsert/delete) per subscription id and expose
  * read-only snapshots for rendering.
  */
-
-/**
- */
 export function createSubscriptionIssueStores() {
   /** @type {Map<string, ReturnType<typeof createSubscriptionIssueStore>>} */
   const stores_by_id = new Map();
@@ -36,6 +33,7 @@ export function createSubscriptionIssueStores() {
   /**
    * Ensure a store exists for client_id and attach a listener that fans out
    * store-level updates to global listeners.
+   *
    * @param {string} client_id
    * @param {{ type: string, params?: Record<string, string|number|boolean> }} [spec]
    * @param {SubscriptionIssueStoreOptions} [options]

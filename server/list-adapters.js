@@ -3,6 +3,7 @@ import { runBdJson } from './bd.js';
 /**
  * Build concrete `bd` CLI args for a subscription type + params.
  * Always includes `--json` for parseable output.
+ *
  * @param {{ type: string, params?: Record<string, string | number | boolean> }} spec
  * @returns {string[]}
  */
@@ -43,9 +44,10 @@ export function mapSubscriptionToBdArgs(spec) {
 
 /**
  * Normalize bd list output to minimal Issue shape used by the registry.
- * - Ensures `id` is a string
- * - Coerces timestamps to numbers
- * - `closed_at` defaults to null when missing or invalid
+ * - Ensures `id` is a string.
+ * - Coerces timestamps to numbers.
+ * - `closed_at` defaults to null when missing or invalid.
+ *
  * @param {unknown} value
  * @returns {Array<{ id: string, created_at: number, updated_at: number, closed_at: number | null } & Record<string, unknown>>}
  */
@@ -95,6 +97,7 @@ export function normalizeIssueList(value) {
 /**
  * Execute the mapped `bd` command for a subscription spec and return normalized items.
  * Errors do not throw; they are surfaced as a structured object.
+ *
  * @param {{ type: string, params?: Record<string, string | number | boolean> }} spec
  * @returns {Promise<FetchListResultSuccess | FetchListResultFailure>}
  */
@@ -171,6 +174,7 @@ export async function fetchListForSubscription(spec) {
 
 /**
  * Create a `bad_request` error object.
+ *
  * @param {string} message
  */
 function badRequest(message) {
@@ -182,6 +186,7 @@ function badRequest(message) {
 
 /**
  * Normalize arbitrary thrown values to a structured error object.
+ *
  * @param {unknown} err
  * @returns {FetchListResultFailure['error']}
  */
@@ -199,6 +204,7 @@ function toErrorObject(err) {
 /**
  * Parse a bd timestamp string to epoch ms using Date.parse.
  * Falls back to numeric coercion when parsing fails.
+ *
  * @param {unknown} v
  * @returns {number}
  */

@@ -36,6 +36,7 @@
 
 /**
  * Create a new, empty entry object.
+ *
  * @returns {Entry}
  */
 function createEntry() {
@@ -49,6 +50,7 @@ function createEntry() {
 
 /**
  * Generate a stable subscription key string from a spec. Sorts params keys.
+ *
  * @param {SubscriptionSpec} spec
  * @returns {string}
  */
@@ -69,6 +71,7 @@ export function keyOf(spec) {
 
 /**
  * Compute a delta between previous and next item maps.
+ *
  * @param {Map<string, ItemMeta>} prev
  * @param {Map<string, ItemMeta>} next
  * @returns {{ added: string[], updated: string[], removed: string[] }}
@@ -101,6 +104,7 @@ export function computeDelta(prev, next) {
 
 /**
  * Normalize array of issue-like objects into an itemsById map.
+ *
  * @param {Array<{ id: string, updated_at: number, closed_at?: number|null }>} items
  * @returns {Map<string, ItemMeta>}
  */
@@ -136,6 +140,7 @@ export class SubscriptionRegistry {
 
   /**
    * Get an entry by key, or null if missing.
+   *
    * @param {string} key
    * @returns {Entry | null}
    */
@@ -145,6 +150,7 @@ export class SubscriptionRegistry {
 
   /**
    * Ensure an entry exists for a spec; returns the key and entry.
+   *
    * @param {SubscriptionSpec} spec
    * @returns {{ key: string, entry: Entry }}
    */
@@ -160,6 +166,7 @@ export class SubscriptionRegistry {
 
   /**
    * Attach a subscriber to a spec. Creates the entry if missing.
+   *
    * @param {SubscriptionSpec} spec
    * @param {WebSocket} ws
    * @returns {{ key: string, subscribed: true }}
@@ -173,6 +180,7 @@ export class SubscriptionRegistry {
   /**
    * Detach a subscriber from the spec. Keeps entry even if empty; eviction
    * is handled by `onDisconnect` sweep.
+   *
    * @param {SubscriptionSpec} spec
    * @param {WebSocket} ws
    * @returns {boolean} true when the subscriber was removed
@@ -189,6 +197,7 @@ export class SubscriptionRegistry {
   /**
    * On socket disconnect, remove it from all subscriber sets and evict any
    * entries that become empty as a result of this sweep.
+   *
    * @param {WebSocket} ws
    */
   onDisconnect(ws) {
@@ -207,6 +216,7 @@ export class SubscriptionRegistry {
 
   /**
    * Serialize a function against a key so only one runs at a time per key.
+   *
    * @template T
    * @param {string} key
    * @param {() => Promise<T>} fn
@@ -243,6 +253,7 @@ export class SubscriptionRegistry {
 
   /**
    * Replace items for a key and compute the delta, storing the new map.
+   *
    * @param {string} key
    * @param {Map<string, ItemMeta>} next_map
    * @returns {{ added: string[], updated: string[], removed: string[] }}
@@ -261,6 +272,7 @@ export class SubscriptionRegistry {
 
   /**
    * Convenience: update items from an array of objects with id/updated_at/closed_at.
+   *
    * @param {string} key
    * @param {Array<{ id: string, updated_at: number, closed_at?: number|null }>} items
    * @returns {{ added: string[], updated: string[], removed: string[] }}

@@ -2,6 +2,7 @@ import { html, render } from 'lit-html';
 
 /**
  * Render the top navigation with three tabs and handle route changes.
+ *
  * @param {HTMLElement} mount_element
  * @param {{ getState: () => any, subscribe: (fn: (s: any) => void) => () => void }} store
  * @param {{ gotoView: (v: 'issues'|'epics'|'board') => void }} router

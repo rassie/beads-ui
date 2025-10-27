@@ -13,6 +13,7 @@ import { cmpClosedDesc, cmpPriorityThenCreated } from './sort.js';
  *
  * Source of truth is per-subscription stores providing snapshots for a given
  * client id. Central issues store fallback has been removed.
+ *
  * @param {{ snapshotFor?: (client_id: string) => IssueLite[], subscribe?: (fn: () => void) => () => void }} [issue_stores]
  */
 export function createListSelectors(issue_stores = undefined) {
@@ -20,6 +21,7 @@ export function createListSelectors(issue_stores = undefined) {
 
   /**
    * Get entities for a subscription id with Issues List sort (priority asc → created asc).
+   *
    * @param {string} client_id
    * @returns {IssueLite[]}
    */
@@ -35,6 +37,7 @@ export function createListSelectors(issue_stores = undefined) {
 
   /**
    * Get entities for a Board column with column-specific sort.
+   *
    * @param {string} client_id
    * @param {'ready'|'blocked'|'in_progress'|'closed'} mode
    * @returns {IssueLite[]}
@@ -58,6 +61,7 @@ export function createListSelectors(issue_stores = undefined) {
   /**
    * Get children for an epic subscribed as client id `epic:${id}`.
    * Sorted as Issues List (priority asc → created asc).
+   *
    * @param {string} epic_id
    * @returns {IssueLite[]}
    */
@@ -79,6 +83,7 @@ export function createListSelectors(issue_stores = undefined) {
 
   /**
    * Subscribe for re-render; triggers once per issues envelope.
+   *
    * @param {() => void} fn
    * @returns {() => void}
    */

@@ -16,6 +16,7 @@
 /**
  * Generate a stable subscription key string from a spec.
  * Mirrors server `keyOf` implementation (sorted params, URLSearchParams).
+ *
  * @param {SubscriptionSpec} spec
  * @returns {string}
  */
@@ -38,9 +39,10 @@ export function subKeyOf(spec) {
  * Create a list subscription store.
  *
  * Wiring:
- *  - Use `subscribeList` to register a subscription and send the request.
+ * - Use `subscribeList` to register a subscription and send the request.
  *
  * Selectors are synchronous and return derived state by client id.
+ *
  * @param {(type: MessageType, payload?: unknown) => Promise<unknown>} send - ws send.
  */
 export function createSubscriptionStore(send) {
@@ -51,6 +53,7 @@ export function createSubscriptionStore(send) {
 
   /**
    * Apply a delta to all client ids mapped to a given key.
+   *
    * @param {string} key
    * @param {{ added: string[], updated: string[], removed: string[] }} delta
    */
@@ -91,6 +94,7 @@ export function createSubscriptionStore(send) {
    * Subscribe to a list spec with a client-provided id.
    * Returns an unsubscribe function.
    * Creates an empty items store immediately; server will publish deltas.
+   *
    * @param {string} client_id
    * @param {SubscriptionSpec} spec
    * @returns {Promise<() => Promise<void>>}
@@ -158,6 +162,7 @@ export function createSubscriptionStore(send) {
   const selectors = {
     /**
      * Get an array of item ids for a subscription.
+     *
      * @param {string} client_id
      * @returns {string[]}
      */
@@ -170,6 +175,7 @@ export function createSubscriptionStore(send) {
     },
     /**
      * Check if an id exists in a subscription.
+     *
      * @param {string} client_id
      * @param {string} id
      * @returns {boolean}
@@ -183,6 +189,7 @@ export function createSubscriptionStore(send) {
     },
     /**
      * Count items for a subscription.
+     *
      * @param {string} client_id
      * @returns {number}
      */
@@ -192,6 +199,7 @@ export function createSubscriptionStore(send) {
     },
     /**
      * Return a shallow object copy `{ [id]: true }` for rendering helpers.
+     *
      * @param {string} client_id
      * @returns {Record<string, true>}
      */

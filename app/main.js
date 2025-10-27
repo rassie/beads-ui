@@ -20,6 +20,7 @@ import { createWsClient } from './ws.js';
 
 /**
  * Bootstrap the SPA shell with two panels.
+ *
  * @param {HTMLElement} root_element - The container element to render into.
  */
 export function bootstrap(root_element) {
@@ -415,6 +416,7 @@ export function bootstrap(root_element) {
 
     /**
      * Compute subscription spec for Issues tab based on filters.
+     *
      * @param {{ status?: string }} filters
      * @returns {{ type: string, params?: Record<string, string|number|boolean> }}
      */
@@ -437,6 +439,7 @@ export function bootstrap(root_element) {
     let last_issues_spec_key = null;
     /**
      * Ensure only the active tab has subscriptions; clean up previous.
+     *
      * @param {{ view: 'issues'|'epics'|'board', filters: any }} s
      */
     function ensureTabSubscriptions(s) {
@@ -596,6 +599,7 @@ export function bootstrap(root_element) {
 
     /**
      * Manage route visibility and list subscriptions per view.
+     *
      * @param {{ selected_id: string | null, view: 'issues'|'epics'|'board', filters: any }} s
      */
     const onRouteChange = (s) => {

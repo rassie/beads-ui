@@ -9,7 +9,7 @@ export default defineConfig([
     ignores: ['node_modules', 'coverage', 'dist', '.beads']
   },
   js.configs.recommended,
-  plugin_jsdoc.configs['flat/recommended'],
+  plugin_jsdoc.configs['flat/contents-typescript-flavor-error'],
   {
     settings: {
       jsdoc: {
@@ -20,12 +20,10 @@ export default defineConfig([
       }
     },
     rules: {
-      'jsdoc/require-jsdoc': 'off',
-      'jsdoc/require-param-description': 'off',
-      'jsdoc/require-returns-description': 'off',
-      'jsdoc/require-property-description': 'off',
-      'jsdoc/reject-any-type': 'off',
-      'jsdoc/require-returns': 'off'
+      'jsdoc/check-line-alignment': 'warn',
+      'jsdoc/tag-lines': ['warn', 'never', { startLines: 1 }],
+      'jsdoc/text-escaping': 'off',
+      'jsdoc/require-hyphen-before-param-description': 'warn'
     }
   },
   {

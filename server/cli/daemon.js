@@ -13,6 +13,7 @@ import { resolveDbPath } from '../db.js';
  * Resolve the runtime directory used for PID and log files.
  * Prefers `BDUI_RUNTIME_DIR`, then `$XDG_RUNTIME_DIR/beads-ui`,
  * and finally `os.tmpdir()/beads-ui`.
+ *
  * @returns {string}
  */
 export function getRuntimeDir() {
@@ -31,6 +32,7 @@ export function getRuntimeDir() {
 
 /**
  * Ensure a directory exists with safe permissions and return its path.
+ *
  * @param {string} dir_path
  * @returns {string}
  */
@@ -61,6 +63,7 @@ export function getLogFilePath() {
 
 /**
  * Read PID from the PID file if present.
+ *
  * @returns {number | null}
  */
 export function readPidFile() {
@@ -100,6 +103,7 @@ export function removePidFile() {
 
 /**
  * Check whether a process is running.
+ *
  * @param {number} pid
  * @returns {boolean}
  */
@@ -122,6 +126,7 @@ export function isProcessRunning(pid) {
 
 /**
  * Compute the absolute path to the server entry file.
+ *
  * @returns {string}
  */
 export function getServerEntryPath() {
@@ -134,6 +139,7 @@ export function getServerEntryPath() {
 /**
  * Spawn the server as a detached daemon, redirecting stdio to the log file.
  * Writes the PID file upon success.
+ *
  * @returns {{ pid: number } | null} Returns child PID on success; null on failure.
  */
 export function startDaemon() {
@@ -183,6 +189,7 @@ export function startDaemon() {
 
 /**
  * Send SIGTERM then (optionally) SIGKILL to stop a process and wait for exit.
+ *
  * @param {number} pid
  * @param {number} timeout_ms
  * @returns {Promise<boolean>} Resolves true if the process is gone.

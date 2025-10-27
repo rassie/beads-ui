@@ -1,5 +1,6 @@
 /**
  * Create a compact, colored badge for an issue type.
+ *
  * @param {string | undefined | null} issue_type - One of: bug, feature, task, epic, chore
  * @returns {HTMLSpanElement}
  */

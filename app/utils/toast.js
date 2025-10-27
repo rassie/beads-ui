@@ -1,5 +1,6 @@
 /**
  * Show a transient global toast message anchored to the viewport.
+ *
  * @param {string} text - Message text.
  * @param {'info'|'success'|'error'} [variant] - Visual variant.
  * @param {number} [duration_ms] - Auto-dismiss delay in milliseconds.

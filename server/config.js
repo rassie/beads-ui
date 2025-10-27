@@ -6,8 +6,9 @@ import { fileURLToPath } from 'node:url';
  * Notes:
  * - `app_dir` is resolved relative to the installed package location.
  * - `root_dir` represents the directory where the process was invoked
- *   (i.e., the current working directory) so DB resolution follows the
- *   caller's context rather than the install location.
+ * (i.e., the current working directory) so DB resolution follows the
+ * caller's context rather than the install location.
+ *
  * @returns {{ host: string, port: number, env: string, app_dir: string, root_dir: string, url: string }}
  */
 export function getConfig() {

@@ -58,6 +58,7 @@ export const MESSAGE_TYPES = /** @type {const} */ ([
 
 /**
  * Generate a lexically sortable request id.
+ *
  * @returns {string}
  */
 export function nextId() {
@@ -68,6 +69,7 @@ export function nextId() {
 
 /**
  * Create a request envelope.
+ *
  * @param {MessageType} type - Message type.
  * @param {unknown} [payload] - Message payload.
  * @param {string} [id] - Optional id; generated if omitted.
@@ -79,6 +81,7 @@ export function makeRequest(type, payload, id = nextId()) {
 
 /**
  * Create a successful reply envelope for a given request.
+ *
  * @param {RequestEnvelope} req - Original request.
  * @param {unknown} [payload] - Reply payload.
  * @returns {ReplyEnvelope}
@@ -89,10 +92,11 @@ export function makeOk(req, payload) {
 
 /**
  * Create an error reply envelope for a given request.
+ *
  * @param {RequestEnvelope} req - Original request.
- * @param {string} code - Error code.
- * @param {string} message - Error message.
- * @param {unknown} [details] - Extra details.
+ * @param {string} code
+ * @param {string} message
+ * @param {unknown} [details]
  * @returns {ReplyEnvelope}
  */
 export function makeError(req, code, message, details) {
@@ -106,6 +110,7 @@ export function makeError(req, code, message, details) {
 
 /**
  * Check if a value is a plain object.
+ *
  * @param {unknown} value
  * @returns {value is Record<string, unknown>}
  */
@@ -115,6 +120,7 @@ function isRecord(value) {
 
 /**
  * Type guard for MessageType values.
+ *
  * @param {unknown} value
  * @returns {value is MessageType}
  */
@@ -127,6 +133,7 @@ export function isMessageType(value) {
 
 /**
  * Type guard for RequestEnvelope.
+ *
  * @param {unknown} value
  * @returns {value is RequestEnvelope}
  */
@@ -143,6 +150,7 @@ export function isRequest(value) {
 
 /**
  * Type guard for ReplyEnvelope.
+ *
  * @param {unknown} value
  * @returns {value is ReplyEnvelope}
  */
@@ -173,6 +181,7 @@ export function isReply(value) {
 /**
  * Normalize and validate an incoming JSON value as a RequestEnvelope.
  * Throws a user-friendly error if invalid.
+ *
  * @param {unknown} json
  * @returns {RequestEnvelope}
  */
@@ -185,6 +194,7 @@ export function decodeRequest(json) {
 
 /**
  * Normalize and validate an incoming JSON value as a ReplyEnvelope.
+ *
  * @param {unknown} json
  * @returns {ReplyEnvelope}
  */

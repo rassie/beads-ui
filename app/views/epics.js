@@ -9,11 +9,12 @@ import { createIssueRowRenderer } from './issue-row.js';
 
 /**
  * Epics view (push-only):
- * - Derives epic groups from the local issues store (no RPC reads)
- * - Subscribes to `tab:epics` for top-level membership
- * - On expand, subscribes to `detail:{id}` (issue-detail) for the epic
- * - Renders children from the epic detail's `dependents` list
- * - Provides inline edits via mutations; UI re-renders on push
+ * - Derives epic groups from the local issues store (no RPC reads).
+ * - Subscribes to `tab:epics` for top-level membership.
+ * - On expand, subscribes to `detail:{id}` (issue-detail) for the epic.
+ * - Renders children from the epic detail's `dependents` list.
+ * - Provides inline edits via mutations; UI re-renders on push.
+ *
  * @param {HTMLElement} mount_element
  * @param {{ updateIssue: (input: any) => Promise<any> }} data
  * @param {(id: string) => void} goto_issue - Navigate to issue detail.

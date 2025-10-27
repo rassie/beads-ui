@@ -1,4 +1,3 @@
-/* global Console */
 /**
  * @import { MessageType } from './protocol.js'
  */
@@ -27,6 +26,7 @@ import { MESSAGE_TYPES, makeRequest, nextId } from './protocol.js';
 
 /**
  * Create a WebSocket client with auto-reconnect and message correlation.
+ *
  * @param {ClientOptions} [options]
  */
 export function createWsClient(options = {}) {
@@ -211,6 +211,7 @@ export function createWsClient(options = {}) {
   return {
     /**
      * Send a request and await its correlated reply payload.
+     *
      * @param {MessageType} type
      * @param {unknown} [payload]
      * @returns {Promise<any>}
@@ -233,6 +234,7 @@ export function createWsClient(options = {}) {
     /**
      * Register a handler for a server-initiated event type.
      * Returns an unsubscribe function.
+     *
      * @param {MessageType} type
      * @param {(payload: any) => void} handler
      * @returns {() => void}
@@ -249,6 +251,7 @@ export function createWsClient(options = {}) {
     },
     /**
      * Subscribe to connection state changes.
+     *
      * @param {(state: ConnectionState) => void} handler
      * @returns {() => void}
      */

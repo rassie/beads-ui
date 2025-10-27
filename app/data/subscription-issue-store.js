@@ -9,10 +9,9 @@ import { cmpPriorityThenCreated } from './sort.js';
  * delete messages in revision order and preserves object identity per id.
  */
 
-// Sort comparator is centralized in app/data/sort.js
-
 /**
  * Create a SubscriptionIssueStore for a given subscription id.
+ *
  * @param {string} id
  * @param {SubscriptionIssueStoreOptions} [options]
  * @returns {SubscriptionIssueStore}
@@ -50,6 +49,7 @@ export function createSubscriptionIssueStore(id, options = {}) {
    * - Ignore messages with revision <= last_revision (except snapshot which resets first).
    * - Preserve object identity when updating an existing item by mutating
    *   fields in place rather than replacing the object reference.
+   *
    * @param {{ type: 'snapshot'|'upsert'|'delete', id: string, revision: number, issues?: any[], issue?: any, issue_id?: string }} msg
    */
   function applyPush(msg) {

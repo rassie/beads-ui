@@ -12,6 +12,7 @@ import { createTypeBadge } from '../utils/type-badge.js';
 /**
  * Create a reusable issue row renderer used by list and epics views.
  * Handles inline editing for title/assignee and selects for status/priority.
+ *
  * @param {{
  *   navigate: (id: string) => void,
  *   onUpdate: (id: string, patch: { title?: string, assignee?: string, status?: 'open'|'in_progress'|'closed', priority?: number }) => Promise<void>,

@@ -2,6 +2,7 @@ import { priority_levels } from './priority.js';
 
 /**
  * Create a colored badge for a priority value (0..4).
+ *
  * @param {number | null | undefined} priority
  * @returns {HTMLSpanElement}
  */

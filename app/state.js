@@ -28,6 +28,7 @@
 
 /**
  * Create a simple store for application state.
+ *
  * @param {Partial<AppState>} [initial]
  * @returns {{ getState: () => AppState, setState: (patch: { selected_id?: string | null, filters?: Partial<Filters> }) => void, subscribe: (fn: (s: AppState) => void) => () => void }}
  */
@@ -71,6 +72,7 @@ export function createStore(initial = {}) {
     },
     /**
      * Update state. Nested filters can be partial.
+     *
      * @param {{ selected_id?: string | null, filters?: Partial<Filters>, board?: Partial<BoardState> }} patch
      */
     setState(patch) {

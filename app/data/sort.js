@@ -9,6 +9,7 @@
 
 /**
  * Compare by priority asc, then created_at asc, then id asc.
+ *
  * @param {IssueLite} a
  * @param {IssueLite} b
  */
@@ -30,6 +31,7 @@ export function cmpPriorityThenCreated(a, b) {
 
 /**
  * Compare by closed_at desc, then id asc for stability.
+ *
  * @param {IssueLite} a
  * @param {IssueLite} b
  */

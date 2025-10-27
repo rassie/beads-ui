@@ -44,6 +44,7 @@ function defaultNavigateFn(hash) {
 
 /**
  * Create the Issue Detail view.
+ *
  * @param {HTMLElement} mount_element - Element to render into.
  * @param {(type: string, payload?: unknown) => Promise<unknown>} sendFn - RPC transport.
  * @param {(hash: string) => void} [navigateFn] - Navigation function; defaults to setting location.hash.
@@ -1071,6 +1072,7 @@ export function createDetailView(
 
   /**
    * Create a click handler for the remove button of a dependency row.
+   *
    * @param {string} did
    * @param {'Dependencies'|'Dependents'} title
    * @returns {(ev: Event) => Promise<void>}
@@ -1114,6 +1116,7 @@ export function createDetailView(
 
   /**
    * Create a click handler for the Add button in a dependency section.
+   *
    * @param {Dependency[]} items
    * @param {'Dependencies'|'Dependents'} title
    * @returns {(ev: Event) => Promise<void>}

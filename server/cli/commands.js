@@ -13,6 +13,7 @@ import { openUrl, waitForServer } from './open.js';
  * Handle `start` command. Idempotent when already running.
  * - Spawns a detached server process, writes PID file, returns 0.
  * - If already running (PID file present and process alive), prints URL and returns 0.
+ *
  * @returns {Promise<number>} Exit code (0 on success)
  */
 /**
@@ -52,6 +53,7 @@ export async function handleStart(options) {
  * Handle `stop` command.
  * - Sends SIGTERM and waits for exit (with SIGKILL fallback), removes PID file.
  * - Returns 2 if not running.
+ *
  * @returns {Promise<number>} Exit code
  */
 export async function handleStop() {
@@ -78,12 +80,14 @@ export async function handleStop() {
 
 /**
  * Handle `restart` command: stop (ignore not-running) then start.
+ *
  * @returns {Promise<number>} Exit code (0 on success)
  */
 /**
  * Handle `restart` command: stop (ignore not-running) then start.
  * Accepts the same options as `handleStart` and passes them through,
  * so restart only opens a browser when `no_open` is explicitly false.
+ *
  * @param {{ no_open?: boolean }} [options]
  * @returns {Promise<number>}
  */

@@ -15,6 +15,7 @@ import { createIssueRowRenderer } from './issue-row.js';
 
 /**
  * Create the Issues List view.
+ *
  * @param {HTMLElement} mount_element - Element to render into.
  * @param {(type: string, payload?: unknown) => Promise<unknown>} sendFn - RPC transport.
  * @param {(hash: string) => void} [navigate_fn] - Navigation function (defaults to setting location.hash).
@@ -25,6 +26,7 @@ import { createIssueRowRenderer } from './issue-row.js';
  */
 /**
  * Create the Issues List view.
+ *
  * @param {HTMLElement} mount_element
  * @param {(type: string, payload?: unknown) => Promise<unknown>} sendFn
  * @param {(hash: string) => void} [navigateFn]
@@ -104,6 +106,7 @@ export function createListView(
 
   /**
    * Event: type select change.
+   *
    * @param {Event} ev
    */
   const onTypeChange = (ev) => {
@@ -237,6 +240,7 @@ export function createListView(
 
   /**
    * Update minimal fields inline via ws mutations and refresh that row's data.
+   *
    * @param {string} id
    * @param {{ [k: string]: any }} patch
    */

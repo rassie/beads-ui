@@ -11,6 +11,7 @@ import path from 'node:path';
  *
  * Returns a normalized absolute path and a `source` indicator. Existence is
  * returned via the `exists` boolean.
+ *
  * @param {{ cwd?: string, env?: Record<string, string | undefined>, explicit_db?: string }} [options]
  * @returns {{ path: string, source: 'flag'|'env'|'nearest'|'home-default', exists: boolean }}
  */
@@ -48,6 +49,7 @@ export function resolveDbPath(options = {}) {
 /**
  * Find nearest .beads/*.db by walking up from start.
  * First alphabetical .db.
+ *
  * @param {string} start
  * @returns {string | null}
  */
@@ -79,6 +81,7 @@ export function findNearestBeadsDb(start) {
 
 /**
  * Resolve possibly relative `p` against `cwd` to an absolute filesystem path.
+ *
  * @param {string} p
  * @param {string} cwd
  */
