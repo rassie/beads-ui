@@ -1,5 +1,14 @@
 # Changes
 
+## 0.3.1
+
+- [`3912ae5`](https://github.com/mantoni/beads-ui/commit/3912ae552b1cc97e61fbaaa0815ca77675c542e4)
+  Status filter intermittently not applied on Issues screen
+- [`a160484`](https://github.com/mantoni/beads-ui/commit/a16048479d1d7d61ed4ad4e53365a5736eb053af)
+  Upgrade eslint-plugin-jsdoc and switch config
+
+_Released by [Maximilian Antoni](https://github.com/mantoni) on 2025-10-27._
+
 ## 0.3.0
 
 - 🍏 Rewrite data-exchange layer to push-only updates via WebSocket.
