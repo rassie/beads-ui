@@ -39,14 +39,42 @@ export function createSubscriptionIssueStores() {
    * @param {SubscriptionIssueStoreOptions} [options]
    */
   function register(client_id, spec, options) {
-    key_by_id.set(client_id, spec ? subKeyOf(spec) : '');
-    if (!stores_by_id.has(client_id)) {
+    const next_key = spec ? subKeyOf(spec) : '';
+    const prev_key = key_by_id.get(client_id) || '';
+    const has_store = stores_by_id.has(client_id);
+    // If the subscription spec changed for an existing client id, replace the
+    // underlying store to reset revision state and avoid ignoring a fresh
+    // snapshot with a lower revision (different server list).
+    if (has_store && prev_key && next_key && prev_key !== next_key) {
+      const prev_store = stores_by_id.get(client_id);
+      if (prev_store) {
+        try {
+          prev_store.dispose();
+        } catch {
+          // ignore
+        }
+      }
+      const off_prev = store_unsubs.get(client_id);
+      if (off_prev) {
+        try {
+          off_prev();
+        } catch {
+          // ignore
+        }
+        store_unsubs.delete(client_id);
+      }
+      const new_store = createSubscriptionIssueStore(client_id, options);
+      stores_by_id.set(client_id, new_store);
+      const off_new = new_store.subscribe(() => emit());
+      store_unsubs.set(client_id, off_new);
+    } else if (!has_store) {
       const store = createSubscriptionIssueStore(client_id, options);
       stores_by_id.set(client_id, store);
       // Fan out per-store events to global subscribers
       const off = store.subscribe(() => emit());
       store_unsubs.set(client_id, off);
     }
+    key_by_id.set(client_id, next_key);
     return () => unregister(client_id);
   }
 
