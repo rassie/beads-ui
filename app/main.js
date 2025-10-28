@@ -8,6 +8,7 @@ import { createSubscriptionIssueStores } from './data/subscription-issue-stores.
 import { createSubscriptionStore } from './data/subscriptions-store.js';
 import { createHashRouter, parseHash } from './router.js';
 import { createStore } from './state.js';
+import { debug } from './utils/logging.js';
 import { showToast } from './utils/toast.js';
 import { createBoardView } from './views/board.js';
 import { createDetailView } from './views/detail.js';
@@ -24,6 +25,9 @@ import { createWsClient } from './ws.js';
  * @param {HTMLElement} root_element - The container element to render into.
  */
 export function bootstrap(root_element) {
+  const log = debug('main');
+  log('bootstrap start');
+
   // Render route shells (nav is mounted in header)
   const shell = html`
     <section id="issues-root" class="route issues">
@@ -101,6 +105,7 @@ export function bootstrap(root_element) {
     if (typeof client.onConnection === 'function') {
       /** @type {(s: 'connecting'|'open'|'closed'|'reconnecting') => void} */
       const onConn = (s) => {
+        log('ws state %s', s);
         if (s === 'reconnecting' || s === 'closed') {
           had_disconnect = true;
           showToast('Connection lost. Reconnecting…', 'error', 4000);
@@ -145,8 +150,8 @@ export function bootstrap(root_element) {
           };
         }
       }
-    } catch {
-      // ignore parse errors
+    } catch (err) {
+      log('filters parse error: %o', err);
     }
     // Load last-view from storage
     /** @type {'issues'|'epics'|'board'} */
@@ -160,8 +165,8 @@ export function bootstrap(root_element) {
       ) {
         last_view = raw_view;
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      log('view parse error: %o', err);
     }
     // Load board preferences
     /** @type {{ closed_filter: 'today'|'3'|'7' }} */
@@ -177,8 +182,8 @@ export function bootstrap(root_element) {
           }
         }
       }
-    } catch {
-      // ignore parse errors
+    } catch (err) {
+      log('board prefs parse error: %o', err);
     }
 
     const store = createStore({
@@ -233,7 +238,8 @@ export function bootstrap(root_element) {
       if (type === 'list-issues') {
         try {
           return listSelectors.selectIssuesFor('tab:issues');
-        } catch {
+        } catch (err) {
+          log('list selectors failed: %o', err);
           return [];
         }
       }
@@ -322,8 +328,8 @@ export function bootstrap(root_element) {
       // Register store first to avoid dropping the initial snapshot
       try {
         sub_issue_stores.register(client_id, spec);
-      } catch {
-        // ignore
+      } catch (err) {
+        log('register detail store failed: %o', err);
       }
       void subscriptions.subscribeList(client_id, spec).catch(() => {});
     }
@@ -450,8 +456,8 @@ export function bootstrap(root_element) {
         // Register store first to capture the initial snapshot
         try {
           sub_issue_stores.register('tab:issues', spec);
-        } catch {
-          // ignore
+        } catch (err) {
+          log('register issues store failed: %o', err);
         }
         // Only (re)subscribe if not yet subscribed or the spec changed
         if (!unsub_issues_tab || key !== last_issues_spec_key) {
@@ -461,8 +467,8 @@ export function bootstrap(root_element) {
               unsub_issues_tab = unsub;
               last_issues_spec_key = key;
             })
-            .catch(() => {
-              // ignore transport errors; retry on next change
+            .catch((err) => {
+              log('subscribe issues failed: %o', err);
             });
         }
       } else if (unsub_issues_tab) {
@@ -471,8 +477,8 @@ export function bootstrap(root_element) {
         last_issues_spec_key = null;
         try {
           sub_issue_stores.unregister('tab:issues');
-        } catch {
-          // ignore
+        } catch (err) {
+          log('unregister issues store failed: %o', err);
         }
       }
 
@@ -481,8 +487,8 @@ export function bootstrap(root_element) {
         // Register store first to avoid race with initial snapshot
         try {
           sub_issue_stores.register('tab:epics', { type: 'epics' });
-        } catch {
-          // ignore
+        } catch (err) {
+          log('register epics store failed: %o', err);
         }
         void subscriptions
           .subscribeList('tab:epics', { type: 'epics' })
@@ -495,8 +501,8 @@ export function bootstrap(root_element) {
         unsub_epics_tab = null;
         try {
           sub_issue_stores.unregister('tab:epics');
-        } catch {
-          // ignore
+        } catch (err) {
+          log('unregister epics store failed: %o', err);
         }
       }
 
@@ -507,8 +513,8 @@ export function bootstrap(root_element) {
             sub_issue_stores.register('tab:board:ready', {
               type: 'ready-issues'
             });
-          } catch {
-            // ignore
+          } catch (err) {
+            log('register board:ready store failed: %o', err);
           }
           void subscriptions
             .subscribeList('tab:board:ready', { type: 'ready-issues' })
@@ -520,8 +526,8 @@ export function bootstrap(root_element) {
             sub_issue_stores.register('tab:board:in-progress', {
               type: 'in-progress-issues'
             });
-          } catch {
-            // ignore
+          } catch (err) {
+            log('register board:in-progress store failed: %o', err);
           }
           void subscriptions
             .subscribeList('tab:board:in-progress', {
@@ -535,8 +541,8 @@ export function bootstrap(root_element) {
             sub_issue_stores.register('tab:board:closed', {
               type: 'closed-issues'
             });
-          } catch {
-            // ignore
+          } catch (err) {
+            log('register board:closed store failed: %o', err);
           }
           void subscriptions
             .subscribeList('tab:board:closed', { type: 'closed-issues' })
@@ -548,8 +554,8 @@ export function bootstrap(root_element) {
             sub_issue_stores.register('tab:board:blocked', {
               type: 'blocked-issues'
             });
-          } catch {
-            // ignore
+          } catch (err) {
+            log('register board:blocked store failed: %o', err);
           }
           void subscriptions
             .subscribeList('tab:board:blocked', { type: 'blocked-issues' })
@@ -563,8 +569,8 @@ export function bootstrap(root_element) {
           unsub_board_ready = null;
           try {
             sub_issue_stores.unregister('tab:board:ready');
-          } catch {
-            // ignore
+          } catch (err) {
+            log('unregister board:ready failed: %o', err);
           }
         }
         if (unsub_board_in_progress) {
@@ -572,8 +578,8 @@ export function bootstrap(root_element) {
           unsub_board_in_progress = null;
           try {
             sub_issue_stores.unregister('tab:board:in-progress');
-          } catch {
-            // ignore
+          } catch (err) {
+            log('unregister board:in-progress failed: %o', err);
           }
         }
         if (unsub_board_closed) {
@@ -581,8 +587,8 @@ export function bootstrap(root_element) {
           unsub_board_closed = null;
           try {
             sub_issue_stores.unregister('tab:board:closed');
-          } catch {
-            // ignore
+          } catch (err) {
+            log('unregister board:closed failed: %o', err);
           }
         }
         if (unsub_board_blocked) {
@@ -590,8 +596,8 @@ export function bootstrap(root_element) {
           unsub_board_blocked = null;
           try {
             sub_issue_stores.unregister('tab:board:blocked');
-          } catch {
-            // ignore
+          } catch (err) {
+            log('unregister board:blocked failed: %o', err);
           }
         }
       }
@@ -621,8 +627,8 @@ export function bootstrap(root_element) {
       }
       try {
         window.localStorage.setItem('beads-ui.view', s.view);
-      } catch {
-        // ignore
+      } catch (err) {
+        log('persist view failed: %o', err);
       }
     };
     store.subscribe(onRouteChange);

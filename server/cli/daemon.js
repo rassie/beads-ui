@@ -140,9 +140,10 @@ export function getServerEntryPath() {
  * Spawn the server as a detached daemon, redirecting stdio to the log file.
  * Writes the PID file upon success.
  *
+ * @param {{ is_debug?: boolean }} [options]
  * @returns {{ pid: number } | null} Returns child PID on success; null on failure.
  */
-export function startDaemon() {
+export function startDaemon(options = {}) {
   const server_entry = getServerEntryPath();
   const log_file = getLogFilePath();
 
@@ -151,6 +152,9 @@ export function startDaemon() {
   let log_fd;
   try {
     log_fd = fs.openSync(log_file, 'a');
+    if (options.is_debug) {
+      console.debug('log file  ', log_file);
+    }
   } catch {
     // If log cannot be opened, fallback to ignoring stdio
     log_fd = -1;
@@ -170,11 +174,15 @@ export function startDaemon() {
     child.unref();
     const child_pid = typeof child.pid === 'number' ? child.pid : -1;
     if (child_pid > 0) {
+      if (options.is_debug) {
+        console.debug('starting  ', child_pid);
+      }
       writePidFile(child_pid);
       return { pid: child_pid };
     }
     return null;
   } catch (err) {
+    console.error('start error', err);
     // Log startup error to log file for traceability
     try {
       const message =
@@ -242,12 +250,12 @@ function sleep(ms) {
  * Print the server URL derived from current config.
  */
 export function printServerUrl() {
-  const { url } = getConfig();
-  console.log(url);
-
   // Resolve from the caller's working directory by default
   const resolved_db = resolveDbPath();
   console.log(
-    `db: ${resolved_db.path} (${resolved_db.source}${resolved_db.exists ? '' : ', missing'})`
+    `beads db   ${resolved_db.path} (${resolved_db.source}${resolved_db.exists ? '' : ', missing'})`
   );
+
+  const { url, env } = getConfig();
+  console.log(`beads ui   listening on ${url} (${env})`);
 }

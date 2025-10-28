@@ -6,9 +6,12 @@
 import { WebSocketServer } from 'ws';
 import { runBd, runBdJson } from './bd.js';
 import { fetchListForSubscription } from './list-adapters.js';
+import { debug } from './logging.js';
 import { isRequest, makeError, makeOk } from './protocol.js';
 import { keyOf, registry } from './subscriptions.js';
 import { validateSubscribeListPayload } from './validators.js';
+
+const log = debug('ws');
 
 /**
  * Debounced refresh scheduling for active list subscriptions.
@@ -77,6 +80,7 @@ function triggerMutationRefreshOnce(timeout_ms = 500) {
 
   // After resolution, run a single refresh across active subs and clear gate
   void p.then(async () => {
+    log('mutation window resolved → refresh active subs');
     try {
       await refreshAllActiveListSubscriptions();
     } catch {
@@ -413,6 +417,7 @@ export function attachWsServer(http_server, options = {}) {
 
   // Heartbeat: track if client answered the last ping
   wss.on('connection', (ws) => {
+    log('client connected');
     // @ts-expect-error add marker property
     ws.isAlive = true;
 
@@ -507,6 +512,7 @@ export async function handleMessage(ws, data) {
   }
 
   if (!isRequest(json)) {
+    log('invalid request');
     const reply = {
       id: 'unknown',
       ok: false,
@@ -527,6 +533,7 @@ export async function handleMessage(ws, data) {
 
   // subscribe-list: payload { id: string, type: string, params?: object }
   if (req.type === 'subscribe-list') {
+    log('subscribe-list %s', /** @type {any} */ (req.payload)?.id || '');
     const validation = validateSubscribeListPayload(
       /** @type {any} */ (req.payload || {})
     );
@@ -562,6 +569,7 @@ export async function handleMessage(ws, data) {
 
   // unsubscribe-list: payload { id: string }
   if (req.type === 'unsubscribe-list') {
+    log('unsubscribe-list %s', /** @type {any} */ (req.payload)?.id || '');
     const { id: client_id } = /** @type {any} */ (req.payload || {});
     if (typeof client_id !== 'string' || client_id.length === 0) {
       ws.send(
@@ -646,6 +654,7 @@ export async function handleMessage(ws, data) {
 
   // update-status
   if (req.type === 'update-status') {
+    log('update-status');
     const { id, status } = /** @type {any} */ (req.payload);
     const allowed = new Set(['open', 'in_progress', 'closed']);
     if (
@@ -691,6 +700,7 @@ export async function handleMessage(ws, data) {
 
   // update-priority
   if (req.type === 'update-priority') {
+    log('update-priority');
     const { id, priority } = /** @type {any} */ (req.payload);
     if (
       typeof id !== 'string' ||
@@ -735,6 +745,7 @@ export async function handleMessage(ws, data) {
 
   // edit-text
   if (req.type === 'edit-text') {
+    log('edit-text');
     const { id, field, value } = /** @type {any} */ (req.payload);
     if (
       typeof id !== 'string' ||
@@ -798,6 +809,7 @@ export async function handleMessage(ws, data) {
 
   // create-issue
   if (req.type === 'create-issue') {
+    log('create-issue');
     const { title, type, priority, description } = /** @type {any} */ (
       req.payload || {}
     );

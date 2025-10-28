@@ -1,6 +1,8 @@
 /**
  * @import { MessageType } from '../protocol.js'
  */
+import { debug } from '../utils/logging.js';
+
 /**
  * Data layer: typed wrappers around the ws transport for mutations and
  * single-issue fetch. List reads have been removed in favor of push-only
@@ -10,6 +12,7 @@
  * @returns {{ updateIssue: (input: { id: string, title?: string, acceptance?: string, notes?: string, design?: string, status?: 'open'|'in_progress'|'closed', priority?: number, assignee?: string }) => Promise<unknown> }}
  */
 export function createDataLayer(transport) {
+  const log = debug('data');
   /**
    * Update issue fields by dispatching specific mutations.
    * Supported fields: title, acceptance, notes, design, status, priority, assignee.
@@ -20,6 +23,9 @@ export function createDataLayer(transport) {
    */
   async function updateIssue(input) {
     const { id } = input;
+
+    log('updateIssue %s %o', id, Object.keys(input));
+
     /** @type {unknown} */
     let last = null;
     if (typeof input.title === 'string') {
@@ -69,6 +75,7 @@ export function createDataLayer(transport) {
         assignee: input.assignee
       });
     }
+    log('updateIssue done %s', id);
     return last;
   }
 

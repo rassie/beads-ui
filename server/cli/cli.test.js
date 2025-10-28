@@ -1,6 +1,12 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import * as logging from '../logging.js';
 import * as commands from './commands.js';
 import { main, parseArgs } from './index.js';
+
+vi.mock('../logging.js', () => ({
+  enableAllDebug: vi.fn(),
+  debug: () => () => {}
+}));
 
 vi.mock('./commands.js', () => ({
   handleStart: vi.fn().mockResolvedValue(0),
@@ -34,6 +40,13 @@ describe('parseArgs', () => {
     expect(parseArgs(['restart']).command).toBe('restart');
   });
 
+  test('recognizes --debug and -d flags', () => {
+    const r1 = parseArgs(['--debug']);
+    const r2 = parseArgs(['-d']);
+
+    expect(r1.flags.includes('debug')).toBe(true);
+    expect(r2.flags.includes('debug')).toBe(true);
+  });
   test('recognizes --open flag', () => {
     const r = parseArgs(['start', '--open']);
 
@@ -47,6 +60,14 @@ describe('main', () => {
 
     expect(code).toBe(0);
     expect(write_mock).toHaveBeenCalled();
+  });
+
+  test('enables debug when --debug passed', async () => {
+    const spy = vi.spyOn(logging, 'enableAllDebug');
+
+    await main(['--debug', '--help']);
+
+    expect(spy).toHaveBeenCalledTimes(1);
   });
 
   test('prints usage and exits 1 on no command', async () => {
@@ -66,7 +87,10 @@ describe('main', () => {
   test('propagates --open to start handler', async () => {
     await main(['start', '--open']);
 
-    expect(commands.handleStart).toHaveBeenCalledWith({ no_open: false });
+    expect(commands.handleStart).toHaveBeenCalledWith({
+      no_open: false,
+      is_debug: false
+    });
   });
 
   test('help lists --open and not --no-open', async () => {

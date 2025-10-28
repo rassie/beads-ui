@@ -1,4 +1,5 @@
 import { html, render } from 'lit-html';
+import { debug } from '../utils/logging.js';
 
 /**
  * Render the top navigation with three tabs and handle route changes.
@@ -8,6 +9,7 @@ import { html, render } from 'lit-html';
  * @param {{ gotoView: (v: 'issues'|'epics'|'board') => void }} router
  */
 export function createTopNav(mount_element, store, router) {
+  const log = debug('views:nav');
   /** @type {(() => void) | null} */
   let unsubscribe = null;
 
@@ -18,6 +20,7 @@ export function createTopNav(mount_element, store, router) {
   function onClick(view) {
     return (ev) => {
       ev.preventDefault();
+      log('click tab %s', view);
       router.gotoView(view);
     };
   }

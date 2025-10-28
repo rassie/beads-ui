@@ -1,3 +1,4 @@
+import { enableAllDebug } from '../logging.js';
 import { handleRestart, handleStart, handleStop } from './commands.js';
 import { printUsage } from './usage.js';
 
@@ -16,6 +17,10 @@ export function parseArgs(args) {
   for (const token of args) {
     if (token === '--help' || token === '-h') {
       flags.push('help');
+      continue;
+    }
+    if (token === '--debug' || token === '-d') {
+      flags.push('debug');
       continue;
     }
     if (token === '--open') {
@@ -49,6 +54,11 @@ export function parseArgs(args) {
 export async function main(args) {
   const { command, flags } = parseArgs(args);
 
+  const is_debug = flags.includes('debug');
+  if (is_debug) {
+    enableAllDebug();
+  }
+
   if (flags.includes('help')) {
     printUsage(process.stdout);
     return 0;
@@ -63,7 +73,10 @@ export async function main(args) {
      * Default behavior: do NOT open a browser.
      * `--open` explicitly opens, overriding env/config; `--no-open` forces closed.
      */
-    const options = { no_open: true };
+    const options = {
+      no_open: true,
+      is_debug: is_debug || Boolean(process.env.DEBUG)
+    };
 
     const has_open = flags.includes('open');
     const has_no_open = flags.includes('no-open');

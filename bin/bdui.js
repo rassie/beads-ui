@@ -4,6 +4,7 @@
  * Delegates to `server/cli/index.js` and sets the process exit code.
  */
 import { main } from '../server/cli/index.js';
+import { debug } from '../server/logging.js';
 
 const argv = process.argv.slice(2);
 
@@ -13,6 +14,6 @@ try {
     process.exitCode = code;
   }
 } catch (err) {
-  console.error(String(/** @type {any} */ (err)?.message || err));
+  debug('cli')('fatal %o', err);
   process.exitCode = 1;
 }

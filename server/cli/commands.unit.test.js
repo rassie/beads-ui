@@ -31,7 +31,7 @@ describe('handleStart (unit)', () => {
     const code = await handleStart({ no_open: true });
 
     expect(code).toBe(0);
-    expect(print_url).toHaveBeenCalledTimes(1);
+    expect(print_url).not.toHaveBeenCalled();
 
     read_pid.mockRestore();
     is_running.mockRestore();

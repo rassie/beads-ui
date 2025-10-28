@@ -1,6 +1,7 @@
 /**
  * @import { SubscriptionIssueStore, SubscriptionIssueStoreOptions } from '../../types/subscription-issue-store.js'
  */
+import { debug } from '../utils/logging.js';
 import { cmpPriorityThenCreated } from './sort.js';
 
 /**
@@ -17,6 +18,7 @@ import { cmpPriorityThenCreated } from './sort.js';
  * @returns {SubscriptionIssueStore}
  */
 export function createSubscriptionIssueStore(id, options = {}) {
+  const log = debug(`issue-store:${id}`);
   /** @type {Map<string, any>} */
   const items_by_id = new Map();
   /** @type {any[]} */
@@ -60,6 +62,7 @@ export function createSubscriptionIssueStore(id, options = {}) {
       return;
     }
     const rev = Number(msg.revision) || 0;
+    log('apply %s rev=%d', msg.type, rev);
     // Ignore stale messages for all types, including snapshots
     if (rev <= last_revision && msg.type !== 'snapshot') {
       return; // stale or duplicate non-snapshot

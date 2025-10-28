@@ -2,6 +2,7 @@ import { html, render } from 'lit-html';
 import { createListSelectors } from '../data/list-selectors.js';
 import { cmpClosedDesc, cmpPriorityThenCreated } from '../data/sort.js';
 import { createIssueIdRenderer } from '../utils/issue-id-renderer.js';
+import { debug } from '../utils/logging.js';
 import { createPriorityBadge } from '../utils/priority-badge.js';
 import { createTypeBadge } from '../utils/type-badge.js';
 
@@ -42,6 +43,7 @@ export function createBoardView(
   subscriptions = undefined,
   issueStores = undefined
 ) {
+  const log = debug('views:board');
   /** @type {IssueLite[]} */
   let list_ready = [];
   /** @type {IssueLite[]} */
@@ -332,6 +334,7 @@ export function createBoardView(
    * Recompute closed list from raw using the current filter and sort.
    */
   function applyClosedFilter() {
+    log('applyClosedFilter %s', closed_filter_mode);
     /** @type {IssueLite[]} */
     let items = Array.isArray(list_closed_raw) ? [...list_closed_raw] : [];
     const now = new Date();
@@ -373,6 +376,7 @@ export function createBoardView(
       const el = /** @type {HTMLSelectElement} */ (ev.target);
       const v = String(el.value || 'today');
       closed_filter_mode = v === '3' || v === '7' ? v : 'today';
+      log('closed filter %s', closed_filter_mode);
       if (store) {
         try {
           store.setState({ board: { closed_filter: closed_filter_mode } });
@@ -445,6 +449,7 @@ export function createBoardView(
   return {
     async load() {
       // Compose lists from subscriptions + issues store
+      log('load');
       refreshFromStores();
       // If nothing is present yet (e.g., immediately after switching back
       // to the Board and before list-delta arrives), fetch via data layer as
@@ -482,6 +487,7 @@ export function createBoardView(
           typeof data.getInProgress === 'function' &&
           typeof data.getClosed === 'function';
         if (total_items === 0 && can_fetch) {
+          log('fallback fetch');
           /** @type {[IssueLite[], IssueLite[], IssueLite[], IssueLite[]]} */
           const [ready_raw, blocked_raw, in_prog_raw, closed_raw] =
             await Promise.all([

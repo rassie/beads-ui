@@ -1,4 +1,5 @@
 import { issueHashFor } from './utils/issue-url.js';
+import { debug } from './utils/logging.js';
 
 /**
  * Hash-based router for tabs (issues/epics/board) and deep-linked issue ids.
@@ -52,6 +53,7 @@ export function parseView(hash) {
  * @param {{ getState: () => any, setState: (patch: any) => void }} store
  */
 export function createHashRouter(store) {
+  const log = debug('router');
   /** @type {(ev?: HashChangeEvent) => any} */
   const onHashChange = () => {
     const hash = window.location.hash || '';
@@ -69,6 +71,7 @@ export function createHashRouter(store) {
     }
     const id = parseHash(hash);
     const view = parseView(hash);
+    log('hash change → view=%s id=%s', view, id);
     store.setState({ selected_id: id, view });
   };
 
@@ -88,6 +91,7 @@ export function createHashRouter(store) {
       const s = store.getState ? store.getState() : { view: 'issues' };
       const view = s.view || 'issues';
       const next = issueHashFor(view, id);
+      log('goto issue %s (view=%s)', id, view);
       if (window.location.hash !== next) {
         window.location.hash = next;
       } else {
@@ -107,6 +111,7 @@ export function createHashRouter(store) {
       const s = store.getState ? store.getState() : { selected_id: null };
       const id = s.selected_id;
       const next = id ? issueHashFor(view, id) : `#/${view}`;
+      log('goto view %s (id=%s)', view, id || '');
       if (window.location.hash !== next) {
         window.location.hash = next;
       } else {

@@ -3,6 +3,7 @@ import { html, render } from 'lit-html';
 import { parseView } from '../router.js';
 import { issueDisplayId } from '../utils/issue-id.js';
 import { issueHashFor } from '../utils/issue-url.js';
+import { debug } from '../utils/logging.js';
 import { renderMarkdown } from '../utils/markdown.js';
 import { emojiForPriority } from '../utils/priority-badge.js';
 import { priority_levels } from '../utils/priority.js';
@@ -57,6 +58,7 @@ export function createDetailView(
   navigateFn = defaultNavigateFn,
   issue_stores = undefined
 ) {
+  const log = debug('views:detail');
   /** @type {IssueDetail | null} */
   let current = null;
   /** @type {string | null} */
@@ -179,6 +181,7 @@ export function createDetailView(
       input.disabled = true;
     }
     try {
+      log('save title %s → %s', String(current.id), next);
       const updated = await sendFn('edit-text', {
         id: current.id,
         field: 'title',
@@ -189,7 +192,8 @@ export function createDetailView(
         edit_title = false;
         doRender();
       }
-    } catch {
+    } catch (err) {
+      log('save title failed %s %o', String(current.id), err);
       current.title = prev;
       edit_title = false;
       doRender();
@@ -240,6 +244,7 @@ export function createDetailView(
       input.disabled = true;
     }
     try {
+      log('save assignee %s → %s', String(current.id), next);
       const updated = await sendFn('update-assignee', {
         id: current.id,
         assignee: next
@@ -249,7 +254,8 @@ export function createDetailView(
         edit_assignee = false;
         doRender();
       }
-    } catch {
+    } catch (err) {
+      log('save assignee failed %s %o', String(current.id), err);
       // revert visually
       current.assignee = prev;
       edit_assignee = false;
@@ -291,6 +297,7 @@ export function createDetailView(
     }
     pending = true;
     try {
+      log('add label %s → %s', String(current.id), text);
       const updated = await sendFn('label-add', {
         id: current.id,
         label: text
@@ -300,7 +307,8 @@ export function createDetailView(
         new_label_text = '';
         doRender();
       }
-    } catch {
+    } catch (err) {
+      log('add label failed %s %o', String(current.id), err);
       showToast('Failed to add label', 'error');
     } finally {
       pending = false;
@@ -315,6 +323,7 @@ export function createDetailView(
     }
     pending = true;
     try {
+      log('remove label %s → %s', String(current?.id || ''), label);
       const updated = await sendFn('label-remove', {
         id: current.id,
         label
@@ -323,7 +332,8 @@ export function createDetailView(
         current = /** @type {IssueDetail} */ (updated);
         doRender();
       }
-    } catch {
+    } catch (err) {
+      log('remove label failed %s %o', String(current?.id || ''), err);
       showToast('Failed to remove label', 'error');
     } finally {
       pending = false;
@@ -347,6 +357,7 @@ export function createDetailView(
     current.status = next;
     doRender();
     try {
+      log('update status %s → %s', String(current.id), next);
       const updated = await sendFn('update-status', {
         id: current.id,
         status: next
@@ -355,7 +366,8 @@ export function createDetailView(
         current = /** @type {IssueDetail} */ (updated);
         doRender();
       }
-    } catch {
+    } catch (err) {
+      log('update status failed %s %o', String(current.id), err);
       current.status = prev;
       doRender();
       showToast('Failed to update status', 'error');
@@ -381,6 +393,7 @@ export function createDetailView(
     current.priority = next;
     doRender();
     try {
+      log('update priority %s → %d', String(current.id), next);
       const updated = await sendFn('update-priority', {
         id: current.id,
         priority: next
@@ -389,7 +402,8 @@ export function createDetailView(
         current = /** @type {IssueDetail} */ (updated);
         doRender();
       }
-    } catch {
+    } catch (err) {
+      log('update priority failed %s %o', String(current.id), err);
       current.priority = prev;
       doRender();
       showToast('Failed to update priority', 'error');
@@ -437,6 +451,7 @@ export function createDetailView(
       ta.disabled = true;
     }
     try {
+      log('save description %s', String(current?.id || ''));
       const updated = await sendFn('edit-text', {
         id: current.id,
         field: 'description',
@@ -447,7 +462,8 @@ export function createDetailView(
         edit_desc = false;
         doRender();
       }
-    } catch {
+    } catch (err) {
+      log('save description failed %s %o', String(current?.id || ''), err);
       current.description = prev;
       edit_desc = false;
       doRender();
@@ -513,6 +529,7 @@ export function createDetailView(
       ta.disabled = true;
     }
     try {
+      log('save design %s', String(current?.id || ''));
       const updated = await sendFn('edit-text', {
         id: current.id,
         field: 'design',
@@ -523,7 +540,8 @@ export function createDetailView(
         edit_design = false;
         doRender();
       }
-    } catch {
+    } catch (err) {
+      log('save design failed %s %o', String(current?.id || ''), err);
       current.design = prev;
       edit_design = false;
       doRender();
@@ -579,6 +597,7 @@ export function createDetailView(
       ta.disabled = true;
     }
     try {
+      log('save notes %s', String(current?.id || ''));
       const updated = await sendFn('edit-text', {
         id: current.id,
         field: 'notes',
@@ -589,7 +608,8 @@ export function createDetailView(
         edit_notes = false;
         doRender();
       }
-    } catch {
+    } catch (err) {
+      log('save notes failed %s %o', String(current?.id || ''), err);
       current.notes = prev;
       edit_notes = false;
       doRender();
@@ -644,6 +664,7 @@ export function createDetailView(
       ta.disabled = true;
     }
     try {
+      log('save acceptance %s', String(current?.id || ''));
       const updated = await sendFn('edit-text', {
         id: current.id,
         field: 'acceptance',
@@ -654,7 +675,8 @@ export function createDetailView(
         edit_accept = false;
         doRender();
       }
-    } catch {
+    } catch (err) {
+      log('save acceptance failed %s %o', String(current?.id || ''), err);
       current.acceptance = prev;
       edit_accept = false;
       doRender();

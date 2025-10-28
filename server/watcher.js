@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { resolveDbPath } from './db.js';
+import { debug } from './logging.js';
 
 /**
  * Watch the resolved beads SQLite DB file and invoke a callback after a debounce window.
@@ -13,6 +14,7 @@ import { resolveDbPath } from './db.js';
  */
 export function watchDb(root_dir, onChange, options = {}) {
   const debounce_ms = options.debounce_ms ?? 250;
+  const log = debug('watcher');
 
   /** @type {ReturnType<typeof setTimeout> | undefined} */
   let timer;
@@ -44,10 +46,9 @@ export function watchDb(root_dir, onChange, options = {}) {
     current_dir = path.dirname(current_path);
     current_file = path.basename(current_path);
     if (!resolved.exists) {
-      console.warn(
-        'watchDb: resolved DB does not exist yet:',
-        current_path,
-        '\nHint: set --db, export BEADS_DB, or run `bd init` in your workspace.'
+      log(
+        'resolved DB missing: %s – Hint: set --db, export BEADS_DB, or run `bd init` in your workspace.',
+        current_path
       );
     }
 
@@ -61,12 +62,13 @@ export function watchDb(root_dir, onChange, options = {}) {
             return;
           }
           if (event_type === 'change' || event_type === 'rename') {
+            log('fs %s %s', event_type, filename || '');
             schedule();
           }
         }
       );
     } catch (err) {
-      console.warn('watchDb: unable to watch directory', current_dir, err);
+      log('unable to watch directory %s %o', current_dir, err);
     }
   };
 

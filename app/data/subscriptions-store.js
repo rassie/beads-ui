@@ -1,6 +1,8 @@
 /**
  * @import { MessageType } from '../protocol.js'
  */
+import { debug } from '../utils/logging.js';
+
 /**
  * Client-side list subscription store.
  *
@@ -46,6 +48,7 @@ export function subKeyOf(spec) {
  * @param {(type: MessageType, payload?: unknown) => Promise<unknown>} send - ws send.
  */
 export function createSubscriptionStore(send) {
+  const log = debug('subs');
   /** @type {Map<string, { key: string, itemsById: Map<string, true> }>} */
   const subs_by_id = new Map();
   /** @type {Map<string, Set<string>>} */
@@ -58,6 +61,13 @@ export function createSubscriptionStore(send) {
    * @param {{ added: string[], updated: string[], removed: string[] }} delta
    */
   function applyDelta(key, delta) {
+    log(
+      'applyDelta %s +%d ~%d -%d',
+      key,
+      (delta.added || []).length,
+      (delta.updated || []).length,
+      (delta.removed || []).length
+    );
     const id_set = ids_by_key.get(key);
     if (!id_set || id_set.size === 0) {
       return;
@@ -101,6 +111,7 @@ export function createSubscriptionStore(send) {
    */
   async function subscribeList(client_id, spec) {
     const key = subKeyOf(spec);
+    log('subscribe %s key=%s', client_id, key);
     // Initialize local entry immediately to capture early deltas
     if (!subs_by_id.has(client_id)) {
       subs_by_id.set(client_id, { key, itemsById: new Map() });
@@ -136,6 +147,7 @@ export function createSubscriptionStore(send) {
     }
 
     return async () => {
+      log('unsubscribe %s key=%s', client_id, key);
       try {
         await send('unsubscribe-list', { id: client_id });
       } catch {

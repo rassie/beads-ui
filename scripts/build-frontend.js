@@ -11,8 +11,10 @@
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { debug } from '../server/logging.js';
 
 async function run() {
+  const log = debug('build');
   // Resolve repo root regardless of where this script is launched from
   const this_file = fileURLToPath(new URL(import.meta.url));
   const repo_root = path.resolve(path.dirname(this_file), '..');
@@ -41,9 +43,9 @@ async function run() {
   try {
     const esbuild = await import('esbuild');
     await esbuild.build(options);
-    console.log(`Built ${path.relative(repo_root, outfile)}`);
+    log('built %s', path.relative(repo_root, outfile));
   } catch (err) {
-    console.error('Bundle error:', /** @type {any} */ (err)?.message || err);
+    log('bundle error %o', err);
     process.exitCode = 1;
   }
 }

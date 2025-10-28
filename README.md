@@ -63,8 +63,19 @@ See `bdui --help` for options.
 
 ## Developer Workflow
 
+- 🔨 Clone the repo and run `npm install`.
+- 🚀 Start the dev server with `npm start`.
 - 📦 Make sure you have `beads-mcp` installed.
 - 🤖 Ask your agent of choice. It will know.
+
+## Debug Logging
+
+- The codebase uses the `debug` package with namespaces like `beads-ui:*`.
+- Enable logs in the browser by running in DevTools:
+  - `localStorage.debug = 'beads-ui:*'` then reload the page
+- Enable logs for Node/CLI (server, build scripts) by setting `DEBUG`:
+  - `DEBUG=beads-ui:* bdui start`
+  - `DEBUG=beads-ui:* node scripts/build-frontend.js`
 
 ## License
 

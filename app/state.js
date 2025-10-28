@@ -1,6 +1,7 @@
 /**
  * Minimal app state store with subscription.
  */
+import { debug } from './utils/logging.js';
 
 /**
  * @typedef {'all'|'open'|'in_progress'|'closed'|'ready'} StatusFilter
@@ -33,6 +34,7 @@
  * @returns {{ getState: () => AppState, setState: (patch: { selected_id?: string | null, filters?: Partial<Filters> }) => void, subscribe: (fn: (s: AppState) => void) => () => void }}
  */
 export function createStore(initial = {}) {
+  const log = debug('state');
   /** @type {AppState} */
   let state = {
     selected_id: initial.selected_id ?? null,
@@ -95,6 +97,12 @@ export function createStore(initial = {}) {
         return;
       }
       state = next;
+      log('state change %o', {
+        selected_id: state.selected_id,
+        view: state.view,
+        filters: state.filters,
+        board: state.board
+      });
       emit();
     },
     subscribe(fn) {

@@ -139,10 +139,9 @@ describe('app/ws client', () => {
     client.close();
   });
 
-  test('dispatches server events and logs unknown types', async () => {
+  test('dispatches server events', async () => {
     const sockets = setupFakeWebSocket();
-    const logger = { ...console, warn: vi.fn(), error: vi.fn() };
-    const client = createWsClient({ logger });
+    const client = createWsClient();
     sockets[0].openNow();
 
     /** @type {any[]} */
@@ -168,7 +167,6 @@ describe('app/ws client', () => {
       type: 'create-issue',
       payload: {}
     });
-    expect(logger.warn).toHaveBeenCalled();
     client.close();
   });
 

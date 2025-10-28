@@ -11,6 +11,7 @@
  *   const off = ws.on('snapshot', (payload) => { <push event> });
  */
 import { MESSAGE_TYPES, makeRequest, nextId } from './protocol.js';
+import { debug } from './utils/logging.js';
 
 /**
  * @typedef {'connecting'|'open'|'closed'|'reconnecting'} ConnectionState
@@ -21,7 +22,7 @@ import { MESSAGE_TYPES, makeRequest, nextId } from './protocol.js';
  */
 
 /**
- * @typedef {{ url?: string, backoff?: BackoffOptions, logger?: Console }} ClientOptions
+ * @typedef {{ url?: string, backoff?: BackoffOptions }} ClientOptions
  */
 
 /**
@@ -30,8 +31,7 @@ import { MESSAGE_TYPES, makeRequest, nextId } from './protocol.js';
  * @param {ClientOptions} [options]
  */
 export function createWsClient(options = {}) {
-  /** @type {Console} */
-  const logger = options.logger || console;
+  const log = debug('ws');
 
   /** @type {BackoffOptions} */
   const backoff = {
@@ -94,6 +94,7 @@ export function createWsClient(options = {}) {
       return;
     }
     state = 'reconnecting';
+    log('ws reconnecting…');
     notifyConnection(state);
     const base = Math.min(
       backoff.maxMs || 0,
@@ -104,6 +105,7 @@ export function createWsClient(options = {}) {
       0,
       Math.round(base + (Math.random() * 2 - 1) * jitter)
     );
+    log('ws retry in %d ms (attempt %d)', delay, attempts + 1);
     reconnect_timer = setTimeout(() => {
       reconnect_timer = null;
       connect();
@@ -115,12 +117,13 @@ export function createWsClient(options = {}) {
     try {
       ws?.send(JSON.stringify(req));
     } catch (err) {
-      logger.error('ws send failed', err);
+      log('ws send failed', err);
     }
   }
 
   function onOpen() {
     state = 'open';
+    log('ws open');
     notifyConnection(state);
     attempts = 0;
     // flush queue
@@ -139,11 +142,11 @@ export function createWsClient(options = {}) {
     try {
       msg = JSON.parse(String(ev.data));
     } catch {
-      logger.warn('ws received non-JSON message');
+      log('ws received non-JSON message');
       return;
     }
     if (!msg || typeof msg.id !== 'string' || typeof msg.type !== 'string') {
-      logger.warn('ws received invalid envelope');
+      log('ws received invalid envelope');
       return;
     }
 
@@ -165,16 +168,17 @@ export function createWsClient(options = {}) {
         try {
           fn(msg.payload);
         } catch (err) {
-          logger.error('ws event handler error', err);
+          log('ws event handler error', err);
         }
       }
     } else {
-      logger.warn(`ws received unhandled message type: ${msg.type}`);
+      log('ws received unhandled message type: %s', msg.type);
     }
   }
 
   function onClose() {
     state = 'closed';
+    log('ws closed');
     notifyConnection(state);
     // fail all pending
     for (const [id, p] of pending.entries()) {
@@ -192,6 +196,7 @@ export function createWsClient(options = {}) {
     const url = resolveUrl();
     try {
       ws = new WebSocket(url);
+      log('ws connecting %s', url);
       state = 'connecting';
       notifyConnection(state);
       ws.addEventListener('open', onOpen);
@@ -201,7 +206,7 @@ export function createWsClient(options = {}) {
       });
       ws.addEventListener('close', onClose);
     } catch (err) {
-      logger.error('ws connect failed', err);
+      log('ws connect failed %o', err);
       scheduleReconnect();
     }
   }
@@ -222,11 +227,13 @@ export function createWsClient(options = {}) {
       }
       const id = nextId();
       const req = makeRequest(type, payload, id);
+      log('send %s id=%s', type, id);
       return new Promise((resolve, reject) => {
         pending.set(id, { resolve, reject, type });
         if (ws && ws.readyState === ws.OPEN) {
           sendRaw(req);
         } else {
+          log('queue %s id=%s (state=%s)', type, id, state);
           queue.push(req);
         }
       });

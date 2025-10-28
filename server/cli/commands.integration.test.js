@@ -45,12 +45,6 @@ afterEach(async () => {
     await daemon.terminateProcess(pid, 2000);
   }
   daemon.removePidFile();
-  // Clear the daemon log to keep noise down in CI
-  try {
-    fs.writeFileSync(daemon.getLogFilePath(), '', 'utf8');
-  } catch {
-    // ignore
-  }
 });
 
 afterAll(() => {

@@ -17,14 +17,14 @@ import { openUrl, waitForServer } from './open.js';
  * @returns {Promise<number>} Exit code (0 on success)
  */
 /**
- * @param {{ no_open?: boolean }} [options]
+ * @param {{ no_open?: boolean, is_debug?: boolean }} [options]
  */
 export async function handleStart(options) {
   // Default behavior: do not open a browser unless explicitly requested.
   const no_open = options?.no_open !== false;
   const existing_pid = readPidFile();
   if (existing_pid && isProcessRunning(existing_pid)) {
-    printServerUrl();
+    console.warn('Server is already running.');
     return 0;
   }
   if (existing_pid && !isProcessRunning(existing_pid)) {
@@ -32,7 +32,7 @@ export async function handleStart(options) {
     removePidFile();
   }
 
-  const started = startDaemon();
+  const started = startDaemon({ is_debug: options?.is_debug });
   if (started && started.pid > 0) {
     printServerUrl();
     // Auto-open the browser once for a fresh daemon start

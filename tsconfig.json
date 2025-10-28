@@ -16,7 +16,9 @@
   },
   "include": [
     "app/**/*.js",
+    "bin/**/*.js",
     "server/**/*.js",
+    "scripts/**/*.js",
     "test/**/*.js",
     "vitest.config.mjs"
   ],

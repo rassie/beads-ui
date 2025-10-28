@@ -2,6 +2,7 @@
  * @import { SubscriptionIssueStoreOptions } from '../../types/subscription-issue-store.js'
  * @import { IssueLite } from './list-selectors.js'
  */
+import { debug } from '../utils/logging.js';
 import { createSubscriptionIssueStore } from './subscription-issue-store.js';
 import { subKeyOf } from './subscriptions-store.js';
 
@@ -11,6 +12,7 @@ import { subKeyOf } from './subscriptions-store.js';
  * read-only snapshots for rendering.
  */
 export function createSubscriptionIssueStores() {
+  const log = debug('issue-stores');
   /** @type {Map<string, ReturnType<typeof createSubscriptionIssueStore>>} */
   const stores_by_id = new Map();
   /** @type {Map<string, string>} */
@@ -42,6 +44,7 @@ export function createSubscriptionIssueStores() {
     const next_key = spec ? subKeyOf(spec) : '';
     const prev_key = key_by_id.get(client_id) || '';
     const has_store = stores_by_id.has(client_id);
+    log('register %s key=%s (prev=%s)', client_id, next_key, prev_key);
     // If the subscription spec changed for an existing client id, replace the
     // underlying store to reset revision state and avoid ignoring a fresh
     // snapshot with a lower revision (different server list).
@@ -82,6 +85,7 @@ export function createSubscriptionIssueStores() {
    * @param {string} client_id
    */
   function unregister(client_id) {
+    log('unregister %s', client_id);
     key_by_id.delete(client_id);
     const store = stores_by_id.get(client_id);
     if (store) {

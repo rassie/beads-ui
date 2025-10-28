@@ -13,8 +13,9 @@ export function printUsage(out_stream) {
     '  restart     Restart the UI server',
     '',
     'Options:',
-    '  -h, --help   Show this help message',
-    '      --open   Open the browser after start/restart',
+    '  -h, --help    Show this help message',
+    '  -d, --debug   Enable debug logging',
+    '      --open    Open the browser after start/restart',
     ''
   ];
   for (const line of lines) {

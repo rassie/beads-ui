@@ -3,6 +3,7 @@ import { createListSelectors } from '../data/list-selectors.js';
 import { cmpClosedDesc } from '../data/sort.js';
 import { ISSUE_TYPES, typeLabel } from '../utils/issue-type.js';
 import { issueHashFor } from '../utils/issue-url.js';
+import { debug } from '../utils/logging.js';
 // issueDisplayId not used directly in this file; rendered in shared row
 import { statusLabel } from '../utils/status.js';
 import { createIssueRowRenderer } from './issue-row.js';
@@ -43,6 +44,7 @@ export function createListView(
   _subscriptions = undefined,
   issue_stores = undefined
 ) {
+  const log = debug('views:list');
   // Touch unused param to satisfy lint rules without impacting behavior
   /** @type {any} */ (void _subscriptions);
   /** @type {string} */
@@ -80,6 +82,7 @@ export function createListView(
   const onStatusChange = async (ev) => {
     const sel = /** @type {HTMLSelectElement} */ (ev.currentTarget);
     status_filter = sel.value;
+    log('status change %s', status_filter);
     if (store) {
       store.setState({
         filters: { status: status_filter }
@@ -98,6 +101,7 @@ export function createListView(
   const onSearchInput = (ev) => {
     const input = /** @type {HTMLInputElement} */ (ev.currentTarget);
     search_text = input.value;
+    log('search input %s', search_text);
     if (store) {
       store.setState({ filters: { search: search_text } });
     }
@@ -112,6 +116,7 @@ export function createListView(
   const onTypeChange = (ev) => {
     const sel = /** @type {HTMLSelectElement} */ (ev.currentTarget);
     type_filter = sel.value || '';
+    log('type change %s', type_filter || '(all)');
     if (store) {
       store.setState({ filters: { type: type_filter } });
     }
@@ -246,6 +251,7 @@ export function createListView(
    */
   async function updateInline(id, patch) {
     try {
+      log('updateInline %s %o', id, Object.keys(patch));
       // Dispatch specific mutations based on provided keys
       if (typeof patch.title === 'string') {
         await sendFn('edit-text', { id, field: 'title', value: patch.title });
@@ -268,6 +274,7 @@ export function createListView(
    * Load issues from local push stores and re-render.
    */
   async function load() {
+    log('load');
     // Preserve scroll position to avoid jarring jumps on live refresh
     const beforeEl = /** @type {HTMLElement|null} */ (
       mount_element.querySelector('#list-root')
@@ -282,7 +289,8 @@ export function createListView(
       } else {
         issues_cache = [];
       }
-    } catch {
+    } catch (err) {
+      log('load failed: %o', err);
       issues_cache = [];
     }
     doRender();
@@ -412,6 +420,7 @@ export function createListView(
     unsubscribe = store.subscribe((s) => {
       if (s.selected_id !== selected_id) {
         selected_id = s.selected_id;
+        log('selected %s', selected_id || '(none)');
         doRender();
       }
       if (s.filters && typeof s.filters === 'object') {
