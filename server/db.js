@@ -38,11 +38,11 @@ export function resolveDbPath(options = {}) {
   }
 
   // 4) ~/.beads/default.db
-  const homeDefault = path.join(os.homedir(), '.beads', 'default.db');
+  const home_default = path.join(os.homedir(), '.beads', 'default.db');
   return {
-    path: homeDefault,
+    path: home_default,
     source: 'home-default',
-    exists: fileExists(homeDefault)
+    exists: fileExists(home_default)
   };
 }
 
@@ -57,15 +57,15 @@ export function findNearestBeadsDb(start) {
   let dir = path.resolve(start);
   // Cap iterations to avoid infinite loop in degenerate cases
   for (let i = 0; i < 100; i++) {
-    const beadsDir = path.join(dir, '.beads');
+    const beads_dir = path.join(dir, '.beads');
     try {
-      const entries = fs.readdirSync(beadsDir, { withFileTypes: true });
+      const entries = fs.readdirSync(beads_dir, { withFileTypes: true });
       const dbs = entries
         .filter((e) => e.isFile() && e.name.endsWith('.db'))
         .map((e) => e.name)
         .sort();
       if (dbs.length > 0) {
-        return path.join(beadsDir, dbs[0]);
+        return path.join(beads_dir, dbs[0]);
       }
     } catch {
       // ignore and walk up

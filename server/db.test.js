@@ -46,14 +46,14 @@ describe('resolveDbPath', () => {
     fs.mkdirSync(nested, { recursive: true });
     const beads = path.join(root, '.beads');
     fs.mkdirSync(beads);
-    const uiDb = path.join(beads, 'ui.db');
-    fs.writeFileSync(uiDb, '');
+    const ui_db = path.join(beads, 'ui.db');
+    fs.writeFileSync(ui_db, '');
 
     const found = findNearestBeadsDb(nested);
-    expect(found).toBe(uiDb);
+    expect(found).toBe(ui_db);
 
     const res = resolveDbPath({ cwd: nested, env: {} });
-    expect(res.path).toBe(uiDb);
+    expect(res.path).toBe(ui_db);
     expect(res.source).toBe('nearest');
   });
 

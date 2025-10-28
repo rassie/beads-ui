@@ -80,24 +80,24 @@ describe('subscriptions registry', () => {
   test('attach/detach and disconnect-driven eviction', () => {
     const reg = new SubscriptionRegistry();
     /** @type {any} */
-    const wsA = { OPEN: 1, readyState: 1, send: vi.fn() };
+    const ws_a = { OPEN: 1, readyState: 1, send: vi.fn() };
     /** @type {any} */
-    const wsB = { OPEN: 1, readyState: 1, send: vi.fn() };
+    const ws_b = { OPEN: 1, readyState: 1, send: vi.fn() };
 
     const spec = { type: 'list', params: { status: 'open' } };
-    const { key } = reg.attach(spec, wsA);
-    reg.attach(spec, wsB);
+    const { key } = reg.attach(spec, ws_a);
+    reg.attach(spec, ws_b);
 
     const entry1 = reg.get(key);
     expect(entry1 && entry1.subscribers.size).toBe(2);
 
-    const removedA = reg.detach(spec, wsA);
-    expect(removedA).toBe(true);
+    const removed_a = reg.detach(spec, ws_a);
+    expect(removed_a).toBe(true);
     const entry2 = reg.get(key);
     expect(entry2 && entry2.subscribers.size).toBe(1);
 
     // Disconnecting B should sweep it and remove empty entry
-    reg.onDisconnect(wsB);
+    reg.onDisconnect(ws_b);
     const entry3 = reg.get(key);
     expect(entry3).toBeNull();
   });

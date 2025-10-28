@@ -112,7 +112,7 @@ describe('ws list subscriptions', () => {
     expect(reply && reply.type).toBe('subscribe-list');
 
     // Expect a snapshot event was sent containing issues
-    const snapshotEnvelope = sock.sent
+    const snapshot_envelope = sock.sent
       .map((m) => {
         try {
           return JSON.parse(m);
@@ -121,15 +121,17 @@ describe('ws list subscriptions', () => {
         }
       })
       .find((o) => o && o.type === 'snapshot');
-    expect(!!snapshotEnvelope).toBe(true);
-    expect(snapshotEnvelope.payload && snapshotEnvelope.payload.id).toBe('c1');
-    expect(Array.isArray(snapshotEnvelope.payload.issues)).toBe(true);
-    expect(snapshotEnvelope.payload.issues.length).toBeGreaterThan(0);
+    expect(!!snapshot_envelope).toBe(true);
+    expect(snapshot_envelope.payload && snapshot_envelope.payload.id).toBe(
+      'c1'
+    );
+    expect(Array.isArray(snapshot_envelope.payload.issues)).toBe(true);
+    expect(snapshot_envelope.payload.issues.length).toBeGreaterThan(0);
 
     const key = keyOf({ type: 'in-progress-issues' });
     const entry = registry.get(key);
-    const beforeSize = entry ? entry.subscribers.size : 0;
-    expect(beforeSize).toBeGreaterThanOrEqual(1);
+    const before_size = entry ? entry.subscribers.size : 0;
+    expect(before_size).toBeGreaterThanOrEqual(1);
   });
 
   test('unsubscribe-list detaches and disconnect sweep evicts entry', async () => {
@@ -173,8 +175,8 @@ describe('ws list subscriptions', () => {
     );
 
     const entry2 = registry.get(key);
-    const afterSize = entry2 ? entry2.subscribers.size : 0;
-    expect(afterSize).toBeLessThan(before);
+    const after_size = entry2 ? entry2.subscribers.size : 0;
+    expect(after_size).toBeLessThan(before);
 
     // Do not assert full eviction here due to global registry used across tests
   });
@@ -281,7 +283,7 @@ describe('ws list subscriptions', () => {
     expect(reply && reply.ok).toBe(true);
     expect(reply && reply.type).toBe('subscribe-list');
 
-    const snapshotEnvelope = sock.sent
+    const snapshot_envelope = sock.sent
       .map((m) => {
         try {
           return JSON.parse(m);
@@ -290,11 +292,11 @@ describe('ws list subscriptions', () => {
         }
       })
       .find((o) => o && o.type === 'snapshot');
-    expect(!!snapshotEnvelope).toBe(true);
-    expect(snapshotEnvelope.payload && snapshotEnvelope.payload.id).toBe(
+    expect(!!snapshot_envelope).toBe(true);
+    expect(snapshot_envelope.payload && snapshot_envelope.payload.id).toBe(
       'detail:UI-1'
     );
-    expect(Array.isArray(snapshotEnvelope.payload.issues)).toBe(true);
+    expect(Array.isArray(snapshot_envelope.payload.issues)).toBe(true);
   });
 
   test('subscribe-list issue-detail enforces id', async () => {

@@ -13,6 +13,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { debug } from '../server/logging.js';
 
+/**
+ * Build frontend bundle to `app/main.bundle.js` using esbuild.
+ */
 async function run() {
   const log = debug('build');
   // Resolve repo root regardless of where this script is launched from

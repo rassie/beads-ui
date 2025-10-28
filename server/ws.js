@@ -325,17 +325,17 @@ async function refreshAndPublish(spec) {
       return;
     }
     const items = applyClosedIssuesFilter(spec, res.items);
-    const prevSize = registry.get(key)?.itemsById.size || 0;
+    const prev_size = registry.get(key)?.itemsById.size || 0;
     const delta = registry.applyItems(key, items);
     const entry = registry.get(key);
     if (!entry || entry.subscribers.size === 0) {
       return;
     }
     /** @type {Map<string, any>} */
-    const byId = new Map();
+    const by_id = new Map();
     for (const it of items) {
       if (it && typeof it.id === 'string') {
-        byId.set(it.id, it);
+        by_id.set(it.id, it);
       }
     }
     for (const ws of entry.subscribers) {
@@ -343,20 +343,20 @@ async function refreshAndPublish(spec) {
       const s = ensureSubs(ws);
       const subs = s.list_subs || new Map();
       /** @type {string[]} */
-      const clientIds = [];
+      const client_ids = [];
       for (const [cid, v] of subs.entries()) {
-        if (v.key === key) clientIds.push(cid);
+        if (v.key === key) client_ids.push(cid);
       }
-      if (clientIds.length === 0) continue;
-      if (prevSize === 0) {
-        for (const cid of clientIds) {
+      if (client_ids.length === 0) continue;
+      if (prev_size === 0) {
+        for (const cid of client_ids) {
           emitSubscriptionSnapshot(ws, cid, key, items);
         }
         continue;
       }
-      for (const cid of clientIds) {
+      for (const cid of client_ids) {
         for (const id of [...delta.added, ...delta.updated]) {
-          const issue = byId.get(id);
+          const issue = by_id.get(id);
           if (issue) {
             emitSubscriptionUpsert(ws, cid, key, issue);
           }

@@ -32,10 +32,10 @@ export function runBd(args, options = {}) {
 
   // Ensure a consistent DB by injecting --db if missing, following beads precedence.
   /** @type {string[]} */
-  const finalArgs = withDbArg(args, spawn_opts.cwd, spawn_opts.env);
+  const final_args = withDbArg(args, spawn_opts.cwd, spawn_opts.env);
 
   return new Promise((resolve) => {
-    const child = spawn(bin, finalArgs, spawn_opts);
+    const child = spawn(bin, final_args, spawn_opts);
 
     /** @type {string[]} */
     const out_chunks = [];
