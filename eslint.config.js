@@ -6,7 +6,14 @@ import globals from 'globals';
 
 export default defineConfig([
   {
-    ignores: ['node_modules', 'coverage', 'dist', '.beads']
+    ignores: [
+      'node_modules',
+      'coverage',
+      'dist',
+      '.beads',
+      'app/main.bundle.js',
+      'app/main.bundle.js.map'
+    ]
   },
   js.configs.recommended,
   plugin_jsdoc.configs['flat/contents-typescript-flavor-error'],
@@ -44,6 +51,12 @@ export default defineConfig([
   },
   {
     files: ['bin/**/*.js'],
+    languageOptions: {
+      globals: globals.node
+    }
+  },
+  {
+    files: ['scripts/**/*.js'],
     languageOptions: {
       globals: globals.node
     }

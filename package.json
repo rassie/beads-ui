@@ -19,6 +19,7 @@
   "scripts": {
     "all": "npm run lint && npm run typecheck && npm test && npm run format:check",
     "start": "node server/index.js",
+    "build": "node scripts/build-frontend.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -27,7 +28,8 @@
     "format:check": "prettier --check .",
     "preversion": "npm run all",
     "version": "changes --commits --footer",
-    "postversion": "git push --follow-tags && npm publish"
+    "postversion": "git push --follow-tags && npm publish",
+    "prepack": "NODE_ENV=production npm run build"
   },
   "devDependencies": {
     "@eslint/js": "^9.38.0",
@@ -42,22 +44,24 @@
     "eslint-plugin-n": "^17.9.0",
     "globals": "^16.4.0",
     "jsdom": "^27.0.1",
+    "esbuild": "^0.25.11",
     "prettier": "^3.3.3",
     "typescript": "^5.6.3",
     "vitest": "^2.1.3"
   },
   "dependencies": {
     "dompurify": "^3.3.0",
-    "esbuild": "^0.25.11",
     "express": "^5.1.0",
     "lit-html": "^3.3.1",
     "marked": "^16.4.1",
     "ws": "^8.18.3"
   },
   "files": [
-    "app",
+    "app/index.html",
+    "app/styles.css",
+    "app/main.bundle.js",
+    "app/main.bundle.js.map",
     "bin",
-    "docs",
     "server",
     "CHANGES.md",
     "LICENSE",
