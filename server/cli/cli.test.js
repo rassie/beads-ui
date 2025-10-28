@@ -88,12 +88,12 @@ describe('main', () => {
     await main(['start', '--open']);
 
     expect(commands.handleStart).toHaveBeenCalledWith({
-      no_open: false,
+      open: true,
       is_debug: false
     });
   });
 
-  test('help lists --open and not --no-open', async () => {
+  test('help lists --open', async () => {
     const write_spy = write_mock;
     write_spy.mockClear();
 
@@ -101,7 +101,6 @@ describe('main', () => {
 
     const output = write_spy.mock.calls.map((c) => String(c[0])).join('');
     expect(output.includes('--open')).toBe(true);
-    expect(output.includes('--no-open')).toBe(false);
   });
 
   test('dispatches to stop handler', async () => {
@@ -116,13 +115,19 @@ describe('main', () => {
 
     expect(code).toBe(0);
     expect(commands.handleRestart).toHaveBeenCalledTimes(1);
-    expect(commands.handleRestart).toHaveBeenCalledWith({ no_open: true });
+    expect(commands.handleRestart).toHaveBeenCalledWith({
+      open: false,
+      is_debug: false
+    });
   });
 
   test('propagates --open to restart handler', async () => {
     await main(['restart', '--open']);
 
-    expect(commands.handleRestart).toHaveBeenCalledWith({ no_open: false });
+    expect(commands.handleRestart).toHaveBeenCalledWith({
+      open: true,
+      is_debug: false
+    });
   });
 
   test('unknown command prints usage and exits 1', async () => {

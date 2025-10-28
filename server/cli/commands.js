@@ -17,11 +17,11 @@ import { openUrl, waitForServer } from './open.js';
  * @returns {Promise<number>} Exit code (0 on success)
  */
 /**
- * @param {{ no_open?: boolean, is_debug?: boolean }} [options]
+ * @param {{ open?: boolean, is_debug?: boolean }} [options]
  */
 export async function handleStart(options) {
-  // Default behavior: do not open a browser unless explicitly requested.
-  const no_open = options?.no_open !== false;
+  // Default: do not open a browser unless explicitly requested via `open: true`.
+  const should_open = options?.open === true;
   const existing_pid = readPidFile();
   if (existing_pid && isProcessRunning(existing_pid)) {
     console.warn('Server is already running.');
@@ -36,7 +36,7 @@ export async function handleStart(options) {
   if (started && started.pid > 0) {
     printServerUrl();
     // Auto-open the browser once for a fresh daemon start
-    if (!no_open) {
+    if (should_open) {
       const { url } = getConfig();
       // Wait briefly for the server to accept connections (single retry window)
       await waitForServer(url, 600);
@@ -86,9 +86,9 @@ export async function handleStop() {
 /**
  * Handle `restart` command: stop (ignore not-running) then start.
  * Accepts the same options as `handleStart` and passes them through,
- * so restart only opens a browser when `no_open` is explicitly false.
+ * so restart only opens a browser when `open` is explicitly true.
  *
- * @param {{ no_open?: boolean }} [options]
+ * @param {{ open?: boolean }} [options]
  * @returns {Promise<number>}
  */
 export async function handleRestart(options) {

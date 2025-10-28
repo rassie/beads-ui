@@ -77,7 +77,7 @@ describe('commands integration', () => {
       .mockImplementation(() => {});
 
     // execution
-    const start_code = await handleStart({ no_open: true });
+    const start_code = await handleStart({ open: false });
 
     // assertion
     expect(start_code).toBe(0);
@@ -106,11 +106,11 @@ describe('commands integration', () => {
 
   test('start is idempotent when already running', async () => {
     // setup
-    await handleStart({ no_open: true });
+    await handleStart({ open: false });
     const start_spy = vi.spyOn(daemon, 'startDaemon');
 
     // execution
-    const code = await handleStart({ no_open: true });
+    const code = await handleStart({ open: false });
 
     // assertion
     expect(code).toBe(0);

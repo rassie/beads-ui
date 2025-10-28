@@ -10,7 +10,7 @@ describe('handleStart (unit)', () => {
       .mockReturnValue(false);
     const start = vi.spyOn(daemon, 'startDaemon').mockReturnValue(null);
 
-    const code = await handleStart({ no_open: true });
+    const code = await handleStart({ open: false });
 
     expect(code).toBe(1);
 
@@ -28,7 +28,7 @@ describe('handleStart (unit)', () => {
       .spyOn(daemon, 'printServerUrl')
       .mockImplementation(() => {});
 
-    const code = await handleStart({ no_open: true });
+    const code = await handleStart({ open: false });
 
     expect(code).toBe(0);
     expect(print_url).not.toHaveBeenCalled();

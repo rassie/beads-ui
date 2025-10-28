@@ -27,10 +27,6 @@ export function parseArgs(args) {
       flags.push('open');
       continue;
     }
-    if (token === '--no-open') {
-      flags.push('no-open');
-      continue;
-    }
     if (
       !command &&
       (token === 'start' || token === 'stop' || token === 'restart')
@@ -70,37 +66,22 @@ export async function main(args) {
 
   if (command === 'start') {
     /**
-     * Default behavior: do NOT open a browser.
-     * `--open` explicitly opens, overriding env/config; `--no-open` forces closed.
+     * Default behavior: do NOT open a browser. `--open` explicitly opens.
      */
     const options = {
-      no_open: true,
+      open: flags.includes('open'),
       is_debug: is_debug || Boolean(process.env.DEBUG)
     };
-
-    const has_open = flags.includes('open');
-    const has_no_open = flags.includes('no-open');
-
-    if (has_open) {
-      options.no_open = false;
-    } else if (has_no_open) {
-      options.no_open = true;
-    }
     return await handleStart(options);
   }
   if (command === 'stop') {
     return await handleStop();
   }
   if (command === 'restart') {
-    const options = { no_open: true };
-    const has_open = flags.includes('open');
-    const has_no_open = flags.includes('no-open');
-
-    if (has_open) {
-      options.no_open = false;
-    } else if (has_no_open) {
-      options.no_open = true;
-    }
+    const options = {
+      open: flags.includes('open'),
+      is_debug: is_debug || Boolean(process.env.DEBUG)
+    };
     return await handleRestart(options);
   }
 
