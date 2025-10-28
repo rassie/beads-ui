@@ -63,19 +63,14 @@ export async function main(args) {
      * Default behavior: do NOT open a browser.
      * `--open` explicitly opens, overriding env/config; `--no-open` forces closed.
      */
-    const options = {
-      no_open: true
-    };
+    const options = { no_open: true };
 
     const has_open = flags.includes('open');
     const has_no_open = flags.includes('no-open');
-    const env_no_open = String(process.env.BDUI_NO_OPEN || '') === '1';
 
     if (has_open) {
       options.no_open = false;
     } else if (has_no_open) {
-      options.no_open = true;
-    } else if (env_no_open) {
       options.no_open = true;
     }
     return await handleStart(options);
@@ -87,13 +82,10 @@ export async function main(args) {
     const options = { no_open: true };
     const has_open = flags.includes('open');
     const has_no_open = flags.includes('no-open');
-    const env_no_open = String(process.env.BDUI_NO_OPEN || '') === '1';
 
     if (has_open) {
       options.no_open = false;
     } else if (has_no_open) {
-      options.no_open = true;
-    } else if (env_no_open) {
       options.no_open = true;
     }
     return await handleRestart(options);

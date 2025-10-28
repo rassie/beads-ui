@@ -52,9 +52,6 @@ See `bdui --help` for options.
 - `BD_BIN`: path to the `bd` binary.
 - `BDUI_RUNTIME_DIR`: override runtime directory for PID/logs. Defaults to
   `$XDG_RUNTIME_DIR/beads-ui` or the system temp dir.
-- `BDUI_NO_OPEN=1`: disable opening the default browser on `start`. Note:
-  Opening the browser is disabled by default; use `--open` to explicitly launch
-  the browser, which overrides this env var.
 - `PORT`: overrides the listen port (default `3000`). The server binds to
   `127.0.0.1`.
 

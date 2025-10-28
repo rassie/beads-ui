@@ -69,40 +69,6 @@ describe('main', () => {
     expect(commands.handleStart).toHaveBeenCalledWith({ no_open: false });
   });
 
-  test('reads BDUI_NO_OPEN=1 to disable open', async () => {
-    const prev = process.env.BDUI_NO_OPEN;
-    try {
-      process.env.BDUI_NO_OPEN = '1';
-
-      await main(['start']);
-
-      expect(commands.handleStart).toHaveBeenCalledWith({ no_open: true });
-    } finally {
-      if (prev === undefined) {
-        delete process.env.BDUI_NO_OPEN;
-      } else {
-        process.env.BDUI_NO_OPEN = prev;
-      }
-    }
-  });
-
-  test('flag overrides env var: --open wins over BDUI_NO_OPEN=1', async () => {
-    const prev = process.env.BDUI_NO_OPEN;
-    try {
-      process.env.BDUI_NO_OPEN = '1';
-
-      await main(['start', '--open']);
-
-      expect(commands.handleStart).toHaveBeenCalledWith({ no_open: false });
-    } finally {
-      if (prev === undefined) {
-        delete process.env.BDUI_NO_OPEN;
-      } else {
-        process.env.BDUI_NO_OPEN = prev;
-      }
-    }
-  });
-
   test('help lists --open and not --no-open', async () => {
     const write_spy = write_mock;
     write_spy.mockClear();
@@ -133,23 +99,6 @@ describe('main', () => {
     await main(['restart', '--open']);
 
     expect(commands.handleRestart).toHaveBeenCalledWith({ no_open: false });
-  });
-
-  test('reads BDUI_NO_OPEN=1 to disable open on restart', async () => {
-    const prev = process.env.BDUI_NO_OPEN;
-    try {
-      process.env.BDUI_NO_OPEN = '1';
-
-      await main(['restart']);
-
-      expect(commands.handleRestart).toHaveBeenCalledWith({ no_open: true });
-    } finally {
-      if (prev === undefined) {
-        delete process.env.BDUI_NO_OPEN;
-      } else {
-        process.env.BDUI_NO_OPEN = prev;
-      }
-    }
   });
 
   test('unknown command prints usage and exits 1', async () => {

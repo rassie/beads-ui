@@ -28,16 +28,13 @@ beforeAll(() => {
   // Snapshot selected env vars to restore later
   prev_env = {
     BDUI_RUNTIME_DIR: process.env.BDUI_RUNTIME_DIR,
-    PORT: process.env.PORT,
-    BDUI_NO_OPEN: process.env.BDUI_NO_OPEN
+    PORT: process.env.PORT
   };
 
   tmp_runtime_dir = fs.mkdtempSync(path.join(os.tmpdir(), 'bdui-it-'));
   process.env.BDUI_RUNTIME_DIR = tmp_runtime_dir;
   // Use port 0 so OS assigns an ephemeral port; URL printing still occurs
   process.env.PORT = '0';
-  // Ensure default start path would not attempt to open the browser if called via CLI
-  process.env.BDUI_NO_OPEN = '1';
   vi.spyOn(console, 'log').mockImplementation(() => {});
 });
 
@@ -68,12 +65,6 @@ afterAll(() => {
     delete process.env.PORT;
   } else {
     process.env.PORT = prev_env.PORT;
-  }
-
-  if (prev_env.BDUI_NO_OPEN === undefined) {
-    delete process.env.BDUI_NO_OPEN;
-  } else {
-    process.env.BDUI_NO_OPEN = prev_env.BDUI_NO_OPEN;
   }
 
   try {
