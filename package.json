@@ -1,7 +1,13 @@
 {
   "name": "beads-ui",
   "version": "0.3.1",
-  "description": "Local‑first UI for Beads — a fast issue tracker for your coding agent.",
+  "description": "Local UI for Beads — Collaborate on issues with your coding agent.",
+  "keywords": [
+    "agent",
+    "issue-tracker",
+    "local-first",
+    "ai-tools"
+  ],
   "homepage": "https://github.com/mantoni/beads-ui",
   "type": "module",
   "bin": {

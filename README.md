@@ -2,7 +2,8 @@
   Beads UI
 </h1>
 <p align="center">
-  <b>Local‑first UI for the <code>bd</code> CLI – <a href="https://github.com/steveyegge/beads">Beads</a></b>
+  <b>Local UI for the <code>bd</code> CLI – <a href="https://github.com/steveyegge/beads">Beads</a></b><br>
+  Collaborate on issues with your coding agent.
 </p>
 <div align="center">
   <a href="https://www.npmjs.com/package/beads-ui"><img src="https://img.shields.io/npm/v/beads-ui.svg" alt="npm Version"></a>
@@ -19,14 +20,14 @@
 - 📺 **Live updates** – Monitors the beads database for changes
 - 🔎 **Issues view** – Filter and search issues, edit inline
 - ⛰️ **Epics view** – Show progress per epic, expand rows, edit inline
-- 🏂 **Board view** – Open / Blocked / Ready / In progress / Closed columns
+- 🏂 **Board view** – Blocked / Ready / In progress / Closed columns
 - ⌨️ **Keyboard navigation** – Navigate and edit without touching the mouse
 
 ## Setup
 
 ```sh
 npm i beads-ui -g
-# In the project directory with a beads database:
+# In your project directory:
 bdui start --open
 ```
 
