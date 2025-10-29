@@ -1,5 +1,12 @@
 # Changes
 
+## 0.4.2
+
+- [`66e31ff`](https://github.com/mantoni/beads-ui/commit/66e31ff0e053f3691657ce1175fd9b02155ca699)
+  Fix pre-bundled app: Check for bundle instead of NODE_ENV (Maximilian Antoni)
+
+_Released by [Maximilian Antoni](https://github.com/mantoni) on 2025-10-29._
+
 ## 0.4.1
 
 - [`03d3477`](https://github.com/mantoni/beads-ui/commit/03d34774cd35bf03d142d2869633327cbe4902bd)
