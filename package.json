@@ -63,6 +63,7 @@
     "app/styles.css",
     "app/main.bundle.js",
     "app/main.bundle.js.map",
+    "app/protocol.js",
     "bin",
     "server",
     "CHANGES.md",

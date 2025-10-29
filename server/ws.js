@@ -4,10 +4,10 @@
  * @import { MessageType } from '../app/protocol.js'
  */
 import { WebSocketServer } from 'ws';
+import { isRequest, makeError, makeOk } from '../app/protocol.js';
 import { runBd, runBdJson } from './bd.js';
 import { fetchListForSubscription } from './list-adapters.js';
 import { debug } from './logging.js';
-import { isRequest, makeError, makeOk } from './protocol.js';
 import { keyOf, registry } from './subscriptions.js';
 import { validateSubscribeListPayload } from './validators.js';
 
