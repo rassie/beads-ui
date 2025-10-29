@@ -29,7 +29,8 @@
     "preversion": "npm run all",
     "version": "changes --commits --footer",
     "postversion": "git push --follow-tags && npm publish",
-    "prepack": "NODE_ENV=production npm run build"
+    "prepack": "npm run build",
+    "postpack": "rm app/main.bundle.js app/main.bundle.js.map"
   },
   "dependencies": {
     "debug": "^4.4.3",

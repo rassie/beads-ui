@@ -2,12 +2,13 @@
  * @import { Express, Request, Response } from 'express'
  */
 import express from 'express';
+import fs from 'node:fs';
 import path from 'node:path';
 
 /**
  * Create and configure the Express application.
  *
- * @param {{ host: string, port: number, env: string, app_dir: string, root_dir: string }} config - Server configuration.
+ * @param {{ host: string, port: number, app_dir: string, root_dir: string }} config - Server configuration.
  * @returns {Express} Configured Express app instance.
  */
 export function createApp(config) {
@@ -26,12 +27,13 @@ export function createApp(config) {
     res.status(200).send({ ok: true });
   });
 
-  // In development, support on-demand bundling for a smooth DX.
-  // In production, we expect `app/main.bundle.js` to be pre-built and served statically.
-  if (config.env !== 'production') {
+  if (
+    !fs.statSync(path.resolve(config.app_dir, 'main.bundle.js'), {
+      throwIfNoEntry: false
+    })
+  ) {
     /**
      * On-demand bundle for the browser using esbuild.
-     * Note: esbuild is loaded lazily so tests don't require it to be installed.
      *
      * @param {Request} _req
      * @param {Response} res

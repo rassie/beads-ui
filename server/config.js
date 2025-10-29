@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
  * (i.e., the current working directory) so DB resolution follows the
  * caller's context rather than the install location.
  *
- * @returns {{ host: string, port: number, env: string, app_dir: string, root_dir: string, url: string }}
+ * @returns {{ host: string, port: number, app_dir: string, root_dir: string, url: string }}
  */
 export function getConfig() {
   const this_file = fileURLToPath(new URL(import.meta.url));
@@ -28,7 +28,6 @@ export function getConfig() {
   return {
     host: host_value,
     port: port_value,
-    env: process.env.NODE_ENV ? String(process.env.NODE_ENV) : 'development',
     app_dir: path.resolve(package_root, 'app'),
     root_dir,
     url: `http://${host_value}:${port_value}`

@@ -28,8 +28,6 @@ async function run() {
   // Ensure output directory exists when running from a fresh checkout
   mkdirSync(app_dir, { recursive: true });
 
-  const is_prod = process.env.NODE_ENV === 'production';
-
   /** @type {BuildOptions} */
   const options = {
     entryPoints: [entry],
@@ -39,7 +37,7 @@ async function run() {
     target: 'es2020',
     outfile,
     sourcemap: true, // write external .map file next to the bundle
-    minify: is_prod,
+    minify: true,
     legalComments: 'none'
   };
 

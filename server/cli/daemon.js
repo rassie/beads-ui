@@ -256,6 +256,6 @@ export function printServerUrl() {
     `beads db   ${resolved_db.path} (${resolved_db.source}${resolved_db.exists ? '' : ', missing'})`
   );
 
-  const { url, env } = getConfig();
-  console.log(`beads ui   listening on ${url} (${env})`);
+  const { url } = getConfig();
+  console.log(`beads ui   listening on ${url}`);
 }
