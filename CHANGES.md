@@ -1,5 +1,12 @@
 # Changes
 
+## 0.4.1
+
+- [`03d3477`](https://github.com/mantoni/beads-ui/commit/03d34774cd35bf03d142d2869633327cbe4902bd)
+  Fix missing protocol.js in bundle
+
+_Released by [Maximilian Antoni](https://github.com/mantoni) on 2025-10-29._
+
 ## 0.4.0
 
 - [`20a787c`](https://github.com/mantoni/beads-ui/commit/20a787c248225b4959b18b703894daf483f380b6)
