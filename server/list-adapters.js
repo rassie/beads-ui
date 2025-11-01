@@ -1,4 +1,7 @@
 import { runBdJson } from './bd.js';
+import { debug } from './logging.js';
+
+const log = debug('list-adapters');
 
 /**
  * Build concrete `bd` CLI args for a subscription type + params.
@@ -107,6 +110,8 @@ export async function fetchListForSubscription(spec) {
   try {
     args = mapSubscriptionToBdArgs(spec);
   } catch (err) {
+    // Surface bad requests (e.g., missing params)
+    log('mapSubscriptionToBdArgs failed for %o: %o', spec, err);
     const e = toErrorObject(err);
     return { ok: false, error: e };
   }
@@ -114,6 +119,13 @@ export async function fetchListForSubscription(spec) {
   try {
     const res = await runBdJson(args);
     if (!res || res.code !== 0 || !('stdoutJson' in res)) {
+      log(
+        'bd failed for %o (args=%o) code=%s stderr=%s',
+        spec,
+        args,
+        res?.code,
+        res?.stderr || ''
+      );
       return {
         ok: false,
         error: {
@@ -161,6 +173,7 @@ export async function fetchListForSubscription(spec) {
     const items = normalizeIssueList(raw);
     return { ok: true, items };
   } catch (err) {
+    log('bd invocation failed for %o (args=%o): %o', spec, args, err);
     return {
       ok: false,
       error: {

@@ -250,8 +250,8 @@ function emitSubscriptionSnapshot(ws, client_id, key, issues) {
   });
   try {
     ws.send(msg);
-  } catch {
-    // ignore per-socket errors
+  } catch (err) {
+    log('emit snapshot send failed key=%s id=%s: %o', key, client_id, err);
   }
 }
 
@@ -277,8 +277,8 @@ function emitSubscriptionUpsert(ws, client_id, key, issue) {
   });
   try {
     ws.send(msg);
-  } catch {
-    // ignore
+  } catch (err) {
+    log('emit upsert send failed key=%s id=%s: %o', key, client_id, err);
   }
 }
 
@@ -304,8 +304,8 @@ function emitSubscriptionDelete(ws, client_id, key, issue_id) {
   });
   try {
     ws.send(msg);
-  } catch {
-    // ignore
+  } catch (err) {
+    log('emit delete send failed key=%s id=%s: %o', key, client_id, err);
   }
 }
 
@@ -322,6 +322,7 @@ async function refreshAndPublish(spec) {
   await registry.withKeyLock(key, async () => {
     const res = await fetchListForSubscription(spec);
     if (!res.ok) {
+      log('refresh failed for %s: %s %o', key, res.error.message, res.error);
       return;
     }
     const items = applyClosedIssuesFilter(spec, res.items);
@@ -554,14 +555,20 @@ export async function handleMessage(ws, data) {
       await registry.withKeyLock(key, async () => {
         const res = await fetchListForSubscription(spec);
         if (!res.ok) {
+          log(
+            'initial snapshot failed for %s: %s %o',
+            key,
+            res.error.message,
+            res.error
+          );
           return;
         }
         const items = applyClosedIssuesFilter(spec, res.items);
         void registry.applyItems(key, items);
         emitSubscriptionSnapshot(ws, client_id, key, items);
       });
-    } catch {
-      // ignore snapshot errors
+    } catch (err) {
+      log('subscribe-list snapshot error for %s: %o', key, err);
     }
     ws.send(JSON.stringify(makeOk(req, { id: client_id, key })));
     return;

@@ -1,5 +1,8 @@
 import { spawn } from 'node:child_process';
 import { resolveDbPath } from './db.js';
+import { debug } from './logging.js';
+
+const log = debug('bd');
 
 /**
  * Resolve the bd executable path.
@@ -88,8 +91,9 @@ export function runBd(args, options = {}) {
       });
     };
 
-    child.on('error', () => {
-      // Treat spawn error as an immediate non-zero exit with captured stderr message.
+    child.on('error', (err) => {
+      // Treat spawn error as an immediate non-zero exit; log for diagnostics.
+      log('spawn error running %s %o', bin, err);
       finish(127);
     });
     child.on('close', (code) => {
@@ -108,13 +112,20 @@ export function runBd(args, options = {}) {
 export async function runBdJson(args, options = {}) {
   const result = await runBd(args, options);
   if (result.code !== 0) {
+    log(
+      'bd exited with code %d (args=%o) stderr=%s',
+      result.code,
+      args,
+      result.stderr
+    );
     return { code: result.code, stderr: result.stderr };
   }
   /** @type {unknown} */
   let parsed;
   try {
     parsed = JSON.parse(result.stdout || 'null');
-  } catch {
+  } catch (err) {
+    log('bd returned invalid JSON (args=%o): %o', args, err);
     return { code: 0, stderr: 'Invalid JSON from bd' };
   }
   return { code: 0, stdoutJson: parsed };

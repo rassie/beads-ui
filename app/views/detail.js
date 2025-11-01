@@ -81,13 +81,9 @@ export function createDetailView(
 
   /** @param {string} id */
   function issueHref(id) {
-    try {
-      /** @type {'issues'|'epics'|'board'} */
-      const view = parseView(window.location.hash || '');
-      return issueHashFor(view, id);
-    } catch {
-      return issueHashFor('issues', id);
-    }
+    /** @type {'issues'|'epics'|'board'} */
+    const view = parseView(window.location.hash || '');
+    return issueHashFor(view, id);
   }
 
   /**
@@ -130,16 +126,10 @@ export function createDetailView(
   if (issue_stores && typeof issue_stores.subscribe === 'function') {
     issue_stores.subscribe(() => {
       try {
-        const prev_id = current && current.id ? String(current.id) : null;
         refreshFromStore();
-        // Only re-render when the current entity changed or when we were loading
-        if (!prev_id || (current && String(current.id) === prev_id)) {
-          doRender();
-        } else {
-          doRender();
-        }
-      } catch {
-        // ignore
+        doRender();
+      } catch (err) {
+        log('issue stores listener error %o', err);
       }
     });
   }
@@ -487,8 +477,8 @@ export function createDetailView(
       if (ta) {
         ta.focus();
       }
-    } catch {
-      // ignore focus errors
+    } catch (err) {
+      log('focus design textarea failed %o', err);
     }
   };
   /**
@@ -1127,8 +1117,8 @@ export function createDetailView(
             doRender();
           }
         }
-      } catch {
-        // ignore
+      } catch (err) {
+        log('dep-remove failed %o', err);
       } finally {
         pending = false;
       }
@@ -1190,7 +1180,8 @@ export function createDetailView(
             doRender();
           }
         }
-      } catch {
+      } catch (err) {
+        log('dep-add failed %o', err);
         showToast('Failed to add dependency', 'error');
       } finally {
         pending = false;
