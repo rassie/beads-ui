@@ -65,8 +65,8 @@ See `bdui --help` for options.
 
 - 🔨 Clone the repo and run `npm install`.
 - 🚀 Start the dev server with `npm start`.
-- 📦 Make sure you have `beads-mcp` installed.
-- 🤖 Ask your agent of choice. It will know.
+- 🔗 Alternatively, use `npm link` to link the package globally and run
+  `bdui start` from any project.
 
 ## Debug Logging
 
