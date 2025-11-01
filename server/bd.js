@@ -24,15 +24,25 @@ export function getBdBin() {
  */
 export function runBd(args, options = {}) {
   const bin = getBdBin();
+
+  // Ensure a consistent DB by setting BEADS_DB environment variable
+  const db_path = resolveDbPath({
+    cwd: options.cwd || process.cwd(),
+    env: options.env || process.env
+  });
+  const env_with_db = {
+    ...(options.env || process.env),
+    BEADS_DB: db_path.path
+  };
+
   const spawn_opts = {
     cwd: options.cwd || process.cwd(),
-    env: options.env ? options.env : process.env,
+    env: env_with_db,
     shell: false
   };
 
-  // Ensure a consistent DB by injecting --db if missing, following beads precedence.
   /** @type {string[]} */
-  const final_args = withDbArg(args, spawn_opts.cwd, spawn_opts.env);
+  const final_args = args.slice();
 
   return new Promise((resolve) => {
     const child = spawn(bin, final_args, spawn_opts);
@@ -108,20 +118,4 @@ export async function runBdJson(args, options = {}) {
     return { code: 0, stderr: 'Invalid JSON from bd' };
   }
   return { code: 0, stdoutJson: parsed };
-}
-
-/**
- * Add a resolved "--db <path>" pair to args when none present.
- *
- * @param {string[]} args
- * @param {string} cwd
- * @param {Record<string, string | undefined>} env
- * @returns {string[]}
- */
-function withDbArg(args, cwd, env) {
-  if (args.includes('--db')) {
-    return args.slice();
-  }
-  const resolved = resolveDbPath({ cwd, env });
-  return ['--db', resolved.path, ...args];
 }
