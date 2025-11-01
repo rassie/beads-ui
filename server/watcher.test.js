@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { watchDb } from './watcher.js';
 
 /** @type {{ dir: string, cb: (event: string, filename?: string) => void, w: { close: () => void } }[]} */
@@ -23,11 +23,6 @@ beforeEach(() => {
   watchers.length = 0;
   vi.useFakeTimers();
   vi.spyOn(console, 'warn').mockImplementation(() => {});
-});
-
-afterEach(() => {
-  vi.useRealTimers();
-  vi.restoreAllMocks();
 });
 
 describe('watchDb', () => {

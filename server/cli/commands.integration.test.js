@@ -66,15 +66,12 @@ afterAll(() => {
   } catch {
     // ignore
   }
-  vi.mocked(console.log).mockRestore();
 });
 
 describe('commands integration', () => {
   test('start then stop returns 0 and manages PID file', async () => {
     // setup
-    const print_spy = vi
-      .spyOn(daemon, 'printServerUrl')
-      .mockImplementation(() => {});
+    vi.spyOn(daemon, 'printServerUrl').mockImplementation(() => {});
 
     // execution
     const start_code = await handleStart({ open: false });
@@ -92,8 +89,6 @@ describe('commands integration', () => {
     expect(stop_code).toBe(0);
     const pid_after_stop = daemon.readPidFile();
     expect(pid_after_stop).toBeNull();
-
-    print_spy.mockRestore();
   });
 
   test('stop returns 2 when not running', async () => {
@@ -117,15 +112,12 @@ describe('commands integration', () => {
     expect(start_spy).not.toHaveBeenCalled();
 
     // cleanup
-    start_spy.mockRestore();
     await handleStop();
   });
 
   test('restart stops (when needed) and starts', async () => {
     // setup
-    const print_spy = vi
-      .spyOn(daemon, 'printServerUrl')
-      .mockImplementation(() => {});
+    vi.spyOn(daemon, 'printServerUrl').mockImplementation(() => {});
 
     // execution
     const code = await handleRestart();
@@ -137,6 +129,5 @@ describe('commands integration', () => {
 
     // cleanup
     await handleStop();
-    print_spy.mockRestore();
   });
 });

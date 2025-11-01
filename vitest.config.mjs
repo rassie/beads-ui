@@ -5,6 +5,7 @@ export default defineConfig({
     environment: 'node',
     include: ['**/*.test.js'],
     setupFiles: ['test/setup-vitest.js'],
+    restoreMocks: true,
     environmentMatchGlobs: [['app/**/*.test.js', 'jsdom']],
     reporters: 'default',
     coverage: {

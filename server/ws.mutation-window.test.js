@@ -1,5 +1,5 @@
 import { createServer } from 'node:http';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { runBd } from './bd.js';
 import { fetchListForSubscription } from './list-adapters.js';
 import { attachWsServer, handleMessage, scheduleListRefresh } from './ws.js';
@@ -19,11 +19,6 @@ vi.mock('./list-adapters.js', () => ({
 
 beforeEach(() => {
   vi.useFakeTimers();
-});
-
-afterEach(() => {
-  vi.useRealTimers();
-  vi.restoreAllMocks();
 });
 
 function makeSocket() {

@@ -60,11 +60,10 @@ describe('resolveDbPath', () => {
   test('falls back to ~/.beads/default.db when none found', async () => {
     // Mock os.homedir to a deterministic location using spy
     const home = mkdtemp();
-    const spy = vi.spyOn(os, 'homedir').mockReturnValue(home);
+    vi.spyOn(os, 'homedir').mockReturnValue(home);
     const mod = await import('./db.js');
     const res = mod.resolveDbPath({ cwd: '/no/db/here', env: {} });
     expect(res.path).toBe(path.join(home, '.beads', 'default.db'));
     expect(res.source).toBe('home-default');
-    spy.mockRestore();
   });
 });

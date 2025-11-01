@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import * as logging from '../logging.js';
 import * as commands from './commands.js';
 import { main, parseArgs } from './index.js';
@@ -19,10 +19,6 @@ let write_mock;
 
 beforeEach(() => {
   write_mock = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
-});
-
-afterEach(() => {
-  write_mock.mockRestore();
 });
 
 describe('parseArgs', () => {
