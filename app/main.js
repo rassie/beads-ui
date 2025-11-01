@@ -261,27 +261,19 @@ export function bootstrap(root_element) {
     );
     // Persist filter changes to localStorage
     store.subscribe((s) => {
-      try {
-        const data = {
-          status: s.filters.status,
-          search: s.filters.search,
-          type: typeof s.filters.type === 'string' ? s.filters.type : ''
-        };
-        window.localStorage.setItem('beads-ui.filters', JSON.stringify(data));
-      } catch {
-        // ignore
-      }
+      const data = {
+        status: s.filters.status,
+        search: s.filters.search,
+        type: typeof s.filters.type === 'string' ? s.filters.type : ''
+      };
+      window.localStorage.setItem('beads-ui.filters', JSON.stringify(data));
     });
     // Persist board preferences
     store.subscribe((s) => {
-      try {
-        window.localStorage.setItem(
-          'beads-ui.board',
-          JSON.stringify({ closed_filter: s.board.closed_filter })
-        );
-      } catch {
-        // ignore
-      }
+      window.localStorage.setItem(
+        'beads-ui.board',
+        JSON.stringify({ closed_filter: s.board.closed_filter })
+      );
     });
     void issues_view.load();
 
@@ -625,11 +617,7 @@ export function bootstrap(root_element) {
       if (!s.selected_id && s.view === 'board') {
         void board_view.load();
       }
-      try {
-        window.localStorage.setItem('beads-ui.view', s.view);
-      } catch (err) {
-        log('persist view failed: %o', err);
-      }
+      window.localStorage.setItem('beads-ui.view', s.view);
     };
     store.subscribe(onRouteChange);
     // Ensure initial state is reflected (fixes reload on #/epics)
@@ -695,11 +683,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
       themeSwitch.addEventListener('change', () => {
         const mode = themeSwitch.checked ? 'dark' : 'light';
         document.documentElement.setAttribute('data-theme', mode);
-        try {
-          window.localStorage.setItem('beads-ui.theme', mode);
-        } catch {
-          // ignore persistence errors
-        }
+        window.localStorage.setItem('beads-ui.theme', mode);
       });
     }
 

@@ -169,17 +169,13 @@ export function createNewIssueDialog(mount_element, sendFn, router, store) {
   }
 
   function saveDefaults() {
-    try {
-      const t = sel_type.value || '';
-      const p = sel_priority.value || '';
-      if (t.length > 0) {
-        window.localStorage.setItem('beads-ui.new.type', t);
-      }
-      if (p.length > 0) {
-        window.localStorage.setItem('beads-ui.new.priority', p);
-      }
-    } catch {
-      // ignore persistence errors
+    const t = sel_type.value || '';
+    const p = sel_priority.value || '';
+    if (t.length > 0) {
+      window.localStorage.setItem('beads-ui.new.type', t);
+    }
+    if (p.length > 0) {
+      window.localStorage.setItem('beads-ui.new.priority', p);
     }
   }
 
@@ -256,7 +252,6 @@ export function createNewIssueDialog(mount_element, sendFn, router, store) {
     if (Array.isArray(list)) {
       const matches = list.filter((it) => String(it.title || '') === title);
       if (matches.length > 0) {
-        /** @type {any} */
         let best = matches[0];
         for (const it of matches) {
           const ai = idNumeric(best.id || '');
