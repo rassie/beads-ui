@@ -9,6 +9,7 @@
     "ai-tools"
   ],
   "homepage": "https://github.com/mantoni/beads-ui",
+  "author": "Maximilian Antoni <mail@maxantoni.de>",
   "type": "module",
   "bin": {
     "bdui": "bin/bdui.js"
