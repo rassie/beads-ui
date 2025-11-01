@@ -6,7 +6,7 @@ import { statusLabel } from '../utils/status.js';
 import { createTypeBadge } from '../utils/type-badge.js';
 
 /**
- * @typedef {{ id: string, title?: string, status?: string, priority?: number, issue_type?: string, assignee?: string }} IssueRowData
+ * @typedef {{ id: string, title?: string, status?: string, priority?: number, issue_type?: string, assignee?: string, dependencies?: Array<{id: string}>, dependents?: Array<{id: string}> }} IssueRowData
  */
 
 /**
@@ -183,6 +183,18 @@ export function createIssueRowRenderer(options) {
               </option>`
           )}
         </select>
+      </td>
+      <td role="gridcell" class="dep-counts">
+        ${(() => {
+          const dep_count = it.dependencies?.length || 0;
+          const dept_count = it.dependents?.length || 0;
+          if (dep_count === 0 && dept_count === 0) {
+            return html`<span class="muted">—</span>`;
+          }
+          return html`<span
+            >${dept_count > 0 ? html`<span class="dept-count">←${dept_count}</span>` : ''}${dept_count > 0 && dep_count > 0 ? ' ' : ''}${dep_count > 0 ? html`<span class="dep-count">→${dep_count}</span>` : ''}</span
+          >`;
+        })()}
       </td>
     </tr>`;
   }
