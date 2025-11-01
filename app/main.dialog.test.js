@@ -54,7 +54,7 @@ describe('UI-104 dialog opens on navigation', () => {
     const title = /** @type {HTMLElement} */ (
       document.getElementById('issue-dialog-title')
     );
-    expect(title.textContent).toBe('#1');
+    expect(title.textContent).toBe('UI-1');
 
     // Underlying list remains visible
     const issuesRoot = /** @type {HTMLElement} */ (

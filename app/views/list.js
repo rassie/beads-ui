@@ -4,7 +4,6 @@ import { cmpClosedDesc } from '../data/sort.js';
 import { ISSUE_TYPES, typeLabel } from '../utils/issue-type.js';
 import { issueHashFor } from '../utils/issue-url.js';
 import { debug } from '../utils/logging.js';
-// issueDisplayId not used directly in this file; rendered in shared row
 import { statusLabel } from '../utils/status.js';
 import { createIssueRowRenderer } from './issue-row.js';
 

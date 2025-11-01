@@ -30,7 +30,7 @@ describe('utils/issue-id-renderer', () => {
 
     expect(el.tagName).toBe('BUTTON');
     expect(el.classList.contains('mono')).toBe(true);
-    expect(el.textContent).toBe('#123');
+    expect(el.textContent).toBe('UI-123');
 
     el.click();
     // Await microtask tick for async handler
@@ -42,7 +42,7 @@ describe('utils/issue-id-renderer', () => {
 
     // Revert after default duration
     vi.advanceTimersByTime(1200);
-    expect(el.textContent).toBe('#123');
+    expect(el.textContent).toBe('UI-123');
   });
 
   test('applies custom class and duration', async () => {
@@ -56,7 +56,7 @@ describe('utils/issue-id-renderer', () => {
     await Promise.resolve();
     expect(el.textContent).toBe('Copied');
     vi.advanceTimersByTime(100);
-    expect(el.textContent).toBe('#9');
+    expect(el.textContent).toBe('UI-9');
   });
 
   test('keyboard activation via Enter/Space copies', () => {

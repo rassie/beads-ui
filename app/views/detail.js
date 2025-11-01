@@ -1,7 +1,6 @@
 // Issue Detail view implementation (lit-html based)
 import { html, render } from 'lit-html';
 import { parseView } from '../router.js';
-import { issueDisplayId } from '../utils/issue-id.js';
 import { issueHashFor } from '../utils/issue-url.js';
 import { debug } from '../utils/logging.js';
 import { renderMarkdown } from '../utils/markdown.js';
@@ -715,7 +714,7 @@ export function createDetailView(
                   ${createTypeBadge(dep.issue_type || '')}
                   <span class="text-truncate">${dep.title || ''}</span>
                   <button
-                    aria-label=${`Remove dependency ${issueDisplayId(did)}`}
+                    aria-label=${`Remove dependency ${did}`}
                     @click=${makeDepRemoveClick(did, title)}
                   >
                     ×

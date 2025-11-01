@@ -142,6 +142,6 @@ describe('UI-106 new issue flow', () => {
     const titleEl = /** @type {HTMLElement} */ (
       document.getElementById('issue-dialog-title')
     );
-    expect(titleEl.textContent).toBe('#200');
+    expect(titleEl.textContent).toBe('UI-200');
   });
 });

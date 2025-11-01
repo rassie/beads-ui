@@ -221,7 +221,7 @@ describe('views/epics', () => {
         r.querySelector('td.mono')
       )?.textContent?.trim()
     );
-    expect(ids).toEqual(['#12', '#11', '#13']);
+    expect(ids).toEqual(['UI-12', 'UI-11', 'UI-13']);
   });
 
   test('clicking inputs/selects inside a row does not navigate', async () => {

@@ -167,25 +167,25 @@ describe('views/board', () => {
     const blocked_ids = Array.from(
       mount.querySelectorAll('#blocked-col .board-card .mono')
     ).map((el) => el.textContent?.trim());
-    expect(blocked_ids).toEqual(['#1', '#2']);
+    expect(blocked_ids).toEqual(['B-1', 'B-2']);
 
     // Ready: priority asc, then created_at asc for equal priority
     const ready_ids = Array.from(
       mount.querySelectorAll('#ready-col .board-card .mono')
     ).map((el) => el.textContent?.trim());
-    expect(ready_ids).toEqual(['#1', '#2', '#3']);
+    expect(ready_ids).toEqual(['R-1', 'R-2', 'R-3']);
 
     // In progress: priority asc (default), then created_at asc
     const prog_ids = Array.from(
       mount.querySelectorAll('#in-progress-col .board-card .mono')
     ).map((el) => el.textContent?.trim());
-    expect(prog_ids).toEqual(['#2', '#1']);
+    expect(prog_ids).toEqual(['P-2', 'P-1']);
 
     // Closed: closed_at desc
     const closed_ids = Array.from(
       mount.querySelectorAll('#closed-col .board-card .mono')
     ).map((el) => el.textContent?.trim());
-    expect(closed_ids).toEqual(['#2', '#1']);
+    expect(closed_ids).toEqual(['C-2', 'C-1']);
 
     // Click navigates
     const first_ready = /** @type {HTMLElement|null} */ (
@@ -247,11 +247,11 @@ describe('views/board', () => {
     ).map((el) => el.textContent?.trim());
 
     // X-2 is in progress, so Ready should only show X-1
-    expect(ready_ids).toEqual(['#1']);
+    expect(ready_ids).toEqual(['X-1']);
 
     const prog_ids = Array.from(
       mount.querySelectorAll('#in-progress-col .board-card .mono')
     ).map((el) => el.textContent?.trim());
-    expect(prog_ids).toEqual(['#2']);
+    expect(prog_ids).toEqual(['X-2']);
   });
 });

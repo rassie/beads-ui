@@ -74,7 +74,7 @@ describe('deep link on initial load (UI-44)', () => {
     const title = /** @type {HTMLElement} */ (
       document.getElementById('issue-dialog-title')
     );
-    expect(title && title.textContent).toBe('#2');
+    expect(title && title.textContent).toBe('UI-2');
 
     // The list renders asynchronously from push-only stores; dialog is open
     // and shows the correct id, which is sufficient for deep-link behavior.
