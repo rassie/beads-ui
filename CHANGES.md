@@ -1,5 +1,28 @@
 # Changes
 
+## 0.4.3
+
+- [`4a5b4cd`](https://github.com/mantoni/beads-ui/commit/4a5b4cda8b22437eac2636c0a5556d0b52897f5f)
+  Add author (ignore in changes)
+- [`a34855e`](https://github.com/mantoni/beads-ui/commit/a34855ea26304554df2056ac6ed5224db25d795a)
+  Ignore tsconfig.tsbuildinfo
+- [`a7ebbc1`](https://github.com/mantoni/beads-ui/commit/a7ebbc1ba8538107f0ec106638115c4d78c48711)
+  Add logging instead of ignoring issues
+- [`54c9488`](https://github.com/mantoni/beads-ui/commit/54c94885c28a9bbdaaa60de6eaf8b91eac567bec)
+  Mention `npm link` for development
+- [`a137db0`](https://github.com/mantoni/beads-ui/commit/a137db02386457b7277f9566b5f6fc0079581bf7)
+  Display beads issue ID as is
+- [`ee343ee`](https://github.com/mantoni/beads-ui/commit/ee343ee39cc5ef9c7d7ec7df0a4f2b2f0e4b51ba)
+  Remove try-catch around localStorage access
+- [`619a107`](https://github.com/mantoni/beads-ui/commit/619a107948b47bcfa6c7102ca0e90f3d575ac3a8)
+  Upgrade vitest to v4
+- [`caed1b5`](https://github.com/mantoni/beads-ui/commit/caed1b5005645c2cf566ac3c3eddc4b5b73a4f74)
+  Use vitest restoreMocks config
+- [`0a28b5b`](https://github.com/mantoni/beads-ui/commit/0a28b5bf5cc278a6775a051c712ff560dfab2b81)
+  Fix: Use BEADS_DB env var instead of --db flag (Nikolai Prokoschenko)
+
+_Released by [Maximilian Antoni](https://github.com/mantoni) on 2025-11-01._
+
 ## 0.4.2
 
 - [`66e31ff`](https://github.com/mantoni/beads-ui/commit/66e31ff0e053f3691657ce1175fd9b02155ca699)
